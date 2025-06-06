@@ -216,37 +216,48 @@ class Val {
     explicit Val(std::string_view v);
     explicit Val(Callback f);
 
-    handle as_handle();
-    Val get(std::string_view prop);
-    void set(std::string_view prop, Val val);
-    bool has(std::string_view prop);
-    bool has_own_property(std::string_view prop);
-    std::string type_of();
-    Val operator[](size_t idx);
+    handle as_handle() const;
+    Val get(std::string_view prop) const;
+    void set(std::string_view prop, const Val &val) const;
+    bool has(std::string_view prop) const;
+    bool has_own_property(std::string_view prop) const;
+    std::string type_of() const;
+    Val operator[](size_t idx) const;
     Val await() const;
 
     template <class... Args>
-    Val call(const char *method, Args &&...vals);
+    Val call(const char *method, Args &&...vals) const;
 
     template <class... Args>
-    Val new_(Args &&...vals);
+    Val new_(Args &&...vals) const;
 
     template <class... Args>
-    Val operator()(Args &&...vals);
+    Val operator()(Args &&...vals) const;
 
     template <typename T>
-    T as();
+    T as() const;
+
+    template <typename T> requires(std::integral<T> || std::floating_point<T>)
+    static std::vector<T> vec_from_js_array(const Val &v) {
+        auto sz = v.get("length").as<int>();
+        std::vector<T> ret;
+        ret.reserve(sz);
+        for (int i = 0; i < sz; i++) {
+            ret.push_back(v[i].as<T>());
+        }
+        return ret;
+    }
 };
 
 class Console : public Val {
   public:
     Console();
     template <class... Args>
-    void log(Args &&...args);
+    void log(Args &&...args) const;
 };
 
 template <class... Args>
-Val Val::call(const char *method, Args &&...vals) {
+Val Val::call(const char *method, Args &&...vals) const {
     handle arr = emlite_val_new_array();
     (emlite_val_push(arr, std::forward<Args>(vals).as_handle()), ...);
     return Val::from_handle(emlite_val_obj_call(v_, method, strlen(method), arr)
@@ -254,21 +265,21 @@ Val Val::call(const char *method, Args &&...vals) {
 }
 
 template <class... Args>
-Val Val::new_(Args &&...vals) {
+Val Val::new_(Args &&...vals) const {
     handle arr = emlite_val_new_array();
     (emlite_val_push(arr, std::forward<Args>(vals).as_handle()), ...);
     return Val::from_handle(emlite_val_construct_new(v_, arr));
 }
 
 template <class... Args>
-Val Val::operator()(Args &&...vals) {
+Val Val::operator()(Args &&...vals) const {
     handle arr = emlite_val_new_array();
     (emlite_val_push(arr, std::forward<Args>(vals).as_handle()), ...);
     return Val::from_handle(emlite_val_func_call(v_, arr));
 }
 
 template <typename T>
-T Val::as() {
+T Val::as() const {
     if constexpr (std::is_integral_v<T>) {
         if constexpr (std::is_same_v<T, bool>) {
             if (v_ > 3)
@@ -286,7 +297,7 @@ T Val::as() {
 }
 
 template <class... Args>
-void Console::log(Args &&...args) {
+void Console::log(Args &&...args) const {
     call("log", std::forward<Args>(args)...);
 }
 
@@ -332,27 +343,27 @@ Val::Val(std::string_view v) : v_(emlite_val_make_str(v.data(), v.size())) {}
 
 Val::Val(Callback f) : v_(Val::make_emlite_val_function(f).as_handle()) {}
 
-handle Val::as_handle() { return v_; }
+handle Val::as_handle() const { return v_; }
 
-std::string Val::type_of() { return std::string(emlite_val_typeof(v_)); }
+std::string Val::type_of() const { return std::string(emlite_val_typeof(v_)); }
 
-Val Val::get(std::string_view prop) {
+Val Val::get(std::string_view prop) const {
     return Val::from_handle(emlite_val_obj_prop(v_, prop.data(), prop.size()));
 }
 
-void Val::set(std::string_view prop, Val val) {
+void Val::set(std::string_view prop, const Val &val) const {
     emlite_val_obj_set_prop(v_, prop.data(), prop.size(), val.as_handle());
 }
 
-bool Val::has(std::string_view prop) {
+bool Val::has(std::string_view prop) const {
     return emlite_val_obj_has_prop(v_, prop.data(), prop.size());
 }
 
-bool Val::has_own_property(std::string_view prop) {
+bool Val::has_own_property(std::string_view prop) const {
     return emlite_val_obj_has_own_prop(v_, prop.data(), prop.size());
 }
 
-Val Val::operator[](size_t idx) {
+Val Val::operator[](size_t idx) const {
     return Val::from_handle(emlite_val_get_elem(v_, idx));
 }
 
