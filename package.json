@@ -1,0 +1,31 @@
+{
+  "name": "emlite",
+  "version": "0.1.0",
+  "description": "A tiny JS bridge for C/C++ via wasm(-wasi)",
+  "main": "src/emlite.js",
+  "type": "module",
+  "directories": {
+    "example": "examples",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "node tests/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MoAlyousef/emlite.git"
+  },
+  "keywords": [
+    "wasm",
+    "wasi",
+    "polyfill",
+    "shim",
+    "webassembly"
+  ],
+  "author": "MoAlyousef",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/MoAlyousef/emlite/issues"
+  },
+  "homepage": "https://github.com/MoAlyousef/emlite#readme"
+}
