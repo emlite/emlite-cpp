@@ -1,5 +1,5 @@
 bin
 *.wasm
 .clangd
-/emlite-rs/target
-/emlite-rs/Cargo.lock
+/rust/emlite-rs/target
+/rust/emlite-rs/Cargo.lock

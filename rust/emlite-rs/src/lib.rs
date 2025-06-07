@@ -1,9 +1,7 @@
 mod defs;
-mod id;
 use crate::defs::*;
-use crate::id::JsType;
-use std::ffi::CStr;
 use std::cell::RefCell;
+use std::ffi::CStr;
 
 thread_local! {
     pub static CB_TABLE: RefCell<Vec<fn(Handle)>> = RefCell::new(Vec::new());
@@ -12,12 +10,19 @@ thread_local! {
 #[macro_export]
 macro_rules! eval {
     ($src: literal) => {{
-        Val::global("eval").invoke(&[&Val::from_str($src)])
+        $crate::Val::global("eval").invoke(&[$crate::Val::from_str($src)])
     }};
     ($src: literal $(, $arg:expr)* $(,)?) => {{
-        Val::global("eval").invoke(
-            &[&Val::from_str(&format!($src, $( $arg ),*)) ]
+        $crate::Val::global("eval").invoke(
+            &[$crate::Val::from_str(&format!($src, $( $arg ),*)) ]
         )
+    }};
+}
+
+#[macro_export]
+macro_rules! argv {
+    ($($rest:expr),*) => {{
+        [$($crate::Val::from($rest)),*]
     }};
 }
 
@@ -27,12 +32,10 @@ pub struct Val {
 
 impl Val {
     pub fn from_handle(handle: Handle) -> Val {
-        Val {
-            v_: handle,
-        }
+        Val { v_: handle }
     }
 
-    pub fn from_val(v: &Val) -> Self {
+    pub fn from_val(v: Val) -> Self {
         let handle = v.as_handle();
         Self { v_: handle }
     }
@@ -53,7 +56,7 @@ impl Val {
     pub fn null() -> Val {
         Val::from_handle(unsafe { emlite_val_null() })
     }
-    
+
     pub fn undefined() -> Val {
         Val::from_handle(unsafe { emlite_val_undefined() })
     }
@@ -74,6 +77,7 @@ impl Val {
         Val::from_handle(unsafe { emlite_val_make_double(f) })
     }
 
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Val {
         Val::from_handle(unsafe { emlite_val_make_str(s.as_ptr() as _, s.len()) })
     }
@@ -82,14 +86,16 @@ impl Val {
         self.v_
     }
 
-    pub fn set(&self, prop: &str, val: &Val) {
-        unsafe { emlite_val_obj_set_prop(self.v_, prop.as_ptr() as _, prop.len(), val.as_handle()) };
+    pub fn set(&self, prop: &str, val: Val) {
+        unsafe {
+            emlite_val_obj_set_prop(self.v_, prop.as_ptr() as _, prop.len(), val.as_handle())
+        };
     }
 
     pub fn has(&self, prop: &str) -> bool {
         unsafe { emlite_val_obj_has_prop(self.v_, prop.as_ptr() as _, prop.len()) }
     }
-    
+
     pub fn has_own_property(&self, prop: &str) -> bool {
         unsafe { emlite_val_obj_has_own_prop(self.v_, prop.as_ptr() as _, prop.len()) }
     }
@@ -106,21 +112,15 @@ impl Val {
     }
 
     pub fn as_i32(&self) -> i32 {
-        unsafe {
-            emlite_val_get_value_int(self.v_) as i32
-        }
+        unsafe { emlite_val_get_value_int(self.v_) as i32 }
     }
 
     pub fn as_bool(&self) -> bool {
-        unsafe {
-            emlite_val_get_value_int(self.v_) > 3
-        }
+        unsafe { emlite_val_get_value_int(self.v_) > 3 }
     }
 
     pub fn as_f64(&self) -> f64 {
-        unsafe {
-            emlite_val_get_value_double(self.v_) as _
-        }
+        unsafe { emlite_val_get_value_double(self.v_) as _ }
     }
 
     pub fn as_string(&self) -> String {
@@ -130,14 +130,8 @@ impl Val {
         }
     }
 
-    pub fn as_<T: JsType>(&self) -> T {
-        unsafe {
-            T::from_generic_wire_type(crate::id::GenericWireType(emlite_val_get_value_double(self.v_)))
-        }
-    }
-
     pub fn to_vec_i32(&self) -> Vec<i32> {
-        let len = self.get(&"length").as_i32();
+        let len = self.get("length").as_i32();
         let mut v: Vec<i32> = vec![];
         for i in 0..len {
             v.push(self.at(i as _).as_i32());
@@ -146,7 +140,7 @@ impl Val {
     }
 
     pub fn to_vec_f64(&self) -> Vec<f64> {
-        let len = self.get(&"length").as_i32();
+        let len = self.get("length").as_i32();
         let mut v: Vec<f64> = vec![];
         for i in 0..len {
             v.push(self.at(i as _).as_f64());
@@ -154,7 +148,7 @@ impl Val {
         v
     }
 
-    pub fn call(&self, f: &str, args: &[&Val]) -> Val {
+    pub fn call(&self, f: &str, args: &[Val]) -> Val {
         unsafe {
             let arr = emlite_val_new_array();
             for arg in args {
@@ -164,7 +158,7 @@ impl Val {
         }
     }
 
-    pub fn new(&self, args: &[&Val]) -> Val {
+    pub fn new(&self, args: &[Val]) -> Val {
         unsafe {
             let arr = emlite_val_new_array();
             for arg in args {
@@ -174,7 +168,7 @@ impl Val {
         }
     }
 
-    pub fn invoke(&self, args: &[&Val]) -> Val {
+    pub fn invoke(&self, args: &[Val]) -> Val {
         unsafe {
             let arr = emlite_val_new_array();
             for arg in args {
@@ -194,16 +188,18 @@ impl Val {
     }
 
     pub fn await_(&self) -> Val {
-        eval!(r#"
+        eval!(
+            r#"
             (async () => {{
                 let obj = ValMap.toValue({});
                 let ret = await obj;
                 return ValMap.toHandle(ret);
             }})()
-        "#, self.v_)
+        "#,
+            self.v_
+        )
     }
 }
-
 
 impl From<i32> for Val {
     fn from(v: i32) -> Self {
@@ -223,11 +219,11 @@ impl From<()> for Val {
     }
 }
 
-impl From<&Val> for Val {
-    fn from(item: &Val) -> Self {
-        Val::from_val(item)
-    }
-}
+// impl From<&Val> for Val {
+//     fn from(item: &Val) -> Self {
+//         Val::from_val(item.into())
+//     }
+// }
 
 impl From<&str> for Val {
     fn from(item: &str) -> Self {
@@ -252,7 +248,11 @@ impl Console {
         }
     }
 
-    pub fn log(&self, args: &[&Val]) {
+    pub fn log(&self, args: &[Val]) {
         self.val.call("log", args);
+    }
+
+    pub fn as_handle(&self) -> Handle {
+        self.val.v_
     }
 }

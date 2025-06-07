@@ -1,0 +1,2 @@
+[target.wasm32-wasip1]
+rustflags = ["-Clink-args=--no-entry --allow-undefined --export-all --import-memory --export-memory --strip-all"]

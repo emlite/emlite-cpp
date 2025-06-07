@@ -1,6 +1,6 @@
 # Emlite
 
-Emlite is a tiny JS bridge for C/C++ via Wasm (wasi), which doesn't require the emscripten toolchain.
+Emlite is a tiny JS bridge for native code (C/C++/Rust) via Wasm (wasi), which doesn't require the emscripten toolchain.
 It provides a single C/C++ header and a single javascript file that allows plain C or C++ code — compiled with wasm32-wasi — to talk to interoperate with javascript (including the DOM) and other JavaScript objects without writing much JS “glue.”
 It provides both a C api and a higher level C++ api similar to emscripten's val api.
 
