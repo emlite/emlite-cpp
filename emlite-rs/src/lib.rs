@@ -37,12 +37,6 @@ impl Val {
         Self { v_: handle }
     }
 
-    // pub fn from_<T: JsType>(v: T) -> Self {
-    //     Self {
-    //         v_: unsafe { T::from_generic_wire_type(crate::id::GenericWireType(std::mem::transmute(v))) },
-    //     }
-    // }
-
     pub fn global_this() -> Val {
         Val::from_handle(unsafe { emlite_val_global_this() })
     }
@@ -114,6 +108,12 @@ impl Val {
     pub fn as_i32(&self) -> i32 {
         unsafe {
             emlite_val_get_value_int(self.v_) as i32
+        }
+    }
+
+    pub fn as_bool(&self) -> bool {
+        unsafe {
+            emlite_val_get_value_int(self.v_) > 3
         }
     }
 
@@ -205,11 +205,17 @@ impl Val {
 }
 
 
-// impl<T: JsType> From<T> for Val {
-//     fn from(v: T) -> Self {
-//         Val::from_(v)
-//     }
-// }
+impl From<i32> for Val {
+    fn from(v: i32) -> Self {
+        Val::from_i32(v)
+    }
+}
+
+impl From<f64> for Val {
+    fn from(v: f64) -> Self {
+        Val::from_f64(v)
+    }
+}
 
 impl From<()> for Val {
     fn from(_: ()) -> Self {
@@ -232,5 +238,21 @@ impl From<&str> for Val {
 impl From<String> for Val {
     fn from(item: String) -> Self {
         Val::from_str(&item)
+    }
+}
+
+pub struct Console {
+    val: Val,
+}
+
+impl Console {
+    pub fn get() -> Console {
+        Console {
+            val: Val::global("console"),
+        }
+    }
+
+    pub fn log(&self, args: &[&Val]) {
+        self.val.call("log", args);
     }
 }

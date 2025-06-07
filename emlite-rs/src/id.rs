@@ -39,7 +39,7 @@ macro_rules! register_rust_float {
             fn id() -> TypeId {
                 get_type_id::<$t>()
             }
-            fn  (v: GenericWireType) -> Self {
+            fn from_generic_wire_type(v: GenericWireType) -> Self {
                 v.0 as _
             }
         }
