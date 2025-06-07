@@ -26,6 +26,15 @@ macro_rules! argv {
     }};
 }
 
+#[unsafe(no_mangle)]
+extern "C" fn wasm_invoke_cb(id: usize, evt: Handle) {
+    CB_TABLE.with_borrow(move |v| {
+        if id < v.len() {
+            v[id](evt);
+        }
+    });
+}
+
 pub struct Val {
     v_: Handle,
 }
@@ -116,7 +125,7 @@ impl Val {
     }
 
     pub fn as_bool(&self) -> bool {
-        unsafe { emlite_val_get_value_int(self.v_) > 3 }
+        self.v_ > 3
     }
 
     pub fn as_f64(&self) -> f64 {
@@ -218,12 +227,6 @@ impl From<()> for Val {
         Val::null()
     }
 }
-
-// impl From<&Val> for Val {
-//     fn from(item: &Val) -> Self {
-//         Val::from_val(item.into())
-//     }
-// }
 
 impl From<&str> for Val {
     fn from(item: &str) -> Self {
