@@ -30,6 +30,18 @@ unsafe extern "C" {
 
     pub fn emlite_val_get_elem(val: Handle, idx: usize) -> Handle;
 
+    pub fn emlite_val_is_string(val: Handle) -> bool;
+    pub fn emlite_val_is_number(val: Handle) -> bool;
+    pub fn emlite_val_not(val: Handle) -> bool;
+    pub fn emlite_val_gt(arg1: Handle, arg2: Handle) -> bool;
+    pub fn emlite_val_gte(arg1: Handle, arg2: Handle) -> bool;
+    pub fn emlite_val_lt(arg1: Handle, arg2: Handle) -> bool;
+    pub fn emlite_val_lte(arg1: Handle, arg2: Handle) -> bool;
+    pub fn emlite_val_equals(arg1: Handle, arg2: Handle) -> bool;
+    pub fn emlite_val_strictly_equals(arg1: Handle, arg2: Handle) -> bool;
+    pub fn emlite_val_instanceof(arg1: Handle, arg2: Handle) -> bool;
+    pub fn emlite_val_delete(val: Handle);
+
     pub fn emlite_val_obj_call(
         obj: Handle,
         name: *const c_char,

@@ -50,6 +50,18 @@ int emlite_val_get_value_int(handle);
 double emlite_val_get_value_double(handle);
 const char *emlite_val_get_value_string(handle);
 handle emlite_val_get_elem(handle, size_t);
+bool emlite_val_is_string(handle);
+bool emlite_val_is_number(handle);
+bool emlite_val_not(handle);
+bool emlite_val_gt(handle, handle);
+bool emlite_val_gte(handle, handle);
+bool emlite_val_lt(handle, handle);
+bool emlite_val_lte(handle, handle);
+bool emlite_val_equals(handle, handle);
+bool emlite_val_strictly_equals(handle, handle);
+bool emlite_val_instanceof(handle, handle);
+void emlite_val_delete(handle);
+
 handle emlite_val_obj_call(
     handle obj, const char *name, size_t len, handle argv
 );
@@ -67,7 +79,7 @@ handle emlite_val_func_call_v(handle func, int n, ...);
 handle emlite_val_obj_call_v(handle obj, const char *name, int n, ...);
 
 #define VAL_OBJ_CALL(obj, name, ...)                                           \
-    emlite_val_obj_call_v(                                                      \
+    emlite_val_obj_call_v(                                                     \
         (obj),                                                                 \
         (name),                                                                \
         (int)(sizeof((handle[]){__VA_ARGS__}) / sizeof(handle)),               \
@@ -75,14 +87,14 @@ handle emlite_val_obj_call_v(handle obj, const char *name, int n, ...);
     )
 
 #define VAL_OBJ_NEW(obj, ...)                                                  \
-    emlite_val_construct_new_v(                                                 \
+    emlite_val_construct_new_v(                                                \
         obj,                                                                   \
         (int)(sizeof((handle[]){__VA_ARGS__}) / sizeof(handle)),               \
         __VA_ARGS__                                                            \
     )
 
 #define VAL_FUNC_CALL(obj, ...)                                                \
-    emlite_val_func_call_v(                                                     \
+    emlite_val_func_call_v(                                                    \
         obj,                                                                   \
         (int)(sizeof((handle[]){__VA_ARGS__}) / sizeof(handle)),               \
         __VA_ARGS__                                                            \
@@ -202,6 +214,7 @@ class Val {
     static Val object();
     static Val array();
     static Val make_js_function(Callback f);
+    static void delete_(Val);
 
     template <typename T>
         requires(std::integral<T> || std::floating_point<T>)
@@ -224,6 +237,16 @@ class Val {
     std::string type_of() const;
     Val operator[](size_t idx) const;
     Val await() const;
+    bool is_number() const;
+    bool is_string() const;
+    bool instanceof (const Val &v) const;
+    bool operator!() const;
+    bool operator==(const Val &other) const;
+    bool operator!=(const Val &other) const;
+    bool operator>(const Val &other) const;
+    bool operator>=(const Val &other) const;
+    bool operator<(const Val &other) const;
+    bool operator<=(const Val &other) const;
 
     template <class... Args>
     Val call(const char *method, Args &&...vals) const;
@@ -237,7 +260,8 @@ class Val {
     template <typename T>
     T as() const;
 
-    template <typename T> requires(std::integral<T> || std::floating_point<T>)
+    template <typename T>
+        requires(std::integral<T> || std::floating_point<T>)
     static std::vector<T> vec_from_js_array(const Val &v) {
         auto sz = v.get("length").as<int>();
         std::vector<T> ret;
@@ -301,7 +325,8 @@ void Console::log(Args &&...args) const {
     call("log", std::forward<Args>(args)...);
 }
 
-#define EMLITE_EVAL(x, ...) Val::global("eval")(Val(std::format(#x, __VA_ARGS__)))
+#define EMLITE_EVAL(x, ...)                                                    \
+    Val::global("eval")(Val(std::format(#x, __VA_ARGS__)))
 
 } // namespace emlite
 
@@ -336,6 +361,8 @@ Val Val::array() {
     val.v_ = emlite_val_new_array();
     return val;
 }
+
+void Val::delete_(Val v) { emlite_val_delete(v.v_); }
 
 Val::Val(const char *v) : v_(emlite_val_make_str(v, std::strlen(v))) {}
 
@@ -382,6 +409,46 @@ Val Val::await() const {
         return ValMap.toHandle(ret);
        }})()
     }}, v_);
+}
+
+bool Val::is_number() const {
+    return emlite_val_is_number(v_);
+}
+
+bool Val::is_string() const {
+    return emlite_val_is_string(v_);
+}
+
+bool Val::instanceof(const Val &v) const {
+    return emlite_val_instanceof(v_, v.v_);
+}
+
+bool Val::operator!() const {
+    return emlite_val_not(v_);
+}
+
+bool Val::operator==(const Val& other) const {
+    return emlite_val_strictly_equals(v_, other.v_);
+}
+
+bool Val::operator!=(const Val& other) const {
+    return !emlite_val_strictly_equals(v_, other.v_);
+}
+
+bool Val::operator>(const Val& other) const {
+    return emlite_val_gt(v_, other.v_);
+}
+
+bool Val::operator>=(const Val& other) const {
+    return emlite_val_gte(v_, other.v_);
+}
+
+bool Val::operator<(const Val& other) const {
+    return emlite_val_lt(v_, other.v_);
+}
+
+bool Val::operator<=(const Val& other) const {
+    return emlite_val_lte(v_, other.v_);
 }
 // clang-format on
 

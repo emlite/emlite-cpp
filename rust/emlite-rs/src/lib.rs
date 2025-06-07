@@ -208,6 +208,16 @@ impl Val {
             self.v_
         )
     }
+
+    pub fn delete(v: Val) {
+        unsafe {
+            emlite_val_delete(v.v_);
+        }
+    }
+
+    pub fn instanceof(&self, v: Val) -> bool {
+        unsafe { emlite_val_instanceof(self.v_, v.v_) }
+    }
 }
 
 impl From<i32> for Val {
@@ -257,5 +267,38 @@ impl Console {
 
     pub fn as_handle(&self) -> Handle {
         self.val.v_
+    }
+}
+
+use std::cmp::Ordering;
+use std::ops::Not;
+
+impl PartialEq for Val {
+    fn eq(&self, other: &Val) -> bool {
+        unsafe { emlite_val_strictly_equals(self.v_, other.v_) }
+    }
+}
+
+impl PartialOrd for Val {
+    fn partial_cmp(&self, other: &Val) -> Option<Ordering> {
+        unsafe {
+            if emlite_val_strictly_equals(self.v_, other.v_) {
+                Some(Ordering::Equal)
+            } else if emlite_val_gt(self.v_, other.v_) {
+                Some(Ordering::Greater)
+            } else if emlite_val_lt(self.v_, other.v_) {
+                Some(Ordering::Less)
+            } else {
+                None
+            }
+        }
+    }
+}
+
+impl Not for Val {
+    type Output = bool;
+
+    fn not(self) -> Self::Output {
+        unsafe { emlite_val_not(self.v_) }
     }
 }

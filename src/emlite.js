@@ -95,6 +95,20 @@ export class Emlite {
             emlite_val_get_value_string: (n) => this.copyStringToWasm(OBJECT_MAP.get(n)),
             emlite_val_typeof: (n) => this.copyStringToWasm(typeof OBJECT_MAP.get(n)),
             emlite_val_get_elem: (n, idx) => OBJECT_MAP.add(OBJECT_MAP.get(n)[idx]),
+            emlite_val_not: (arg) => !OBJECT_MAP.get(arg),
+            emlite_val_is_string: (arg) => {
+                let obj = OBJECT_MAP.get(arg);
+                typeof obj === "string" || obj instanceof String
+            },
+            emlite_val_is_number: (arg) => typeof OBJECT_MAP.get(arg) === "number",
+            emlite_val_gt: (arg1, arg2) => OBJECT_MAP.get(arg1) > OBJECT_MAP.get(arg2),
+            emlite_val_gte: (arg1, arg2) => OBJECT_MAP.get(arg1) >= OBJECT_MAP.get(arg2),
+            emlite_val_lt: (arg1, arg2) => OBJECT_MAP.get(arg1) < OBJECT_MAP.get(arg2),
+            emlite_val_lte: (arg1, arg2) => OBJECT_MAP.get(arg1) <= OBJECT_MAP.get(arg2),
+            emlite_val_equals: (arg1, arg2) => OBJECT_MAP.get(arg1) == OBJECT_MAP.get(arg2),
+            emlite_val_strictly_equals: (arg1, arg2) => OBJECT_MAP.get(arg1) === OBJECT_MAP.get(arg2),
+            emlite_val_instanceof: (arg1, arg2) => OBJECT_MAP.get(arg1) instanceof OBJECT_MAP.get(arg2),
+            emlite_val_delete: (n) => delete OBJECT_MAP.get(n),
             emlite_val_make_callback: (id) => {
                 const fn = (event) => {
                     const evtHandle = OBJECT_MAP.add(event);
