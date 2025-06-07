@@ -90,6 +90,9 @@ The most convenient way to pass extra flags to the toolchain is via a .cargo/con
 ```toml
 [target.wasm32-wasip1]
 rustflags = ["-Clink-args=--no-entry --allow-undefined --export-all --import-memory --export-memory --strip-all"]
+
+[profile.release]
+lto = true # to get smaller builds
 ```
 
 ## Deployment
