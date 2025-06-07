@@ -25,7 +25,7 @@ use emlite::*;
 fn main() {
     let document = Val::global("document");
     let elem = document.call("createElement", &argv!["BUTTON"]);
-    elem.set(&"textContent", Val::from("Click"));
+    elem.set("textContent", Val::from("Click"));
     let body = document.call("getElementsByTagName", &argv!["body"]).at(0);
     elem.call(
         "addEventListener",
@@ -93,17 +93,68 @@ rustflags = ["-Clink-args=--no-entry --allow-undefined --export-all --import-mem
 ```
 
 ## Deployment
-Building a program generates a .wasm binary. You will have to get the necessary glue via the emlite npm package:
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    <script src="./dom.js"></script>
-</body>
-</html>
+
+You can get 
+### In the browser
+
+To use it in your web stack, you will need a wasi javascript polyfill, here we use @bjorn3/browser_wasi_shim and the emlite npm packages:
+
+```javascript
+// see the index.html for an example
+import { WASI, File, OpenFile, ConsoleStdout } from "@bjorn3/browser_wasi_shim";
+import { Emlite } from "emlite";
+
+window.onload = async () => {
+    let fds = [
+        new OpenFile(new File([])), // 0, stdin
+        ConsoleStdout.lineBuffered(msg => console.log(`[WASI stdout] ${msg}`)), // 1, stdout
+        ConsoleStdout.lineBuffered(msg => console.warn(`[WASI stderr] ${msg}`)), // 2, stderr
+    ];
+    let wasi = new WASI([], [], fds);
+    let emlite = new Emlite();
+    let wasm = await WebAssembly.compileStreaming(fetch("./bin/dom_test1.wasm"));
+    let inst = await WebAssembly.instantiate(wasm, {
+        "wasi_snapshot_preview1": wasi.wasiImport,
+        "env": emlite.env,
+    });
+    emlite.setExports(inst.exports);
+    // if your C/C++ has a main function, use: `wasi.start(inst)`. If not, use `wasi.initialize(inst)`.
+    wasi.start(inst);
+    // test our exported function `add` in tests/dom_test1.cpp works
+    window.alert(inst.exports.add(1, 2));
+};
 ```
+
+### With a javascript engine like nodejs
+
+If you're vendoring the emlite.js file:
+```javascript
+import { Emlite } from "emlite";
+import { WASI } from "node:wasi";
+import { readFile } from "node:fs/promises";
+import { argv, env } from "node:process";
+
+async function main() {
+    const wasi = new WASI({
+        version: 'preview1',
+        args: argv,
+        env,
+    });
+    
+    const emlite = new Emlite();
+    const wasm = await WebAssembly.compile(
+        await readFile("./bin/console.wasm"),
+    );
+    const instance = await WebAssembly.instantiate(wasm, {
+        wasi_snapshot_preview1: wasi.wasiImport,
+        env: emlite.env,
+    });
+    wasi.start(instance);
+    emlite.setExports(instance.exports);
+    // if you have another exported function marked with EMLITE_USED, you can get it in the instance exports
+    instance.exports.some_func();
+}
+
+await main();
+```
+Note that nodejs as of version 22.16 requires a _start function in the wasm module. That can be achieved by defining an `fn main() {}` function. It's also why we use `wasi.start(instance)` in the js module.
