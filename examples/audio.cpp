@@ -30,8 +30,8 @@ int main() {
     btn.set("textContent", Val("Play!"));
     body.call("appendChild", btn);
     btn.call("addEventListener", Val("click"), Val([](auto) {
-                 auto oscillator = Val::global().get("oscillator");
-                 auto context    = Val::global().get("context");
+                 auto oscillator = Val::global("oscillator");
+                 auto context    = Val::global("context");
                  printf("Playing\n");
                  oscillator.call("connect", context.get("destination"));
                  oscillator.call("start", Val(0));
