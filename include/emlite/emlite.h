@@ -201,7 +201,7 @@ class Val {
     static Val undefined();
     static Val object();
     static Val array();
-    static Val make_emlite_val_function(Callback f);
+    static Val make_js_function(Callback f);
 
     template <typename T>
         requires(std::integral<T> || std::floating_point<T>)
@@ -341,7 +341,7 @@ Val::Val(const char *v) : v_(emlite_val_make_str(v, std::strlen(v))) {}
 
 Val::Val(std::string_view v) : v_(emlite_val_make_str(v.data(), v.size())) {}
 
-Val::Val(Callback f) : v_(Val::make_emlite_val_function(f).as_handle()) {}
+Val::Val(Callback f) : v_(Val::make_js_function(f).as_handle()) {}
 
 handle Val::as_handle() const { return v_; }
 
@@ -367,7 +367,7 @@ Val Val::operator[](size_t idx) const {
     return Val::from_handle(emlite_val_get_elem(v_, idx));
 }
 
-Val Val::make_emlite_val_function(Callback f) {
+Val Val::make_js_function(Callback f) {
     uint32_t id = cb_table.len;
     CallbackList_push_back(&cb_table, f);
     return Val::from_handle(emlite_val_make_callback(id));
