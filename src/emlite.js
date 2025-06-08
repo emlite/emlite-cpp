@@ -52,6 +52,9 @@ OBJECT_MAP.add(globalThis);
 const enc = new TextEncoder('utf-8');
 const dec = new TextDecoder('utf-8');
 
+const CB_STORE = new Map();
+let nextCbId = 0;
+
 export class Emlite {
     constructor(memory) {
         this._memory = memory ? memory : new WebAssembly.Memory({ initial: 100 });
@@ -109,12 +112,19 @@ export class Emlite {
             emlite_val_strictly_equals: (arg1, arg2) => OBJECT_MAP.get(arg1) === OBJECT_MAP.get(arg2),
             emlite_val_instanceof: (arg1, arg2) => OBJECT_MAP.get(arg1) instanceof OBJECT_MAP.get(arg2),
             emlite_val_delete: (n) => delete OBJECT_MAP.get(n),
-            emlite_val_make_callback: (id) => {
-                const fn = (event) => {
-                    const evtHandle = OBJECT_MAP.add(event);
-                    this.exports.wasm_invoke_cb(id, evtHandle);
+            emlite_val_throw: (n) => { throw OBJECT_MAP.get(n); },
+            emlite_val_make_callback: (fidx) => {
+                const id = nextCbId++;
+                CB_STORE.set(id, fidx);
+                const jsFn = (...args) => {
+                    const arrHandle = OBJECT_MAP.add(
+                        args.map(v => OBJECT_MAP.add(v))
+                    );
+                    return this
+                        .exports.__indirect_function_table
+                        .get(fidx)(arrHandle);
                 };
-                return OBJECT_MAP.add(fn);
+                return OBJECT_MAP.add(jsFn);
             },
             emlite_val_obj_call: (objRef, mPtr, mLen, argvRef) => {
                 const target = OBJECT_MAP.get(objRef);

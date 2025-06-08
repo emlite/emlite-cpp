@@ -12,8 +12,9 @@ int main() {
     auto btn  = doc.call("createElement", Val("BUTTON"));
     btn.set("textContent", Val("Click Me!"));
     body.call("appendChild", btn);
-    btn.call("addEventListener", Val("click"), Val([](auto h) {
+    btn.call("addEventListener", Val("click"), Val([](auto h) -> handle {
                  auto console = Console();
                  console.log(Val::from_handle(h));
+                 return Val::undefined().as_handle();
              }));
 }

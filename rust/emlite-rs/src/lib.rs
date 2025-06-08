@@ -1,11 +1,6 @@
 mod defs;
 use crate::defs::*;
-use std::cell::RefCell;
 use std::ffi::CStr;
-
-thread_local! {
-    pub static CB_TABLE: RefCell<Vec<fn(Handle)>> = RefCell::new(Vec::new());
-}
 
 #[macro_export]
 macro_rules! eval {
@@ -26,15 +21,7 @@ macro_rules! argv {
     }};
 }
 
-#[unsafe(no_mangle)]
-extern "C" fn wasm_invoke_cb(id: usize, evt: Handle) {
-    CB_TABLE.with_borrow(move |v| {
-        if id < v.len() {
-            v[id](evt);
-        }
-    });
-}
-
+#[derive(Copy, Clone, Debug)]
 pub struct Val {
     v_: Handle,
 }
@@ -187,13 +174,9 @@ impl Val {
         }
     }
 
-    pub fn make_js_function(f: fn(Handle)) -> Val {
-        let id = CB_TABLE.with_borrow_mut(move |v| {
-            let id = v.len();
-            v.push(f);
-            id
-        });
-        Val::from_handle(unsafe { emlite_val_make_callback(id as u32) })
+    pub fn make_js_function(f: fn(Handle) -> Handle) -> Val {
+        let idx: u32 = f as usize as u32;
+        unsafe { Val::from_handle(emlite_val_make_callback(idx)) }
     }
 
     pub fn await_(&self) -> Val {
@@ -212,6 +195,12 @@ impl Val {
     pub fn delete(v: Val) {
         unsafe {
             emlite_val_delete(v.v_);
+        }
+    }
+
+    pub fn throw(v: Val) {
+        unsafe {
+            emlite_val_throw(v.v_);
         }
     }
 
@@ -234,7 +223,7 @@ impl From<f64> for Val {
 
 impl From<()> for Val {
     fn from(_: ()) -> Self {
-        Val::null()
+        Val::undefined()
     }
 }
 
@@ -250,6 +239,9 @@ impl From<String> for Val {
     }
 }
 
+use std::ops::{Deref, DerefMut};
+
+#[derive(Copy, Clone, Debug)]
 pub struct Console {
     val: Val,
 }
@@ -267,6 +259,20 @@ impl Console {
 
     pub fn as_handle(&self) -> Handle {
         self.val.v_
+    }
+}
+
+impl Deref for Console {
+    type Target = Val;
+
+    fn deref(&self) -> &Self::Target {
+        &self.val
+    }
+}
+
+impl DerefMut for Console {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.val
     }
 }
 

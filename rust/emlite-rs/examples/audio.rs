@@ -34,6 +34,7 @@ fn main() {
                 oscillator.call("connect", &argv![context.get("destination")]);
                 oscillator.call("start", &argv![0]);
                 println!("All done!");
+                Val::undefined().as_handle()
             })
         ],
     );

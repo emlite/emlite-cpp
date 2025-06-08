@@ -29,7 +29,7 @@ int main() {
     auto btn  = doc.call("createElement", Val("BUTTON"));
     btn.set("textContent", Val("Play!"));
     body.call("appendChild", btn);
-    btn.call("addEventListener", Val("click"), Val([](auto) {
+    btn.call("addEventListener", Val("click"), Val([](auto) -> handle {
                  auto oscillator = Val::global("oscillator");
                  auto context    = Val::global("context");
                  printf("Playing\n");
@@ -37,5 +37,6 @@ int main() {
                  oscillator.call("start", Val(0));
 
                  printf("All done!\n");
+                 return Val::undefined().as_handle();
              }));
 }

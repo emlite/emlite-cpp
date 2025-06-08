@@ -23,9 +23,10 @@ EMLITE_USED extern "C" int add(int a, int b) {
     body.call("appendChild", btn);
 
     // emlite_val_make_callback
-    btn.call("addEventListener", Val("click"), Val([](auto) {
+    btn.call("addEventListener", Val("click"), Val([](auto) -> handle {
                  auto console = Console();
                  console.call("log", Val("Clicked"));
+                 return Val::undefined().as_handle();
              }));
 
     // check memory growth!

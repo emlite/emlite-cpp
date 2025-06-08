@@ -10,27 +10,13 @@
 
 typedef uint32_t handle;
 
-typedef void (*Callback)(handle);
+typedef handle (*Callback)(handle);
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include <stdbool.h>
-
-typedef struct CallbackList {
-    Callback *fns;
-    size_t len;
-    size_t cap;
-} CallbackList;
-
-int CallbackList_reserve(CallbackList *list, size_t new_cap);
-int CallbackList_push_back(CallbackList *list, Callback cb);
-int CallbackList_remove(CallbackList *list, size_t index);
-Callback CallbackList_at(const CallbackList *list, size_t index);
-void CallbackList_free(CallbackList *list);
-
-static CallbackList cb_table = {0, 0, 0};
 
 handle emlite_val_null(void);
 handle emlite_val_undefined(void);
@@ -61,6 +47,7 @@ bool emlite_val_equals(handle, handle);
 bool emlite_val_strictly_equals(handle, handle);
 bool emlite_val_instanceof(handle, handle);
 void emlite_val_delete(handle);
+void emlite_val_throw(handle);
 
 handle emlite_val_obj_call(
     handle obj, const char *name, size_t len, handle argv
@@ -103,51 +90,6 @@ handle emlite_val_obj_call_v(handle obj, const char *name, int n, ...);
 #ifdef EMLITE_IMPL
 #include <stdarg.h>
 
-int CallbackList_reserve(CallbackList *list, size_t new_cap) {
-    if (new_cap <= list->cap)
-        return 0;
-    Callback *tmp = (Callback *)realloc(list->fns, new_cap * sizeof(Callback));
-    if (!tmp)
-        return -1;
-    list->fns = tmp;
-    list->cap = new_cap;
-    return 0;
-}
-
-int CallbackList_push_back(CallbackList *list, Callback cb) {
-    if (list->len == list->cap) {
-        size_t new_cap = list->cap ? list->cap * 2 : 4;
-        if (CallbackList_reserve(list, new_cap) != 0)
-            return -1;
-    }
-    list->fns[list->len++] = cb;
-    return 0;
-}
-
-int CallbackList_remove(CallbackList *list, size_t index) {
-    if (index >= list->len)
-        return -1;
-    memmove(
-        &list->fns[index],
-        &list->fns[index + 1],
-        (list->len - index - 1) * sizeof(Callback)
-    );
-    list->len--;
-    return 0;
-}
-
-Callback CallbackList_at(const CallbackList *list, size_t index) {
-    if (index >= list->len)
-        return (Callback)0;
-    return list->fns[index];
-}
-
-void CallbackList_free(CallbackList *list) {
-    free(list->fns);
-    list->fns = NULL;
-    list->len = list->cap = 0;
-}
-
 handle emlite_val_global(const char *name) {
     handle w = emlite_val_global_this();
     return emlite_val_obj_prop(w, name, strlen(name));
@@ -183,12 +125,6 @@ handle emlite_val_func_call_v(handle obj, int n, ...) {
     return emlite_val_func_call(obj, arr);
 }
 
-__attribute__((used)) void *memalloc(size_t s) { return malloc(s); }
-
-__attribute__((used)) void wasm_invoke_cb(uint32_t id, handle evt) {
-    if (id < cb_table.len && cb_table.fns[id])
-        cb_table.fns[id](evt);
-}
 #endif
 
 #ifdef __cplusplus
@@ -215,6 +151,7 @@ class Val {
     static Val array();
     static Val make_js_function(Callback f);
     static void delete_(Val);
+    static void throw_(Val);
 
     template <typename T>
         requires(std::integral<T> || std::floating_point<T>)
@@ -364,6 +301,8 @@ Val Val::array() {
 
 void Val::delete_(Val v) { emlite_val_delete(v.v_); }
 
+void Val::throw_(Val v) { return emlite_val_throw(v.v_); }
+
 Val::Val(const char *v) : v_(emlite_val_make_str(v, std::strlen(v))) {}
 
 Val::Val(std::string_view v) : v_(emlite_val_make_str(v.data(), v.size())) {}
@@ -395,9 +334,9 @@ Val Val::operator[](size_t idx) const {
 }
 
 Val Val::make_js_function(Callback f) {
-    uint32_t id = cb_table.len;
-    CallbackList_push_back(&cb_table, f);
-    return Val::from_handle(emlite_val_make_callback(id));
+    uint32_t fidx = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(f)
+    ); // pointer ⇒ table index
+    return Val::from_handle(emlite_val_make_callback(fidx));
 }
 
 // clang-format off

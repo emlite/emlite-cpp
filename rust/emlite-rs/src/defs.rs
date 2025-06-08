@@ -41,6 +41,7 @@ unsafe extern "C" {
     pub fn emlite_val_strictly_equals(arg1: Handle, arg2: Handle) -> bool;
     pub fn emlite_val_instanceof(arg1: Handle, arg2: Handle) -> bool;
     pub fn emlite_val_delete(val: Handle);
+    pub fn emlite_val_throw(val: Handle);
 
     pub fn emlite_val_obj_call(
         obj: Handle,

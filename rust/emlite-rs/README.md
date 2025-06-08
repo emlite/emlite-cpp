@@ -36,7 +36,7 @@ fn main() {
                 console.call("clear", &[]);
                 println!("client x: {}", Val::from_handle(ev).get("clientX").as_i32());
                 println!("hello from Rust");
-                ().into()
+                Val::undefined().as_handle()
             })
         ],
     );
