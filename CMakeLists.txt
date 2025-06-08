@@ -53,6 +53,10 @@ if (EMLITE_BUILD_EXAMPLES)
     add_executable(audio examples/audio.cpp)
     target_link_libraries(audio PRIVATE emlite::emlite)
     set_target_properties(audio PROPERTIES LINKER_LANGUAGE CXX SUFFIX .wasm LINK_FLAGS "-Wl,--no-entry,--allow-undefined,--export-all,--import-memory,--export-memory,--strip-all")
+
+    add_executable(node_readfile examples/node_readfile.cpp)
+    target_link_libraries(node_readfile PRIVATE emlite::emlite)
+    set_target_properties(node_readfile PROPERTIES LINKER_LANGUAGE CXX SUFFIX .wasm LINK_FLAGS "-Wl,--no-entry,--allow-undefined,--export-all,--import-memory,--export-memory,--strip-all")
 endif()
 
 if (EMLITE_BUILD_TESTS)

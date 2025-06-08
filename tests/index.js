@@ -6,6 +6,10 @@ import { WASI } from "node:wasi";
 import { readFile } from "node:fs/promises";
 import { argv, env } from "node:process";
 
+import { createRequire } from "module";
+const myrequire = createRequire(import.meta.url);
+global.myrequire = myrequire;
+
 async function main() {
     const wasi = new WASI({
         version: 'preview1',
@@ -15,7 +19,7 @@ async function main() {
 
     const emlite = new Emlite();
     const wasm = await WebAssembly.compile(
-        await readFile("./bin/eval.wasm"),
+        await readFile("./bin/node_readfile.wasm"),
     );
     const instance = await WebAssembly.instantiate(wasm, {
         wasi_snapshot_preview1: wasi.wasiImport,
