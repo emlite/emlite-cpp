@@ -1,6 +1,6 @@
 # emlite-rs
 
-A Rust wrapper around emlite, which allows native code to target javascript.
+Emlite is a tiny JS bridge for native Rust code via Wasm. It can be used with either the wasm32-wasip1 or the wasm32-unknown-unknown targets, without the need to bring in tools like emscripten nor wasm-bindgen.
 
 ## Usage
 Add emlite to your Cargo.toml:
@@ -72,7 +72,10 @@ fn main() {
 ```
 
 ## Building
-To build, you need:
+
+### For the wasm32-wasip1 target
+
+You need:
 - wasm32-wasip1 target.
 
 To get the rust target:
@@ -86,6 +89,7 @@ cargo build --target=wasm32-wasip1
 ```
 
 ## Passing necessary flags for javascript engines (browser, node ...etc)
+
 The most convenient way to pass extra flags to the toolchain is via a .cargo/config.toml file:
 ```toml
 [target.wasm32-wasip1]
@@ -95,10 +99,32 @@ rustflags = ["-Clink-args=--no-entry --allow-undefined --export-all --import-mem
 lto = true # to get smaller builds
 ```
 
+### For the wasm32-unknown-unknown target
+
+You need:
+- wasm32-unknown-unknown target.
+
+To get the rust target:
+```bash
+rustup target add wasm32-unknown-unknown
+```
+
+## Passing necessary flags for javascript engines (browser, node ...etc)
+
+The most convenient way to pass extra flags to the toolchain is via a .cargo/config.toml file:
+```toml
+[target.wasm32-unknown-unknown]
+rustflags = ["-Clink-args=--no-entry --allow-undefined --export-all --import-memory --export-memory --strip-all"]
+
+[profile.release]
+lto = true # to get smaller builds
+```
+
 ## Deployment
 
-You can get 
-### In the browser
+### For the wasip1 target
+
+#### In the browser
 
 To use it in your web stack, you will need a wasi javascript polyfill, here we use @bjorn3/browser_wasi_shim and the emlite npm packages:
 
@@ -128,7 +154,7 @@ window.onload = async () => {
 };
 ```
 
-### With a javascript engine like nodejs
+#### With a javascript engine like nodejs
 
 If you're vendoring the emlite.js file:
 ```javascript
@@ -161,3 +187,44 @@ async function main() {
 await main();
 ```
 Note that nodejs as of version 22.16 requires a _start function in the wasm module. That can be achieved by defining an `fn main() {}` function. It's also why we use `wasi.start(instance)` in the js module.
+
+### For the wasm32-unknown-unknown target
+
+#### Targeting the browser
+
+Emlite-rs can be used with Rust's wasm32-unknown-unknown target:
+
+```javascript
+import { Emlite } from "./src/emlite.js";
+
+window.onload = async () => {
+    let emlite = new Emlite();
+    let wasm = await WebAssembly.compileStreaming(fetch("./target/wasm32-unknown-unknown/release/examples/audio.wasm"));
+    let inst = await WebAssembly.instantiate(wasm, {
+        env: emlite.env,
+    });
+    emlite.setExports(inst.exports);
+    inst.exports.main();
+};
+```
+
+#### Targeting node and other javascript engins
+
+```javascript
+import { Emlite } from "../src/emlite.js";
+import { readFile } from "node:fs/promises";
+
+async function main() {
+    const emlite = new Emlite();
+    const wasm = await WebAssembly.compile(
+        await readFile("./bin/eval.wasm"),
+    );
+    const instance = await WebAssembly.instantiate(wasm, {
+        env: emlite.env,
+    });
+    emlite.setExports(instance.exports);
+    instance.exports.main();
+}
+
+await main();
+```
