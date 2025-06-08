@@ -1,5 +1,8 @@
 [target.wasm32-wasip1]
 rustflags = ["-Clink-args=--no-entry --allow-undefined --export-all --import-memory --export-memory --strip-all"]
 
+[target.wasm32-unknown-unknown]
+rustflags = ["-Clink-args=--no-entry --allow-undefined --export-all --import-memory --export-memory --strip-all"]
+
 [profile.release]
 lto = true
