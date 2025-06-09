@@ -1,9 +1,9 @@
 [package]
 name = "emlite"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2024"
 description = "A Rust wrapper around emlite"
-homepage = "https://github.com/MoAlyousef/emlite/tree/main/rust/emlite-rs"
+homepage = "https://github.com/MoAlyousef/emlite/tree/main/rust/emlite"
 repository = "https://github.com/MoAlyousef/emlite"
 keywords = ["wasm", "wasi", "polyfill", "shim", "bindings"]
 categories = ["api-bindings", "wasm"]

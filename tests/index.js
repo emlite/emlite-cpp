@@ -1,4 +1,4 @@
-// nodejs example
+// nodejs example for examples/node_readfile.cpp
 // node tests/index.js
 
 import { Emlite } from "../src/emlite.js";

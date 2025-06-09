@@ -1,4 +1,4 @@
-# emlite-rs
+# emlite
 
 Emlite is a tiny JS bridge for native Rust code via Wasm. It can be used with either the wasm32-wasip1 or the wasm32-unknown-unknown targets, without the need to bring in tools like emscripten nor wasm-bindgen.
 

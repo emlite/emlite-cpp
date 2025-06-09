@@ -1,5 +1,7 @@
 bin
 *.wasm
 .clangd
-/rust/emlite-rs/target
-/rust/emlite-rs/Cargo.lock
+/rust/emlite/target
+/rust/emlite/Cargo.lock
+/zig/emlite/zig-out
+/zig/emlite/.zig-cache
