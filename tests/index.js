@@ -7,8 +7,8 @@ import { readFile } from "node:fs/promises";
 import { argv, env } from "node:process";
 
 import { createRequire } from "module";
-const myrequire = createRequire(import.meta.url);
-global.myrequire = myrequire;
+const require = createRequire(import.meta.url);
+globalThis.require = require;
 
 async function main() {
     const wasi = new WASI({
