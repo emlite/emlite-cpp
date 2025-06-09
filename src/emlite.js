@@ -1,5 +1,7 @@
 class UniqueList {
     constructor() {
+        // duplicate storage gets us two-way O(1) lookup, but doubles memory.
+        // however in js everything is a reference, so that should be ok!
         this._items = [];
         this._index = new Map();
     }
@@ -27,13 +29,18 @@ class UniqueList {
     get size() { return this._items.length; }
 
     delete(value) {
-        if (!this._index.has(value)) return false;
         const i = this._index.get(value);
-        const last = this._items.pop();
-        if (i < this._items.length) {
-            this._items[i] = last;
-            this._index.set(last, i);
+        if (i === undefined) return false;
+
+        const lastIdx = this._items.length - 1;
+        const lastVal = this._items[lastIdx];
+
+        if (i !== lastIdx) {
+            this._items[i] = lastVal;
+            this._index.set(lastVal, i);
         }
+
+        this._items.pop();
         this._index.delete(value);
         return true;
     }
