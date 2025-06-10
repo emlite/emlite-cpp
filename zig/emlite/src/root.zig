@@ -133,3 +133,7 @@ pub const Val = struct {
         return fromHandle(emlite_val_make_callback(@intCast(@intFromPtr(fn_ptr))));
     }
 };
+
+pub fn emlite_eval(alloc: std.mem.Allocator, comptime fmt: [] const u8, args: anytype) !Val {
+    return Val.global("eval").invoke(&.{Val.fromStr(try std.fmt.allocPrint(alloc, fmt, args))});
+}

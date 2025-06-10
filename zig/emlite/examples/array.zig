@@ -2,6 +2,15 @@ const std = @import("std");
 const em = @import("emlite");
 
 pub fn main() !void {
+    var general_purpose_allocator: std.heap.GeneralPurposeAllocator(.{}) = .init;
+    const gpa = general_purpose_allocator.allocator();
+
+    _ = try em.emlite_eval(gpa,
+    \\
+    \\ console.log('{d}');
+    \\
+    , .{ 5 });
+
     const console = em.Val.global("console");
     const msg     = em.Val.fromStr("Hello from Zig wrapper!");
 
