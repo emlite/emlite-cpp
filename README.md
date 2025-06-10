@@ -1,7 +1,7 @@
 # Emlite
 
-Emlite is a tiny JS bridge for native code (C/C++/Rust) via Wasm (wasi), which doesn't require the emscripten toolchain.
-It provides a single C/C++ header and a single javascript file that allows plain C or C++ code — compiled with wasm32-wasi — to talk to interoperate with javascript (including the DOM) and other JavaScript objects without writing much JS “glue.”
+Emlite is a tiny JS bridge for native code (C/C++/Rust/Zig) via Wasm (wasi), which doesn't require the emscripten toolchain.
+It provides a single C or C++ header and a single javascript file that allows plain C or C++ code — compiled with wasm32-wasi — to talk to interoperate with javascript (including the DOM) and other JavaScript objects without writing much JS “glue.”
 It provides both a C api and a higher level C++ api similar to emscripten's val api.
 
 ## Requirements
@@ -31,22 +31,20 @@ C++ example:
 ```c++
 // define EMLITE_IMPL in only one implementation unit (source file)!
 #define EMLITE_IMPL
-#include <emlite/emlite.h>
+#include <emlite/emlite.hpp>
 
 using namespace emlite;
 
 EMLITE_USED extern "C" void some_func() {
-    auto con1 = Console();
-    con1.log(Val("Hello from Emlite"));
+    Console().log(Val("Hello from Emlite"));
 
     auto doc  = Val::global("document");
     auto body = doc.call("getElementsByTagName", Val("body"))[0];
     auto btn  = doc.call("createElement", Val("BUTTON"));
     btn.set("textContent", Val("Click Me!"));
     body.call("appendChild", btn);
-    btn.call("addEventListener", Val("click"), Val([](auto h) -> handle {
-                 auto console = Console();
-                 console.log(Val::from_handle(h));
+    btn.call("addEventListener", Val("click"), Val([](auto h) -> Handle {
+                 Console().log(Val::from_handle(h));
                  return Val::undefined().as_handle();
              }));
 }
@@ -59,8 +57,8 @@ C example:
 #include <emlite/emlite.h>
 
 int main() {
-    handle global  = emlite_val_global_this();
-    handle console = emlite_val_obj_prop(global, "console", strlen("console"));
+    Handle global  = emlite_val_global_this();
+    Handle console = emlite_val_obj_prop(global, "console", strlen("console"));
     VAL_OBJ_CALL(console, "log", emlite_val_make_int(200));
 }
 ```

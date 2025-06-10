@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 #define EMLITE_IMPL
-#include <emlite/emlite.h>
+#include <emlite/emlite.hpp>
 
 using namespace emlite;
 
@@ -29,7 +29,7 @@ int main() {
     auto btn  = doc.call("createElement", Val("BUTTON"));
     btn.set("textContent", Val("Play!"));
     body.call("appendChild", btn);
-    btn.call("addEventListener", Val("click"), Val([](auto) -> handle {
+    btn.call("addEventListener", Val("click"), Val([](auto) -> Handle {
                  auto oscillator = Val::global("oscillator");
                  auto context    = Val::global("context");
                  printf("Playing\n");

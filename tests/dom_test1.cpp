@@ -2,13 +2,12 @@
 #include <vector>
 
 #define EMLITE_IMPL
-#include <emlite/emlite.h>
+#include <emlite/emlite.hpp>
 
 using namespace emlite;
 
 EMLITE_USED extern "C" int add(int a, int b) {
-    auto con1 = Console();
-    con1.log(Val("Hello from Emlite"));
+    Console().log(Val("Hello from Emlite"));
 
     auto doc = Val::global("document");
     // operator[]
@@ -23,9 +22,8 @@ EMLITE_USED extern "C" int add(int a, int b) {
     body.call("appendChild", btn);
 
     // emlite_val_make_callback
-    btn.call("addEventListener", Val("click"), Val([](auto) -> handle {
-                 auto console = Console();
-                 console.call("log", Val("Clicked"));
+    btn.call("addEventListener", Val("click"), Val([](auto) -> Handle {
+                 Console().call("log", Val("Clicked"));
                  return Val::undefined().as_handle();
              }));
 
@@ -44,19 +42,19 @@ EMLITE_USED extern "C" int add(int a, int b) {
     auto str2   = String.new_(Val("created a string object number 2"));
 
     // check uniqueness of objects of the same type!
-    con1.log(str1);
-    con1.log(str2);
-    con1.log(str1);
+    Console().log(str1);
+    Console().log(str2);
+    Console().log(str1);
 
     // check copyStringToWasm
-    con1.log(Val(str1.as<std::string>()));
-    con1.log(Val(str2.as<std::string>()));
-    con1.log(Val(str1.as<std::string>()));
+    Console().log(Val(str1.as<std::string>()));
+    Console().log(Val(str2.as<std::string>()));
+    Console().log(Val(str1.as<std::string>()));
 
     // operator()
     auto floor = Val::global("Math").get("floor");
     auto ret   = floor(Val(2.5));
-    con1.log(ret);
+    Console().log(ret);
 
     // test EMLITE_EVAL and also operator()
     // clang-format off
@@ -67,12 +65,12 @@ EMLITE_USED extern "C" int add(int a, int b) {
         b
     , 5, 6);
     // clang-format on
-    con1.log(retval);
+    Console().log(retval);
 
     // test await
     auto Notification = Val::global("Notification");
     auto status       = Notification.call("requestPermission").await();
-    con1.log(status);
+    Console().log(status);
 
     return a + b;
 }
