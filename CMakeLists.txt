@@ -63,4 +63,8 @@ if (EMLITE_BUILD_TESTS)
     add_executable(dom_test1 tests/dom_test1.cpp)
     target_link_libraries(dom_test1 PRIVATE emlite::emlite)
     set_target_properties(dom_test1 PROPERTIES LINKER_LANGUAGE CXX SUFFIX .wasm LINK_FLAGS "-Wl,--no-entry,--allow-undefined,--export-all,--import-memory,--export-memory,--strip-all")
+
+    add_executable(dom_test2 tests/dom_test2.c)
+    target_link_libraries(dom_test2 PRIVATE emlite::emlite)
+    set_target_properties(dom_test2 PROPERTIES LINKER_LANGUAGE CXX SUFFIX .wasm LINK_FLAGS "-Wl,--no-entry,--allow-undefined,--export-all,--import-memory,--export-memory,--strip-all")
 endif()

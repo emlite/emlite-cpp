@@ -276,7 +276,7 @@ Val Val::operator[](size_t idx) const {
 
 Val Val::make_js_function(Callback f) {
     uint32_t fidx = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(f)
-    ); // pointer ⇒ table index
+    );
     return Val::from_handle(emlite_val_make_callback(fidx));
 }
 

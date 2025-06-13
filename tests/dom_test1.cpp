@@ -59,8 +59,8 @@ EMLITE_USED extern "C" int add(int a, int b) {
     // test EMLITE_EVAL and also operator()
     // clang-format off
     auto retval = EMLITE_EVAL(
-        let a = {};
-        let b = {};
+        let a = %d;
+        let b = %d;
         console.log(a, b);
         b
     , 5, 6);

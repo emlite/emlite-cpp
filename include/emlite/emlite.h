@@ -1,8 +1,8 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
-#include <stdlib.h>
 
 #ifndef EMLITE_USED
 #define EMLITE_USED __attribute__((used))
@@ -60,86 +60,240 @@ bool emlite_val_obj_has_own_prop(Handle, const char *prop, size_t len);
 Handle emlite_val_make_callback(Handle id);
 // end externs
 
-Handle emlite_val_global(const char *name);
-Handle emlite_val_construct_new_v(Handle, int n, ...);
-Handle emlite_val_func_call_v(Handle func, int n, ...);
-Handle emlite_val_obj_call_v(Handle obj, const char *name, int n, ...);
-Handle emlite_eval(const char *src, ...);
+typedef struct {
+    Handle h;
+} em_Val;
 
-#define VAL_OBJ_CALL(obj, name, ...)                                           \
-    emlite_val_obj_call_v(                                                     \
-        (obj),                                                                 \
-        (name),                                                                \
-        (int)(sizeof((Handle[]){__VA_ARGS__}) / sizeof(Handle)),               \
-        __VA_ARGS__                                                            \
-    )
+em_Val em_Val_from_int(int i);
+em_Val em_Val_from_double(double i);
+em_Val em_Val_from_string(const char *i);
+em_Val em_Val_from_handle(uint32_t v);
+em_Val em_Val_global(const char *name);
+em_Val em_Val_global_this();
+em_Val em_Val_null();
+em_Val em_Val_undefined();
+em_Val em_Val_object();
+em_Val em_Val_array();
+em_Val em_Val_make_js_function(Callback f);
+void em_Val_delete(em_Val);
+void em_Val_throw(em_Val);
 
-#define VAL_OBJ_NEW(obj, ...)                                                  \
-    emlite_val_construct_new_v(                                                \
-        obj,                                                                   \
-        (int)(sizeof((Handle[]){__VA_ARGS__}) / sizeof(Handle)),               \
-        __VA_ARGS__                                                            \
-    )
+Handle em_Val_as_handle(em_Val self);
+em_Val em_Val_get(em_Val self, const char *prop);
+void em_Val_set(em_Val self, const char *prop, em_Val val);
+bool em_Val_has(em_Val self, const char *prop);
+bool em_Val_has_own_property(em_Val self, const char *prop);
+const char *em_Val_type_of(em_Val self);
+em_Val em_Val_at(em_Val self, size_t idx);
+em_Val em_Val_await(em_Val self);
+bool em_Val_is_number(em_Val self);
+bool em_Val_is_string(em_Val self);
+bool em_Val_instanceof(em_Val self, em_Val v);
+bool em_Val_not(em_Val self);
+bool em_Val_seq(em_Val self, em_Val other);
+bool em_Val_eq(em_Val self, em_Val other);
+bool em_Val_neq(em_Val self, em_Val other);
+bool em_Val_gt(em_Val self, em_Val other);
+bool em_Val_gte(em_Val self, em_Val other);
+bool em_Val_lt(em_Val self, em_Val other);
+bool em_Val_lte(em_Val self, em_Val other);
 
-#define VAL_FUNC_CALL(obj, ...)                                                \
-    emlite_val_func_call_v(                                                    \
-        obj,                                                                   \
-        (int)(sizeof((Handle[]){__VA_ARGS__}) / sizeof(Handle)),               \
-        __VA_ARGS__                                                            \
-    )
+int em_Val_as_int(em_Val self);
+bool em_Val_as_bool(em_Val self);
+double em_Val_as_double(em_Val self);
+const char *em_Val_as_string(em_Val self);
 
-#define EMLITE_EVAL(x, ...) emlite_eval(#x __VA_OPT__(, __VA_ARGS__))
+em_Val em_Val_call(em_Val self, const char *method, int n, ...);
+em_Val em_Val_new(em_Val self, int n, ...);
+em_Val em_Val_invoke(em_Val self, int n, ...);
+
+em_Val emlite_eval(const char *src);
+em_Val emlite_eval_v(const char *src, ...);
+#define EMLITE_EVAL(x, ...) emlite_eval_v(#x __VA_OPT__(, __VA_ARGS__))
 
 #ifdef EMLITE_IMPL
+
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-Handle emlite_val_global(const char *name) {
-    Handle w = emlite_val_global_this();
-    return emlite_val_obj_prop(w, name, strlen(name));
+em_Val em_Val_from_int(int i) { return (em_Val){.h = emlite_val_make_int(i)}; }
+
+em_Val em_Val_from_double(double i) {
+    return (em_Val){.h = emlite_val_make_double(i)};
+}
+em_Val em_Val_from_string(const char *s) {
+    return (em_Val){.h = emlite_val_make_str(s, strlen(s))};
 }
 
-Handle emlite_val_obj_call_v(Handle obj, const char *name, int n, ...) {
+em_Val em_Val_from_handle(uint32_t v) { return (em_Val){.h = v}; }
+
+em_Val em_Val_global(const char *name) {
+    Handle global = emlite_val_global_this();
+    return em_Val_from_handle(emlite_val_obj_prop(global, name, strlen(name)));
+}
+
+em_Val em_Val_global_this() {
+    return em_Val_from_handle(emlite_val_global_this());
+}
+
+em_Val em_Val_null() { return em_Val_from_handle(0); }
+
+em_Val em_Val_undefined() { return em_Val_from_handle(1); }
+
+em_Val em_Val_object() { return em_Val_from_handle(emlite_val_new_object()); }
+
+em_Val em_Val_array() { return em_Val_from_handle(emlite_val_new_array()); }
+
+em_Val em_Val_make_js_function(Callback f) {
+    uint32_t fidx = (uint32_t)f;
+    return em_Val_from_handle(emlite_val_make_callback(fidx));
+}
+
+void em_Val_delete(em_Val v) { emlite_val_delete(v.h); }
+
+void em_Val_throw(em_Val v) { emlite_val_throw(v.h); }
+
+Handle em_Val_as_handle(em_Val self) { return self.h; }
+
+em_Val em_Val_get(em_Val self, const char *prop) {
+    return em_Val_from_handle(emlite_val_obj_prop(self.h, prop, strlen(prop)));
+}
+
+void em_Val_set(em_Val self, const char *prop, em_Val val) {
+    emlite_val_obj_set_prop(self.h, prop, strlen(prop), val.h);
+}
+
+bool em_Val_has(em_Val self, const char *prop) {
+    return emlite_val_obj_has_prop(self.h, prop, strlen(prop));
+}
+
+bool em_Val_has_own_property(em_Val self, const char *prop) {
+    return emlite_val_obj_has_own_prop(self.h, prop, strlen(prop));
+}
+
+const char *em_Val_type_of(em_Val self) { return emlite_val_typeof(self.h); }
+
+em_Val em_Val_at(em_Val self, size_t idx) {
+    return em_Val_from_handle(emlite_val_get_elem(self.h, idx));
+}
+
+em_Val em_Val_await(em_Val self) {
+    // clang-format off
+    return EMLITE_EVAL({
+        (async() =>
+            {
+                let obj = ValMap.toValue(% d);
+                let ret = await obj;
+                return ValMap.toHandle(ret);
+            })()
+        }, self.h
+    );
+    // clang-format on
+}
+
+bool em_Val_is_number(em_Val self) { return emlite_val_is_number(self.h); }
+
+bool em_Val_is_string(em_Val self) { return emlite_val_is_string(self.h); }
+
+bool em_Val_instanceof(em_Val self, em_Val v) {
+    return emlite_val_instanceof(self.h, v.h);
+}
+
+bool em_Val_not(em_Val self) { return emlite_val_not(self.h); }
+
+bool em_Val_seq(em_Val self, em_Val other) {
+    return emlite_val_strictly_equals(self.h, other.h);
+}
+
+bool em_Val_eq(em_Val self, em_Val other) {
+    return emlite_val_equals(self.h, other.h);
+}
+
+bool em_Val_neq(em_Val self, em_Val other) {
+    return !emlite_val_strictly_equals(self.h, other.h);
+}
+
+bool em_Val_gt(em_Val self, em_Val other) {
+    return emlite_val_gt(self.h, other.h);
+}
+
+bool em_Val_gte(em_Val self, em_Val other) {
+    return emlite_val_gte(self.h, other.h);
+}
+
+bool em_Val_lt(em_Val self, em_Val other) {
+    return emlite_val_lt(self.h, other.h);
+}
+
+bool em_Val_lte(em_Val self, em_Val other) {
+    return emlite_val_lte(self.h, other.h);
+}
+
+int em_Val_as_int(em_Val self) { return emlite_val_get_value_int(self.h); }
+
+bool em_Val_as_bool(em_Val self) { return self.h > 3; }
+
+double em_Val_as_double(em_Val self) {
+    return emlite_val_get_value_double(self.h);
+}
+
+const char *em_Val_as_string(em_Val self) {
+    return emlite_val_get_value_string(self.h);
+}
+
+em_Val em_Val_call(em_Val self, const char *method, int n, ...) {
     Handle arr = emlite_val_new_array();
     va_list args;
     va_start(args, n);
-    for (int i = 0; i < n; i++)
-        emlite_val_push(arr, va_arg(args, Handle));
+    for (int i = 0; i < n; i++) {
+        em_Val c = va_arg(args, em_Val);
+        emlite_val_push(arr, em_Val_as_handle(c));
+    }
     va_end(args);
-    return emlite_val_obj_call(obj, name, strlen(name), arr);
+    return em_Val_from_handle(
+        emlite_val_obj_call(self.h, method, strlen(method), arr)
+    );
 }
 
-Handle emlite_val_construct_new_v(Handle obj, int n, ...) {
+em_Val em_Val_new(em_Val self, int n, ...) {
     Handle arr = emlite_val_new_array();
     va_list args;
     va_start(args, n);
-    for (int i = 0; i < n; i++)
-        emlite_val_push(arr, va_arg(args, Handle));
+    for (int i = 0; i < n; i++) {
+        em_Val c = va_arg(args, em_Val);
+        emlite_val_push(arr, em_Val_as_handle(c));
+    }
     va_end(args);
-    return emlite_val_construct_new(obj, arr);
+    return em_Val_from_handle(emlite_val_construct_new(self.h, arr));
 }
 
-Handle emlite_val_func_call_v(Handle obj, int n, ...) {
+em_Val em_Val_invoke(em_Val self, int n, ...) {
     Handle arr = emlite_val_new_array();
     va_list args;
     va_start(args, n);
-    for (int i = 0; i < n; i++)
-        emlite_val_push(arr, va_arg(args, Handle));
+    for (int i = 0; i < n; i++) {
+        em_Val c = va_arg(args, em_Val);
+        emlite_val_push(arr, em_Val_as_handle(c));
+    }
     va_end(args);
-    return emlite_val_func_call(obj, arr);
+    return em_Val_from_handle(emlite_val_func_call(self.h, arr));
 }
 
-Handle emlite_eval(const char *src, ...) {
+em_Val emlite_eval(const char *src) {
+    em_Val eval = em_Val_global("eval");
+    return em_Val_invoke(eval, 1, em_Val_from_string(src));
+}
+
+em_Val emlite_eval_v(const char *src, ...) {
     va_list args;
     va_start(args, src);
     size_t len = vsnprintf(NULL, 0, src, args);
     char *ptr  = (char *)malloc(len);
     (void)vsnprintf(ptr, len + 1, src, args);
     va_end(args);
-    Handle global = emlite_val_global_this();
-    Handle eval   = emlite_val_obj_prop(global, "eval", strlen("eval"));
-    return VAL_FUNC_CALL(eval, emlite_val_make_str(ptr, len));
+    return emlite_eval(ptr);
 }
 
 #endif
