@@ -36,3 +36,9 @@ CMake can also be used. It needs to be invoked while passing clang as your CC an
 # from the project's root
 CC=clang CXX=clang++ cmake -Bbin -DCMAKE_SYSROOT=/path/to/wasi-sysroot -DEMLITE_BUILD_EXAMPLES=ON && cmake --build bin
 ```
+
+## Building with stock clang for wasm32-unknown-unknown (freestanding)
+If you need no standard library headers, you can build using:
+```
+clang --target=wasm32 -o con.wasm -Iinclude examples/console.c -nostdlib -Wl,--allow-undefined,--no-entry,--import-memory,--export-memory,--export-all,--strip-all
+```

@@ -1,35 +1,9 @@
 #pragma once
 
-#ifndef __cplusplus
-#if __has_include(<stdbool.h>)
+// these are freestanding headers
 #include <stdbool.h>
-#else
-typedef int bool;
-#define true 1
-#define false 0
-enum { __bool_true_false_are_defined = 1 };
-#endif
-#endif
-
-#if __has_include(<stddef.h>)
 #include <stddef.h>
-#else
-typedef __SIZE_TYPE__ size_t;
-typedef __PTRDIFF_TYPE__ ptrdiff_t;
-#endif
-
-#if __has_include(<stdint.h>)
 #include <stdint.h>
-#else
-typedef __UINT8_TYPE__ uint8_t;
-typedef __UINT16_TYPE__ uint16_t;
-typedef __UINT32_TYPE__ uint32_t;
-typedef __UINT64_TYPE__ uint64_t;
-typedef __INT8_TYPE__ int8_t;
-typedef __INT16_TYPE__ int16_t;
-typedef __INT32_TYPE__ int32_t;
-typedef __INT64_TYPE__ int64_t;
-#endif
 
 #ifndef EMLITE_USED
 #define EMLITE_USED __attribute__((used))
@@ -141,14 +115,8 @@ em_Val emlite_eval_v(const char *src, ...);
 
 #ifdef EMLITE_IMPL
 
-#if __has_include(<stdarg.h>)
+// present in freestanding environments
 #include <stdarg.h>
-#else
-typedef __builtin_va_list va_list;
-#define va_start(ap, last) __builtin_va_start(ap, last)
-#define va_end(ap) __builtin_va_end(ap)
-#define va_arg(ap, type) __builtin_va_arg(ap, type)
-#endif
 
 #if __has_include(<string.h>)
 #include <string.h>
