@@ -1,79 +1,239 @@
 #pragma once
 
-#include <cstdint>
-#include <cstdlib>
-#include <cstring>
-#include <string>
-#include <string_view>
-#include <type_traits>
-#include <utility>
-#include <vector>
+#include "emlite.h"
+#undef EMLITE_EVAL
 
-#ifndef EMLITE_USED
-#define EMLITE_USED __attribute__((used))
+#if __has_include(<vector>)
+#include <vector>
+#define EMLITE_HAS_STD_VECTOR 1
+#else
+#define EMLITE_HAS_STD_VECTOR 0
 #endif
 
-using Handle = uint32_t;
+namespace emlite {
 
-using Callback = Handle (*)(Handle);
+namespace detail {
 
-// externs
-extern "C" {
-Handle emlite_val_null(void);
-Handle emlite_val_undefined(void);
-Handle emlite_val_false(void);
-Handle emlite_val_true(void);
-Handle emlite_val_global_this();
-Handle emlite_val_new_array(void);
-Handle emlite_val_new_object(void);
-char *emlite_val_typeof(Handle);
-Handle emlite_val_construct_new(Handle, Handle argv);
-Handle emlite_val_func_call(Handle func, Handle argv);
-void emlite_val_push(Handle arr, Handle v);
-Handle emlite_val_make_int(int t);
-Handle emlite_val_make_double(double t);
-Handle emlite_val_make_str(const char *, size_t);
-int emlite_val_get_value_int(Handle);
-double emlite_val_get_value_double(Handle);
-char *emlite_val_get_value_string(Handle);
-Handle emlite_val_get_elem(Handle, size_t);
-bool emlite_val_is_string(Handle);
-bool emlite_val_is_number(Handle);
-bool emlite_val_not(Handle);
-bool emlite_val_gt(Handle, Handle);
-bool emlite_val_gte(Handle, Handle);
-bool emlite_val_lt(Handle, Handle);
-bool emlite_val_lte(Handle, Handle);
-bool emlite_val_equals(Handle, Handle);
-bool emlite_val_strictly_equals(Handle, Handle);
-bool emlite_val_instanceof(Handle, Handle);
-void emlite_val_delete(Handle);
-void emlite_val_throw(Handle);
+template <typename T>
+struct remove_reference {
+    typedef T type;
+};
 
-Handle emlite_val_obj_call(
-    Handle obj, const char *name, size_t len, Handle argv
-);
-Handle emlite_val_obj_prop(Handle obj, const char *prop, size_t len);
-void emlite_val_obj_set_prop(
-    Handle obj, const char *prop, size_t len, Handle val
-);
-bool emlite_val_obj_has_prop(Handle, const char *prop, size_t len);
-bool emlite_val_obj_has_own_prop(Handle, const char *prop, size_t len);
-Handle emlite_val_make_callback(Handle id);
+template <typename T>
+struct remove_reference<T &> {
+    typedef T type;
+};
 
-void *emlite_malloc(size_t);
-void *emlite_realloc(void *, size_t);
-void emlite_free(void *);
+template <typename T>
+struct remove_reference<T &&> {
+    typedef T type;
+};
+
+template <typename T>
+constexpr T &&forward(typename remove_reference<T>::type &t) noexcept {
+    return static_cast<T &&>(t);
 }
 
-namespace emlite {
+template <typename T>
+constexpr T &&forward(typename remove_reference<T>::type &&t) noexcept {
+    static_assert(
+        !__is_lvalue_reference(T), "forwarding an rvalue as an lvalue"
+    );
+    return static_cast<T &&>(t);
+}
+
+template <typename T, typename U>
+struct is_same {
+    static constexpr bool value = false;
+};
+
+template <typename T>
+struct is_same<T, T> {
+    static constexpr bool value = true;
+};
+
+template <typename T, typename U>
+constexpr bool is_same_v = is_same<T, U>::value;
+
+template <typename T>
+struct is_integral {
+    static constexpr bool value = false;
+};
+
+// Specializations for integral types
+template <>
+struct is_integral<bool> {
+    static constexpr bool value = true;
+};
+template <>
+struct is_integral<char> {
+    static constexpr bool value = true;
+};
+template <>
+struct is_integral<signed char> {
+    static constexpr bool value = true;
+};
+template <>
+struct is_integral<unsigned char> {
+    static constexpr bool value = true;
+};
+template <>
+struct is_integral<wchar_t> {
+    static constexpr bool value = true;
+};
+template <>
+struct is_integral<char16_t> {
+    static constexpr bool value = true;
+};
+template <>
+struct is_integral<char32_t> {
+    static constexpr bool value = true;
+};
+template <>
+struct is_integral<short> {
+    static constexpr bool value = true;
+};
+template <>
+struct is_integral<unsigned short> {
+    static constexpr bool value = true;
+};
+template <>
+struct is_integral<int> {
+    static constexpr bool value = true;
+};
+template <>
+struct is_integral<unsigned int> {
+    static constexpr bool value = true;
+};
+template <>
+struct is_integral<long> {
+    static constexpr bool value = true;
+};
+template <>
+struct is_integral<unsigned long> {
+    static constexpr bool value = true;
+};
+template <>
+struct is_integral<long long> {
+    static constexpr bool value = true;
+};
+template <>
+struct is_integral<unsigned long long> {
+    static constexpr bool value = true;
+};
+
+template <typename T>
+constexpr bool is_integral_v = is_integral<T>::value;
+
+template <typename T>
+struct is_floating_point {
+    static constexpr bool value = false;
+};
+
+template <>
+struct is_floating_point<float> {
+    static constexpr bool value = true;
+};
+template <>
+struct is_floating_point<double> {
+    static constexpr bool value = true;
+};
+template <>
+struct is_floating_point<long double> {
+    static constexpr bool value = true;
+};
+
+template <typename T>
+constexpr bool is_floating_point_v = is_floating_point<T>::value;
+} // namespace detail
+
+template <typename T>
+    requires(!detail::is_same_v<T, void>)
+class UniqCPtr {
+  private:
+    T *ptr;
+
+    UniqCPtr(const UniqCPtr &)            = delete;
+    UniqCPtr &operator=(const UniqCPtr &) = delete;
+
+  public:
+    UniqCPtr() : ptr(nullptr) {}
+
+    explicit UniqCPtr(T *p) : ptr(p) {}
+
+    UniqCPtr(UniqCPtr &&other) : ptr(other.ptr) { other.ptr = nullptr; }
+
+    UniqCPtr &operator=(UniqCPtr &&other) {
+        if (this != &other) {
+            if (ptr) {
+                delete_(ptr);
+            }
+            ptr       = other.ptr;
+            other.ptr = nullptr;
+        }
+        return *this;
+    }
+
+    ~UniqCPtr() {
+        if (ptr) {
+            delete_(ptr);
+        }
+    }
+
+    T &operator*() const { return *ptr; }
+    T *operator->() const { return ptr; }
+
+    T *get() const { return ptr; }
+
+    T *release() {
+        T *temp = ptr;
+        ptr     = nullptr;
+        return temp;
+    }
+
+    void reset(T *p = nullptr) {
+        if (ptr) {
+            delete_(ptr);
+        }
+        ptr = p;
+    }
+
+    operator bool() const { return ptr != nullptr; }
+
+    void delete_(void *ptr) {
+#if EMLITE_HAVE_LIBC_MALLOC
+        free(ptr);
+#else
+        emlite_free(ptr);
+#endif
+    }
+
+//     static void operator delete(void* ptr, size_t sz)
+//     {
+// #if EMLITE_HAVE_LIBC_MALLOC
+//         free(ptr);
+// #else
+//         emlite_free(ptr);
+// #endif
+//     }
+ 
+//     static void operator delete[](void* ptr, size_t sz)
+//     {
+// #if EMLITE_HAVE_LIBC_MALLOC
+//         free(ptr);
+// #else
+//         emlite_free(ptr);
+// #endif
+//     }
+};
+
 class Val {
     Handle v_;
     Val();
 
   public:
     static Val from_handle(uint32_t v);
-    static Val global(std::string_view name);
+    static Val global(const char *name);
     static Val global();
     static Val null();
     static Val undefined();
@@ -85,24 +245,23 @@ class Val {
 
     template <typename T>
     explicit Val(T v)
-        requires(std::is_integral_v<T> || std::is_floating_point_v<T>)
+        requires(detail::is_integral_v<T> || detail::is_floating_point_v<T>)
         : v_(0) {
-        if constexpr (std::is_integral_v<T>) {
+        if constexpr (detail::is_integral_v<T>) {
             v_ = emlite_val_make_int(v);
         } else {
             v_ = emlite_val_make_double(v);
         }
     }
     explicit Val(const char *v);
-    explicit Val(std::string_view v);
     explicit Val(Callback f);
 
     Handle as_handle() const;
-    Val get(std::string_view prop) const;
-    void set(std::string_view prop, const Val &val) const;
-    bool has(std::string_view prop) const;
-    bool has_own_property(std::string_view prop) const;
-    std::string type_of() const;
+    Val get(const char *prop) const;
+    void set(const char *prop, const Val &val) const;
+    bool has(const char *prop) const;
+    bool has_own_property(const char *prop) const;
+    UniqCPtr<char> type_of() const;
     Val operator[](size_t idx) const;
     Val await() const;
     bool is_number() const;
@@ -128,9 +287,10 @@ class Val {
     template <typename T>
     T as() const;
 
+#if EMLITE_HAS_STD_VECTOR
     template <typename T>
     static std::vector<T> vec_from_js_array(const Val &v)
-        requires(std::is_integral_v<T> || std::is_floating_point_v<T>)
+        requires(detail::is_integral_v<T> || detail::is_floating_point_v<T>)
     {
         auto sz = v.get("length").as<int>();
         std::vector<T> ret;
@@ -140,6 +300,7 @@ class Val {
         }
         return ret;
     }
+#endif
 };
 
 class Console : public Val {
@@ -152,7 +313,7 @@ class Console : public Val {
 template <class... Args>
 Val Val::call(const char *method, Args &&...vals) const {
     Handle arr = emlite_val_new_array();
-    (emlite_val_push(arr, std::forward<Args>(vals).as_handle()), ...);
+    (emlite_val_push(arr, detail::forward<Args>(vals).as_handle()), ...);
     return Val::from_handle(emlite_val_obj_call(v_, method, strlen(method), arr)
     );
 }
@@ -160,21 +321,21 @@ Val Val::call(const char *method, Args &&...vals) const {
 template <class... Args>
 Val Val::new_(Args &&...vals) const {
     Handle arr = emlite_val_new_array();
-    (emlite_val_push(arr, std::forward<Args>(vals).as_handle()), ...);
+    (emlite_val_push(arr, detail::forward<Args>(vals).as_handle()), ...);
     return Val::from_handle(emlite_val_construct_new(v_, arr));
 }
 
 template <class... Args>
 Val Val::operator()(Args &&...vals) const {
     Handle arr = emlite_val_new_array();
-    (emlite_val_push(arr, std::forward<Args>(vals).as_handle()), ...);
+    (emlite_val_push(arr, detail::forward<Args>(vals).as_handle()), ...);
     return Val::from_handle(emlite_val_func_call(v_, arr));
 }
 
 template <typename T>
 T Val::as() const {
-    if constexpr (std::is_integral_v<T>) {
-        if constexpr (std::is_same_v<T, bool>) {
+    if constexpr (detail::is_integral_v<T>) {
+        if constexpr (detail::is_same_v<T, bool>) {
             if (v_ > 3)
                 return true;
             else
@@ -182,33 +343,22 @@ T Val::as() const {
         } else {
             return emlite_val_get_value_int(v_);
         }
-    } else if constexpr (std::is_floating_point_v<T>)
+    } else if constexpr (detail::is_floating_point_v<T>)
         return emlite_val_get_value_int(v_);
-    else if constexpr (std::is_same_v<T, std::string>)
-        return std::string(emlite_val_get_value_string(v_));
+    else if constexpr (detail::is_same_v<T, UniqCPtr<char>>)
+        return UniqCPtr<char>(emlite_val_get_value_string(v_));
     return T{};
 }
 
 template <class... Args>
 void Console::log(Args &&...args) const {
-    call("log", std::forward<Args>(args)...);
-}
-
-template <class... Args>
-std::string emlite_eval_impl(const char *src, Args &&...args) {
-    if constexpr (sizeof...(Args) == 0) {
-        return std::string(src);
-    } else {
-        auto len = snprintf(nullptr, 0, src, std::forward<Args>(args)...);
-        auto s   = std::string(len, '\0');
-        (void
-        )snprintf(s.data(), s.size() + 1, src, std::forward<Args>(args)...);
-        return s;
-    }
+    call("log", detail::forward<Args>(args)...);
 }
 
 #define EMLITE_EVAL(x, ...)                                                    \
-    Val::global("eval")(Val(emlite_eval_impl(#x __VA_OPT__(, __VA_ARGS__))))
+    Val::from_handle(                                                          \
+        em_Val_as_handle(emlite_eval_v(#x __VA_OPT__(, __VA_ARGS__)))          \
+    )
 
 } // namespace emlite
 
@@ -222,7 +372,7 @@ Val Val::from_handle(uint32_t v) {
     return val;
 }
 
-Val Val::global(std::string_view v) {
+Val Val::global(const char *v) {
     return Val::from_handle(emlite_val_global_this()).get(v);
 }
 
@@ -248,30 +398,28 @@ void Val::delete_(Val v) { emlite_val_delete(v.v_); }
 
 void Val::throw_(Val v) { return emlite_val_throw(v.v_); }
 
-Val::Val(const char *v) : v_(emlite_val_make_str(v, std::strlen(v))) {}
-
-Val::Val(std::string_view v) : v_(emlite_val_make_str(v.data(), v.size())) {}
+Val::Val(const char *v) : v_(emlite_val_make_str(v, strlen(v))) {}
 
 Val::Val(Callback f) : v_(Val::make_js_function(f).as_handle()) {}
 
 Handle Val::as_handle() const { return v_; }
 
-std::string Val::type_of() const { return std::string(emlite_val_typeof(v_)); }
+UniqCPtr<char> Val::type_of() const { return UniqCPtr<char>(emlite_val_typeof(v_)); }
 
-Val Val::get(std::string_view prop) const {
-    return Val::from_handle(emlite_val_obj_prop(v_, prop.data(), prop.size()));
+Val Val::get(const char *prop) const {
+    return Val::from_handle(emlite_val_obj_prop(v_, prop, strlen(prop)));
 }
 
-void Val::set(std::string_view prop, const Val &val) const {
-    emlite_val_obj_set_prop(v_, prop.data(), prop.size(), val.as_handle());
+void Val::set(const char *prop, const Val &val) const {
+    emlite_val_obj_set_prop(v_, prop, strlen(prop), val.as_handle());
 }
 
-bool Val::has(std::string_view prop) const {
-    return emlite_val_obj_has_prop(v_, prop.data(), prop.size());
+bool Val::has(const char *prop) const {
+    return emlite_val_obj_has_prop(v_, prop, strlen(prop));
 }
 
-bool Val::has_own_property(std::string_view prop) const {
-    return emlite_val_obj_has_own_prop(v_, prop.data(), prop.size());
+bool Val::has_own_property(const char *prop) const {
+    return emlite_val_obj_has_own_prop(v_, prop, strlen(prop));
 }
 
 Val Val::operator[](size_t idx) const {
@@ -279,8 +427,7 @@ Val Val::operator[](size_t idx) const {
 }
 
 Val Val::make_js_function(Callback f) {
-    uint32_t fidx = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(f)
-    );
+    uint32_t fidx = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(f));
     return Val::from_handle(emlite_val_make_callback(fidx));
 }
 

@@ -5,6 +5,13 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#if __has_include(<stdlib.h>)
+#include <stdlib.h>
+#define EMLITE_HAVE_LIBC_MALLOC 1
+#else
+#define EMLITE_HAVE_LIBC_MALLOC 0
+#endif
+
 #ifndef EMLITE_USED
 #define EMLITE_USED __attribute__((used))
 #endif
@@ -130,12 +137,6 @@ static inline __attribute__((__always_inline__)) size_t strlen(const char *s) {
         ++p;
     return (size_t)(p - s);
 }
-#endif
-
-#if __has_include(<stdlib.h>)
-#include <stdlib.h>
-#else
-#define EMLITE_HAVE_LIBC_MALLOC 0
 #endif
 
 #if __has_include(<stdio.h>)
@@ -453,10 +454,7 @@ em_Val emlite_eval_v(const char *src, ...) {
 #else
     char *ptr = (char *)emlite_malloc(len + 1);
 #endif
-    if (!ptr) {
-        va_end(args);
-        return em_Val_undefined();
-    }
+    // check if ptr was allocated
     vsnprintf(ptr, len + 1, src, args);
     va_end(args);
     em_Val ret = emlite_eval(ptr);

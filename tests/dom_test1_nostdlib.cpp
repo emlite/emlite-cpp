@@ -1,5 +1,6 @@
-#include <iostream>
-#include <vector>
+// clang-format off
+// clang++-18 --target=wasm32 -o dom_test1_nostdlib.wasm -Iinclude tests/dom_test1_nostdlib.cpp -nostdlib -Os -Wl,--allow-undefined,--no-entry,--import-memory,--export-memory,--export-all,--strip-all
+// clang-format on
 
 #define EMLITE_IMPL
 #include <emlite/emlite.hpp>
@@ -14,11 +15,6 @@ EMLITE_USED extern "C" int add(int a, int b) {
     auto body = doc.call("getElementsByTagName", Val("body"))[0];
     auto btn  = doc.call("createElement", Val("BUTTON"));
     btn.set("textContent", Val("Click Me!"));
-    // test as<> and wasi's fd_write
-    printf("%s\n", btn.get("textContent").as<UniqCPtr<char>>().get());
-    fflush(stdout);
-    printf("%s\n", btn.type_of().get());
-
     body.call("appendChild", btn);
 
     // emlite_val_make_callback
@@ -26,15 +22,6 @@ EMLITE_USED extern "C" int add(int a, int b) {
                  Console().call("log", Val("Clicked"));
                  return Val::undefined().as_handle();
              }));
-
-    // check memory growth!
-    std::vector<int> vals = {0, 1, 2};
-    for (int i = 0; i < 100; i++) {
-        vals.push_back(i);
-    }
-
-    // check wasi's fd_write shim works
-    printf("%d\n", vals.back());
 
     // check Val::new_
     auto String = Val::global("String");

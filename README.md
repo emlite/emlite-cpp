@@ -56,10 +56,9 @@ C example:
 #define EMLITE_IMPL
 #include <emlite/emlite.h>
 
-int main() {
-    Handle global  = emlite_val_global_this();
-    Handle console = emlite_val_obj_prop(global, "console", strlen("console"));
-    VAL_OBJ_CALL(console, "log", emlite_val_make_int(200));
+EMLITE_USED int main() {
+    em_Val console = em_Val_global("console");
+    em_Val_call(console, "log", 1, em_Val_from_string("200"));
 }
 ```
 
