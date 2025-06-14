@@ -1,8 +1,35 @@
 #pragma once
 
+#ifndef __cplusplus
+#if __has_include(<stdbool.h>)
 #include <stdbool.h>
+#else
+typedef int bool;
+#define true 1
+#define false 0
+enum { __bool_true_false_are_defined = 1 };
+#endif
+#endif
+
+#if __has_include(<stddef.h>)
 #include <stddef.h>
+#else
+typedef __SIZE_TYPE__ size_t;
+typedef __PTRDIFF_TYPE__ ptrdiff_t;
+#endif
+
+#if __has_include(<stdint.h>)
 #include <stdint.h>
+#else
+typedef __UINT8_TYPE__ uint8_t;
+typedef __UINT16_TYPE__ uint16_t;
+typedef __UINT32_TYPE__ uint32_t;
+typedef __UINT64_TYPE__ uint64_t;
+typedef __INT8_TYPE__ int8_t;
+typedef __INT16_TYPE__ int16_t;
+typedef __INT32_TYPE__ int32_t;
+typedef __INT64_TYPE__ int64_t;
+#endif
 
 #ifndef EMLITE_USED
 #define EMLITE_USED __attribute__((used))
@@ -108,15 +135,178 @@ em_Val em_Val_new(em_Val self, int n, ...);
 em_Val em_Val_invoke(em_Val self, int n, ...);
 
 em_Val emlite_eval(const char *src);
+
 em_Val emlite_eval_v(const char *src, ...);
 #define EMLITE_EVAL(x, ...) emlite_eval_v(#x __VA_OPT__(, __VA_ARGS__))
 
 #ifdef EMLITE_IMPL
 
+#if __has_include(<stdarg.h>)
 #include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
+#else
+typedef __builtin_va_list va_list;
+#define va_start(ap, last) __builtin_va_start(ap, last)
+#define va_end(ap) __builtin_va_end(ap)
+#define va_arg(ap, type) __builtin_va_arg(ap, type)
+#endif
+
+#if __has_include(<string.h>)
 #include <string.h>
+#else
+static inline __attribute__((__always_inline__)) size_t strlen(const char *s) {
+    const char *p = s;
+    while (*p)
+        ++p;
+    return (size_t)(p - s);
+}
+#endif
+
+#if __has_include(<stdlib.h>)
+#include <stdlib.h>
+#else
+#define EMLITE_HAVE_LIBC_MALLOC 0
+#endif
+
+#if __has_include(<stdio.h>)
+#include <stdio.h>
+#else
+static size_t emlite_utoa(
+    char *buf, unsigned long long value, int base, int upper
+) {
+    static const char digits_low[] = "0123456789abcdef";
+    static const char digits_up[]  = "0123456789ABCDEF";
+    const char *digits             = upper ? digits_up : digits_low;
+
+    size_t i = 0;
+    if (value == 0) {
+        buf[i++] = '0';
+    } else {
+        while (value) {
+            buf[i++] = digits[value % base];
+            value /= base;
+        }
+
+        for (size_t j = 0; j < i / 2; ++j) {
+            char t         = buf[j];
+            buf[j]         = buf[i - 1 - j];
+            buf[i - 1 - j] = t;
+        }
+    }
+    return i;
+}
+
+static inline __attribute__((__always_inline__)) int vsnprintf(
+    char *out, size_t n, const char *fmt, va_list ap
+) {
+    size_t pos = 0;
+
+    while (*fmt) {
+        if (*fmt != '%') {
+            if (pos + 1 < n)
+                out[pos] = *fmt;
+            ++pos;
+            ++fmt;
+            continue;
+        }
+
+        ++fmt;
+
+        if (*fmt == '%') {
+            if (pos + 1 < n)
+                out[pos] = '%';
+            ++pos;
+            ++fmt;
+            continue;
+        }
+
+        int longflag = 0;
+        while (*fmt == 'l') {
+            ++longflag;
+            ++fmt;
+        }
+
+        char tmp[32];
+        const char *chunk = tmp;
+        size_t chunk_len  = 0;
+        int negative      = 0;
+
+        switch (*fmt) {
+        case 's': {
+            const char *s = va_arg(ap, const char *);
+            if (!s)
+                s = "(null)";
+            chunk     = s;
+            chunk_len = strlen(s);
+            break;
+        }
+        case 'c': {
+            tmp[0]    = (char)va_arg(ap, int);
+            chunk     = tmp;
+            chunk_len = 1;
+            break;
+        }
+        case 'd':
+        case 'i': {
+            long long v = longflag ? va_arg(ap, long long) : va_arg(ap, int);
+            if (v < 0) {
+                negative = 1;
+                v        = -v;
+            }
+            chunk_len = emlite_utoa(tmp, (unsigned long long)v, 10, 0);
+            break;
+        }
+        case 'u': {
+            unsigned long long v = longflag ? va_arg(ap, unsigned long long)
+                                            : va_arg(ap, unsigned int);
+            chunk_len            = emlite_utoa(tmp, v, 10, 0);
+            break;
+        }
+        case 'x':
+        case 'X': {
+            unsigned long long v = longflag ? va_arg(ap, unsigned long long)
+                                            : va_arg(ap, unsigned int);
+            chunk_len            = emlite_utoa(tmp, v, 16, (*fmt == 'X'));
+            break;
+        }
+        default:
+            tmp[0]    = '%';
+            tmp[1]    = *fmt;
+            chunk     = tmp;
+            chunk_len = 2;
+            break;
+        }
+
+        if (negative) {
+            if (pos + 1 < n)
+                out[pos] = '-';
+            ++pos;
+        }
+
+        for (size_t i = 0; i < chunk_len; ++i) {
+            if (pos + 1 < n)
+                out[pos] = chunk[i];
+            ++pos;
+        }
+
+        ++fmt;
+    }
+
+    if (n)
+        out[(pos < n) ? pos : (n - 1)] = '\0';
+
+    return (int)pos;
+}
+
+static inline __attribute__((__always_inline__)) int snprintf(
+    char *out, size_t n, const char *fmt, ...
+) {
+    va_list ap;
+    va_start(ap, fmt);
+    int r = vsnprintf(out, n, fmt, ap);
+    va_end(ap);
+    return r;
+}
+#endif
 
 em_Val em_Val_from_int(int i) { return (em_Val){.h = emlite_val_make_int(i)}; }
 
@@ -180,17 +370,11 @@ em_Val em_Val_at(em_Val self, size_t idx) {
 }
 
 em_Val em_Val_await(em_Val self) {
-    // clang-format off
-    return EMLITE_EVAL({
-        (async() =>
-            {
-                let obj = ValMap.toValue(% d);
-                let ret = await obj;
-                return ValMap.toHandle(ret);
-            })()
-        }, self.h
-    );
-    // clang-format on
+    char buf[256];
+    const char *code = "(async() => { let obj = ValMap.toValue(%d); let ret = "
+                       "await obj; return ValMap.toHandle(ret); })()";
+    (void)snprintf(buf, 256, code, self.h);
+    return emlite_eval(buf);
 }
 
 bool em_Val_is_number(em_Val self) { return emlite_val_is_number(self.h); }
@@ -289,9 +473,21 @@ em_Val emlite_eval(const char *src) {
 em_Val emlite_eval_v(const char *src, ...) {
     va_list args;
     va_start(args, src);
-    size_t len = vsnprintf(NULL, 0, src, args);
-    char *ptr  = (char *)malloc(len);
-    (void)vsnprintf(ptr, len + 1, src, args);
+#if EMLITE_HAVE_LIBC_MALLOC
+    va_list args_len;
+    va_copy(args_len, args);
+    size_t len = vsnprintf(NULL, 0, src, args_len);
+    va_end(args_len);
+    char *ptr = (char *)malloc(len + 1);
+    if (!ptr) {
+        va_end(args);
+        return emlite_val_undefined();
+    }
+#else
+    size_t len = 511;
+    char ptr[512];
+#endif
+    vsnprintf(ptr, len + 1, src, args);
     va_end(args);
     return emlite_eval(ptr);
 }
