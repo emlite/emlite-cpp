@@ -1,6 +1,6 @@
 #![allow(unused)]
 
-use core::ffi::{c_char, c_double, c_int};
+use core::ffi::{c_char, c_double, c_int, c_void};
 pub type Handle = u32;
 
 unsafe extern "C" {
@@ -13,7 +13,7 @@ unsafe extern "C" {
     pub fn emlite_val_new_array() -> Handle;
     pub fn emlite_val_new_object() -> Handle;
 
-    pub fn emlite_val_typeof(val: Handle) -> *const c_char;
+    pub fn emlite_val_typeof(val: Handle) -> *mut c_char;
 
     pub fn emlite_val_construct_new(ctor: Handle, argv: Handle) -> Handle;
     pub fn emlite_val_func_call(func: Handle, argv: Handle) -> Handle;
@@ -26,7 +26,7 @@ unsafe extern "C" {
 
     pub fn emlite_val_get_value_int(val: Handle) -> c_int;
     pub fn emlite_val_get_value_double(val: Handle) -> c_double;
-    pub fn emlite_val_get_value_string(val: Handle) -> *const c_char;
+    pub fn emlite_val_get_value_string(val: Handle) -> *mut c_char;
 
     pub fn emlite_val_get_elem(val: Handle, idx: usize) -> Handle;
 
@@ -59,4 +59,10 @@ unsafe extern "C" {
     pub fn emlite_val_obj_has_own_prop(obj: Handle, prop: *const c_char, len: usize) -> bool;
 
     pub fn emlite_val_make_callback(id: Handle) -> Handle;
+
+    pub fn emlite_malloc(len: usize) -> *mut c_void;
+
+    pub fn emlite_realloc(ptr: *mut c_void, len: usize) -> *mut c_void;
+
+    pub fn emlite_free(ptr: *mut c_void);
 }

@@ -25,7 +25,7 @@ Handle emlite_val_true(void);
 Handle emlite_val_global_this();
 Handle emlite_val_new_array(void);
 Handle emlite_val_new_object(void);
-const char *emlite_val_typeof(Handle);
+char *emlite_val_typeof(Handle);
 Handle emlite_val_construct_new(Handle, Handle argv);
 Handle emlite_val_func_call(Handle func, Handle argv);
 void emlite_val_push(Handle arr, Handle v);
@@ -34,7 +34,7 @@ Handle emlite_val_make_double(double t);
 Handle emlite_val_make_str(const char *, size_t);
 int emlite_val_get_value_int(Handle);
 double emlite_val_get_value_double(Handle);
-const char *emlite_val_get_value_string(Handle);
+char *emlite_val_get_value_string(Handle);
 Handle emlite_val_get_elem(Handle, size_t);
 bool emlite_val_is_string(Handle);
 bool emlite_val_is_number(Handle);
@@ -59,6 +59,9 @@ void emlite_val_obj_set_prop(
 bool emlite_val_obj_has_prop(Handle, const char *prop, size_t len);
 bool emlite_val_obj_has_own_prop(Handle, const char *prop, size_t len);
 Handle emlite_val_make_callback(Handle id);
+void *emlite_malloc(size_t);
+void *emlite_realloc(void *, size_t);
+void emlite_free(void *);
 // end externs
 
 typedef struct {
@@ -84,7 +87,7 @@ em_Val em_Val_get(em_Val self, const char *prop);
 void em_Val_set(em_Val self, const char *prop, em_Val val);
 bool em_Val_has(em_Val self, const char *prop);
 bool em_Val_has_own_property(em_Val self, const char *prop);
-const char *em_Val_type_of(em_Val self);
+char *em_Val_typeof(em_Val self);
 em_Val em_Val_at(em_Val self, size_t idx);
 em_Val em_Val_await(em_Val self);
 bool em_Val_is_number(em_Val self);
@@ -102,7 +105,7 @@ bool em_Val_lte(em_Val self, em_Val other);
 int em_Val_as_int(em_Val self);
 bool em_Val_as_bool(em_Val self);
 double em_Val_as_double(em_Val self);
-const char *em_Val_as_string(em_Val self);
+char *em_Val_as_string(em_Val self);
 
 em_Val em_Val_call(em_Val self, const char *method, int n, ...);
 em_Val em_Val_new(em_Val self, int n, ...);
@@ -331,7 +334,7 @@ bool em_Val_has_own_property(em_Val self, const char *prop) {
     return emlite_val_obj_has_own_prop(self.h, prop, strlen(prop));
 }
 
-const char *em_Val_type_of(em_Val self) { return emlite_val_typeof(self.h); }
+char *em_Val_typeof(em_Val self) { return emlite_val_typeof(self.h); }
 
 em_Val em_Val_at(em_Val self, size_t idx) {
     return em_Val_from_handle(emlite_val_get_elem(self.h, idx));
@@ -391,7 +394,7 @@ double em_Val_as_double(em_Val self) {
     return emlite_val_get_value_double(self.h);
 }
 
-const char *em_Val_as_string(em_Val self) {
+char *em_Val_as_string(em_Val self) {
     return emlite_val_get_value_string(self.h);
 }
 
@@ -441,23 +444,28 @@ em_Val emlite_eval(const char *src) {
 em_Val emlite_eval_v(const char *src, ...) {
     va_list args;
     va_start(args, src);
-#if EMLITE_HAVE_LIBC_MALLOC
     va_list args_len;
     va_copy(args_len, args);
     size_t len = vsnprintf(NULL, 0, src, args_len);
     va_end(args_len);
+#if EMLITE_HAVE_LIBC_MALLOC
     char *ptr = (char *)malloc(len + 1);
+#else
+    char *ptr = (char *)emlite_malloc(len + 1);
+#endif
     if (!ptr) {
         va_end(args);
-        return emlite_val_undefined();
+        return em_Val_undefined();
     }
-#else
-    size_t len = 511;
-    char ptr[512];
-#endif
     vsnprintf(ptr, len + 1, src, args);
     va_end(args);
-    return emlite_eval(ptr);
+    em_Val ret = emlite_eval(ptr);
+#if EMLITE_HAVE_LIBC_MALLOC
+    free(ptr);
+#else
+    emlite_free(ptr);
+#endif
+    return ret;
 }
 
 #endif
