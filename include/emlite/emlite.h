@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // these are freestanding headers
 #include <stdbool.h>
 #include <stddef.h>
@@ -12,6 +16,12 @@
 #define EMLITE_HAVE_LIBC_MALLOC 0
 #endif
 
+#if __has_include(<string.h>)
+#include <string.h>
+#else
+size_t strlen(const char *);
+#endif
+
 #ifndef EMLITE_USED
 #define EMLITE_USED __attribute__((used))
 #endif
@@ -19,10 +29,6 @@
 typedef uint32_t Handle;
 
 typedef Handle (*Callback)(Handle);
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 // externs
 Handle emlite_val_null(void);
@@ -131,7 +137,7 @@ em_Val emlite_eval_v(const char *src, ...);
 #if __has_include(<string.h>)
 #include <string.h>
 #else
-static inline __attribute__((__always_inline__)) size_t strlen(const char *s) {
+size_t strlen(const char *s) {
     const char *p = s;
     while (*p)
         ++p;

@@ -10,6 +10,8 @@
 #define EMLITE_HAS_STD_VECTOR 0
 #endif
 
+extern "C" size_t strlen(const char *s);
+
 namespace emlite {
 
 namespace detail {
@@ -207,24 +209,67 @@ class UniqCPtr {
         emlite_free(ptr);
 #endif
     }
+};
 
-//     static void operator delete(void* ptr, size_t sz)
-//     {
-// #if EMLITE_HAVE_LIBC_MALLOC
-//         free(ptr);
-// #else
-//         emlite_free(ptr);
-// #endif
-//     }
- 
-//     static void operator delete[](void* ptr, size_t sz)
-//     {
-// #if EMLITE_HAVE_LIBC_MALLOC
-//         free(ptr);
-// #else
-//         emlite_free(ptr);
-// #endif
-//     }
+template <typename T>
+    requires(!detail::is_same_v<T, void>)
+class UniqCPtr<T[]> {
+  private:
+    T *ptr;
+
+    UniqCPtr(const UniqCPtr &)            = delete;
+    UniqCPtr &operator=(const UniqCPtr &) = delete;
+
+  public:
+    UniqCPtr() : ptr(nullptr) {}
+
+    explicit UniqCPtr(T *p) : ptr(p) {}
+
+    UniqCPtr(UniqCPtr &&other) : ptr(other.ptr) { other.ptr = nullptr; }
+
+    UniqCPtr &operator=(UniqCPtr &&other) {
+        if (this != &other) {
+            if (ptr) {
+                delete_(ptr);
+            }
+            ptr       = other.ptr;
+            other.ptr = nullptr;
+        }
+        return *this;
+    }
+
+    ~UniqCPtr() {
+        if (ptr) {
+            delete_(ptr);
+        }
+    }
+
+    T& operator[](size_t i) const { return ptr[i]; }
+
+    T *get() const { return ptr; }
+
+    T *release() {
+        T *temp = ptr;
+        ptr     = nullptr;
+        return temp;
+    }
+
+    void reset(T *p = nullptr) {
+        if (ptr) {
+            delete_(ptr);
+        }
+        ptr = p;
+    }
+
+    operator bool() const { return ptr != nullptr; }
+
+    void delete_(void *ptr) {
+#if EMLITE_HAVE_LIBC_MALLOC
+        free(ptr);
+#else
+        emlite_free(ptr);
+#endif
+    }
 };
 
 class Val {
@@ -261,7 +306,7 @@ class Val {
     void set(const char *prop, const Val &val) const;
     bool has(const char *prop) const;
     bool has_own_property(const char *prop) const;
-    UniqCPtr<char> type_of() const;
+    UniqCPtr<char[]> type_of() const;
     Val operator[](size_t idx) const;
     Val await() const;
     bool is_number() const;
@@ -345,8 +390,8 @@ T Val::as() const {
         }
     } else if constexpr (detail::is_floating_point_v<T>)
         return emlite_val_get_value_int(v_);
-    else if constexpr (detail::is_same_v<T, UniqCPtr<char>>)
-        return UniqCPtr<char>(emlite_val_get_value_string(v_));
+    else if constexpr (detail::is_same_v<T, UniqCPtr<char[]>>)
+        return UniqCPtr<char[]>(emlite_val_get_value_string(v_));
     return T{};
 }
 
@@ -404,7 +449,7 @@ Val::Val(Callback f) : v_(Val::make_js_function(f).as_handle()) {}
 
 Handle Val::as_handle() const { return v_; }
 
-UniqCPtr<char> Val::type_of() const { return UniqCPtr<char>(emlite_val_typeof(v_)); }
+UniqCPtr<char[]> Val::type_of() const { return UniqCPtr<char[]>(emlite_val_typeof(v_)); }
 
 Val Val::get(const char *prop) const {
     return Val::from_handle(emlite_val_obj_prop(v_, prop, strlen(prop)));

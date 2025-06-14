@@ -1,4 +1,3 @@
-#include <iostream>
 #include <vector>
 
 #define EMLITE_IMPL
@@ -15,7 +14,7 @@ EMLITE_USED extern "C" int add(int a, int b) {
     auto btn  = doc.call("createElement", Val("BUTTON"));
     btn.set("textContent", Val("Click Me!"));
     // test as<> and wasi's fd_write
-    printf("%s\n", btn.get("textContent").as<UniqCPtr<char>>().get());
+    printf("%s\n", btn.get("textContent").as<UniqCPtr<char[]>>().get());
     fflush(stdout);
     printf("%s\n", btn.type_of().get());
 
@@ -47,9 +46,9 @@ EMLITE_USED extern "C" int add(int a, int b) {
     Console().log(str1);
 
     // check copyStringToWasm
-    Console().log(Val(str1.as<UniqCPtr<char>>().get()));
-    Console().log(Val(str2.as<UniqCPtr<char>>().get()));
-    Console().log(Val(str1.as<UniqCPtr<char>>().get()));
+    Console().log(Val(str1.as<UniqCPtr<char[]>>().get()));
+    Console().log(Val(str2.as<UniqCPtr<char[]>>().get()));
+    Console().log(Val(str1.as<UniqCPtr<char[]>>().get()));
 
     // operator()
     auto floor = Val::global("Math").get("floor");

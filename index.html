@@ -20,7 +20,7 @@
             ];
             let wasi = new WASI([], [], fds);
             let emlite = new Emlite();
-            let wasm = await WebAssembly.compileStreaming(fetch("./bin/dom_test1.wasm"));
+            let wasm = await WebAssembly.compileStreaming(fetch("./bin_wasi_sdk/dom_test1.wasm"));
             let inst = await WebAssembly.instantiate(wasm, {
                 wasi_snapshot_preview1: wasi.wasiImport,
                 env: emlite.env,
