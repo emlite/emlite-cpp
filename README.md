@@ -67,7 +67,22 @@ int main() {
 
 ### In the browser
 
-To use it in your web stack, you will need a wasi javascript polyfill, here we use @bjorn3/browser_wasi_shim (via unpkg) and we vendor the emlite.js file into our src directory:
+If you target wasm32 (freestanding) with stock clang, you can import emlite using:
+```javascript
+import { Emlite } from "./src/emlite.js";
+
+window.onload = async () => {
+    let emlite = new Emlite();
+    let wasm = await WebAssembly.compileStreaming(fetch("./dom_test2_nostdlib.wasm"));
+    let inst = await WebAssembly.instantiate(wasm, {
+        env: emlite.env,
+    });
+    emlite.setExports(inst.exports);
+    window.alert(inst.exports.add(1, 2));
+};
+```
+
+To use emlite with wasm32-wasi in your web stack, you will need a wasi javascript polyfill, here we use @bjorn3/browser_wasi_shim (via unpkg) and we vendor the emlite.js file into our src directory:
 ```javascript
 // see the index.html for an example
 import { WASI, File, OpenFile, ConsoleStdout } from "https://unpkg.com/@bjorn3/browser_wasi_shim";

@@ -51,116 +51,7 @@ class UniqueList {
 const HEADER_BYTES = 8;
 const ALIGN = 8;
 const PAGE_SIZE = 65536;
-
-const u32 = () => new Uint32Array(memory.buffer);
 const alignUp = (x, a) => (x + a - 1) & ~(a - 1);
-
-let freelist = 0;
-let brk = alignUp(heapBase, ALIGN);
-
-const sizeAt = off => u32()[off >>> 2];
-const nextAt = off => u32()[(off >>> 2) + 1];
-const setSize = (off, sz) => { u32()[off >>> 2] = sz; };
-const setNext = (off, nx) => { u32()[(off >>> 2) + 1] = nx; };
-
-const grow = bytes => {
-    const shortfall = brk + bytes - memory.buffer.byteLength;
-    if (shortfall > 0) {
-        const pages = Math.ceil(shortfall / PAGE_SIZE);
-        memory.grow(pages);
-    }
-};
-
-function emlite_malloc(n) {
-    n = alignUp(n, ALIGN);
-    let prev = 0;
-    let cur = freelist;
-
-    while (cur !== 0 && Math.abs(sizeAt(cur)) < n) {
-        prev = cur;
-        cur = nextAt(cur);
-    }
-
-    if (cur !== 0) {
-        const blkSize = Math.abs(sizeAt(cur));
-        const remain = blkSize - n;
-
-        if (remain > HEADER_BYTES) {
-            const newFree = cur + HEADER_BYTES + n;
-            setSize(newFree, -remain + HEADER_BYTES);
-            setNext(newFree, nextAt(cur));
-            setSize(cur, n);
-            if (prev === 0) freelist = newFree; else setNext(prev, newFree);
-        } else {
-            if (prev === 0) freelist = nextAt(cur); else setNext(prev, nextAt(cur));
-            setSize(cur, blkSize);
-        }
-        return cur + HEADER_BYTES;
-    }
-
-    const off = brk;
-    grow(n + HEADER_BYTES);
-    setSize(off, n);
-    brk += HEADER_BYTES + n;
-    return off + HEADER_BYTES;
-}
-
-function emlite_free(ptr) {
-    if (!ptr) return;
-    const blk = ptr - HEADER_BYTES;
-    const sz = sizeAt(blk);
-
-    if (sz <= 0) throw new Error("double free / corrupted block");
-    setSize(blk, -sz);
-
-    if (freelist === 0 || blk < freelist) {
-        setNext(blk, freelist);
-        freelist = blk;
-    } else {
-        let cur = freelist;
-        while (nextAt(cur) !== 0 && nextAt(cur) < blk) cur = nextAt(cur);
-        setNext(blk, nextAt(cur));
-        setNext(cur, blk);
-    }
-
-    const nxt = nextAt(blk);
-    if (nxt && blk + HEADER_BYTES + Math.abs(sizeAt(blk)) === nxt) {
-        setSize(blk, -(
-            Math.abs(sizeAt(blk)) +
-            HEADER_BYTES +
-            Math.abs(sizeAt(nxt))
-        ));
-        setNext(blk, nextAt(nxt));
-    }
-
-    if (freelist !== blk) {
-        let cur = freelist;
-        while (nextAt(cur) !== 0 && nextAt(cur) < blk) cur = nextAt(cur);
-        if (cur + HEADER_BYTES + Math.abs(sizeAt(cur)) === blk) {
-            setSize(cur, -(
-                Math.abs(sizeAt(cur)) +
-                HEADER_BYTES +
-                Math.abs(sizeAt(blk))
-            ));
-            setNext(cur, nextAt(blk));
-        }
-    }
-}
-
-function emlite_realloc(ptr, n) {
-    if (!ptr) return malloc(n);
-    if (n === 0) { free(ptr); return 0; }
-
-    const blk = ptr - HEADER_BYTES;
-    const oldSize = Math.abs(sizeAt(blk));
-    if (n <= oldSize) return ptr;
-
-    const newPtr = malloc(n);
-    new Uint8Array(memory.buffer, newPtr, n)
-        .set(new Uint8Array(memory.buffer, ptr, oldSize));
-    free(ptr);
-    return newPtr;
-}
 
 const OBJECT_MAP = new UniqueList();
 globalThis.ValMap = OBJECT_MAP;
@@ -183,16 +74,35 @@ export class Emlite {
 
     setExports(exports) {
         this.exports = exports;
+        this.brk = alignUp(this.exports.__heap_base.value, ALIGN);
+        this.freelist = 0;
     }
+
+    u32() { return new Uint32Array(this._memory.buffer); }
+
+    grow(bytes) {
+        const shortfall = brk + bytes - memory.buffer.byteLength;
+        if (shortfall > 0) {
+            const pages = Math.ceil(shortfall / PAGE_SIZE);
+            memory.grow(pages);
+        }
+    }
+
+    sizeAt (off) { return this.u32()[off >>> 2]; }
+    nextAt (off) { return this.u32()[(off >>> 2) + 1]; }
+    setSize (off, sz) { return this.u32()[off >>> 2] = sz; }
+    setNext (off, nx) { return u32()[(off >>> 2) + 1] = nx; }
 
     cStr(ptr, len) {
         return dec.decode(new Uint8Array(this._memory.buffer, ptr, len));
     }
 
+    emlite_malloc(n) {}
+
     copyStringToWasm(str) {
         const utf8 = enc.encode(str + "\0");
         let alloc_fn = undefined;
-        if (this.exports.malloc !== undefined) alloc_fn = this.exports.malloc; else alloc_fn = emlite_malloc;
+        if (this.exports.malloc !== undefined) alloc_fn = this.exports.malloc; else alloc_fn = this.emlite_malloc;
         const ptr = alloc_fn(utf8.length);
         if (ptr === 0) throw new Error('malloc failed in copyStringToWasm');
         new Uint8Array(this._memory.buffer).set(utf8, ptr);
@@ -294,9 +204,62 @@ export class Emlite {
                 const prop = this.cStr(pPtr, pLen);
                 return target.hasOwnProperty(prop);
             },
-            emlite_malloc: emlite_malloc,
-            emlite_free: emlite_free,
-            emlite_realloc: emlite_realloc,
+            emlite_malloc: (n) => this.emlite_malloc(n),
+            emlite_free: (ptr) => {
+                if (!ptr) return;
+                const blk = ptr - HEADER_BYTES;
+                const sz = this.sizeAt(blk);
+
+                if (sz <= 0) throw new Error("double free / corrupted block");
+                this.setSize(blk, -sz);
+
+                if (this.freelist === 0 || blk < this.freelist) {
+                    this.setNext(blk, this.freelist);
+                    this.freelist = blk;
+                } else {
+                    let cur = this.freelist;
+                    while (this.nextAt(cur) !== 0 && this.nextAt(cur) < blk) cur = this.nextAt(cur);
+                    this.setNext(blk, this.nextAt(cur));
+                    this.setNext(cur, blk);
+                }
+
+                const nxt = this.nextAt(blk);
+                if (nxt && blk + HEADER_BYTES + Math.abs(this.sizeAt(blk)) === nxt) {
+                    this.setSize(blk, -(
+                        Math.abs(this.sizeAt(blk)) +
+                        HEADER_BYTES +
+                        Math.abs(this.sizeAt(nxt))
+                    ));
+                    this.setNext(blk, this.nextAt(nxt));
+                }
+
+                if (this.freelist !== blk) {
+                    let cur = this.freelist;
+                    while (this.nextAt(cur) !== 0 && this.nextAt(cur) < blk) cur = this.nextAt(cur);
+                    if (cur + HEADER_BYTES + Math.abs(this.sizeAt(cur)) === blk) {
+                        this.setSize(cur, -(
+                            Math.abs(this.sizeAt(cur)) +
+                            HEADER_BYTES +
+                            Math.abs(this.sizeAt(blk))
+                        ));
+                        this.setNext(cur, this.nextAt(blk));
+                    }
+                }
+            },
+            emlite_realloc: (ptr, n) => {
+                if (!ptr) return this.emlite_malloc(n);
+                if (n === 0) { this.emlite_free(ptr); return 0; }
+
+                const blk = ptr - HEADER_BYTES;
+                const oldSize = Math.abs(this.sizeAt(blk));
+                if (n <= oldSize) return ptr;
+
+                const newPtr = this.emlite_malloc(n);
+                new Uint8Array(this._memory.buffer, newPtr, n)
+                    .set(new Uint8Array(this._memory.buffer, ptr, oldSize));
+                this.emlite_free(ptr);
+                return newPtr;
+            },
         };
     }
 }

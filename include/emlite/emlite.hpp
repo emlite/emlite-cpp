@@ -60,6 +60,10 @@ void emlite_val_obj_set_prop(
 bool emlite_val_obj_has_prop(Handle, const char *prop, size_t len);
 bool emlite_val_obj_has_own_prop(Handle, const char *prop, size_t len);
 Handle emlite_val_make_callback(Handle id);
+
+void *emlite_malloc(size_t);
+void *emlite_realloc(void *, size_t);
+void emlite_free(void *);
 }
 
 namespace emlite {
