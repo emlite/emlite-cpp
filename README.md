@@ -102,9 +102,9 @@ async function main() {
 await main();
 ```
 
-### Using wasm32-wasi or wasm32-wasip1
+### Using wasm32-wasi, wasm32-wasip1 or emscripten
 #### In the browser
-To use emlite with wasm32-wasi or wasm32-wasip1 in your web stack, you will need a wasi javascript polyfill, here we use @bjorn3/browser_wasi_shim (via unpkg) and we vendor the emlite.js file into our src directory (note that both can also be installed via npm):
+To use emlite with wasm32-wasi, wasm32-wasip1 or emscripten** in your web stack, you will need a wasi javascript polyfill, here we use @bjorn3/browser_wasi_shim (via unpkg) and we vendor the emlite.js file into our src directory (note that both can also be installed via npm):
 ```javascript
 // see the index.html for an example
 import { WASI, File, OpenFile, ConsoleStdout } from "https://unpkg.com/@bjorn3/browser_wasi_shim";
@@ -137,6 +137,9 @@ If installed via npm, they can be imported using:
 import { WASI, File, OpenFile, ConsoleStdout } from "@bjorn3/browser_wasi_shim";
 import { Emlite } from "emlite";
 ```
+
+** Note that this depends on emscripten's ability to create standalone wasm files, which will also require a wasi shim:
+https://v8.dev/blog/emscripten-standalone-wasm
 
 #### With a javascript engine like nodejs
 You can get emlite from npm:
@@ -175,49 +178,6 @@ async function main() {
 await main();
 ```
 Note that nodejs as of version 22.16 requires a _start function in the wasm module. That can be achieved by defining an `int main() {}` function. It's also why we use `wasi.start(instance)` in the js module.
-
-### Using Emscripten
-#### In the browser
-```javascript
-import { Emlite } from "./src/emlite.js";
-
-window.onload = async () => {
-    let emlite = new Emlite();
-    let wasm = await WebAssembly.compileStreaming(fetch("./bin_emscripten/dom_test1_nostdlib.wasm"));
-    let inst = await WebAssembly.instantiate(wasm, {
-        env: emlite.env,
-    });
-    emlite.setExports(inst.exports);
-    window.alert(inst.exports.add(1, 2));
-};
-```
-
-#### With a javascript engine like nodejs
-You can get emlite from npm:
-```
-npm install emlite
-```
-
-Then in your javascript file:
-```javascript
-import { Emlite } from "emlite";
-import { readFile } from "node:fs/promises";
-
-async function main() {
-    const emlite = new Emlite();
-    const wasm = await WebAssembly.compile(
-        await readFile("./bin/console.wasm"),
-    );
-    const instance = await WebAssembly.instantiate(wasm, {
-        env: emlite.env,
-    });
-    emlite.setExports(instance.exports);
-    // if you have another exported function marked with EMLITE_USED, you can get it in the instance exports
-    instance.exports.some_func();
-}
-
-await main();
-```
 
 ## Building
 ### Using CMake
