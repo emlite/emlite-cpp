@@ -62,7 +62,7 @@ let nextCbId = 0;
 
 export class Emlite {
     constructor(memory) {
-        this._memory = memory ?? new WebAssembly.Memory({ initial: 100 });
+        this._memory = memory ?? new WebAssembly.Memory({ initial: 258, maximum: 4096 });
         this.brk = 0;   
         this.freelist = 0;   
     }
@@ -291,6 +291,7 @@ export class Emlite {
                 this.emlite_free(ptr);
                 return newPtr;
             },
+            emscripten_notify_memory_growth: (i) => {},
         };
     }
 }

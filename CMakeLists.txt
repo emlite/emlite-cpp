@@ -24,8 +24,10 @@ install(EXPORT emliteTargets
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/emlite
 )
 
-# emscripten requires `new Emlite(new WebAssembly.Memory({ initial: 258, maximum: 258 }))`
 set(DEFAULT_LINK_FLAGS "-Wl,--no-entry,--allow-undefined,--export-all,--import-memory,--export-memory,--strip-all")
+if (EMSCRIPTEN)
+    set(DEFAULT_LINK_FLAGS "${DEFAULT_LINK_FLAGS} -sALLOW_MEMORY_GROWTH=1")
+endif()
 
 if (EMLITE_BUILD_EXAMPLES)
     add_executable(console examples/console.c)
