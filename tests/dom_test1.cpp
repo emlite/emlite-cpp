@@ -71,6 +71,16 @@ EMLITE_USED extern "C" int add(int a, int b) {
     auto status       = Notification.call("requestPermission").await();
     Console().log(status);
 
+    auto arr = Val::global("eval")(Val("let arr = [1, 2, 3, 4, 5]; arr"));
+
+    size_t len = 0;
+    auto arr2 = Val::vec_from_js_array<int>(arr, len);
+
+    printf("%ld\n", len);
+    for (size_t i = 0; i < len; i++) {
+        printf("%d\n", arr2[i]);
+    }
+
     return a + b;
 }
 

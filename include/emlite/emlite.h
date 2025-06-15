@@ -11,9 +11,10 @@ extern "C" {
 
 #if __has_include(<stdlib.h>)
 #include <stdlib.h>
-#define EMLITE_HAVE_LIBC_MALLOC 1
 #else
-#define EMLITE_HAVE_LIBC_MALLOC 0
+void *malloc(size_t);
+void *realloc(void *, size_t);
+void free(void *);
 #endif
 
 #if __has_include(<string.h>)
@@ -142,6 +143,22 @@ size_t strlen(const char *s) {
     while (*p)
         ++p;
     return (size_t)(p - s);
+}
+#endif
+
+#if __has_include(<stdlib.h>)
+#include <stdlib.h>
+#else
+void *malloc(size_t s) {
+    return emlite_malloc(s);
+}
+
+void *realloc(void * p, size_t s) {
+    return emlite_realloc(p, s);
+}
+
+void free(void *p) {
+    emlite_free(p);
 }
 #endif
 
@@ -455,20 +472,12 @@ em_Val emlite_eval_v(const char *src, ...) {
     va_copy(args_len, args);
     size_t len = vsnprintf(NULL, 0, src, args_len);
     va_end(args_len);
-#if EMLITE_HAVE_LIBC_MALLOC
     char *ptr = (char *)malloc(len + 1);
-#else
-    char *ptr = (char *)emlite_malloc(len + 1);
-#endif
     // check if ptr was allocated
     vsnprintf(ptr, len + 1, src, args);
     va_end(args);
     em_Val ret = emlite_eval(ptr);
-#if EMLITE_HAVE_LIBC_MALLOC
     free(ptr);
-#else
-    emlite_free(ptr);
-#endif
     return ret;
 }
 

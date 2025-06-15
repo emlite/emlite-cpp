@@ -3,13 +3,6 @@
 #include "emlite.h"
 #undef EMLITE_EVAL
 
-#if __has_include(<vector>)
-#include <vector>
-#define EMLITE_HAS_STD_VECTOR 1
-#else
-#define EMLITE_HAS_STD_VECTOR 0
-#endif
-
 namespace emlite {
 
 namespace detail {
@@ -201,11 +194,7 @@ class UniqCPtr {
     operator bool() const { return ptr != nullptr; }
 
     void delete_(void *ptr) {
-#if EMLITE_HAVE_LIBC_MALLOC
         free(ptr);
-#else
-        emlite_free(ptr);
-#endif
     }
 };
 
@@ -262,11 +251,7 @@ class UniqCPtr<T[]> {
     operator bool() const { return ptr != nullptr; }
 
     void delete_(void *ptr) {
-#if EMLITE_HAVE_LIBC_MALLOC
         free(ptr);
-#else
-        emlite_free(ptr);
-#endif
     }
 };
 
@@ -330,20 +315,18 @@ class Val {
     template <typename T>
     T as() const;
 
-#if EMLITE_HAS_STD_VECTOR
     template <typename T>
-    static std::vector<T> vec_from_js_array(const Val &v)
+    static UniqCPtr<T[]> vec_from_js_array(const Val &v, size_t &len)
         requires(detail::is_integral_v<T> || detail::is_floating_point_v<T>)
     {
         auto sz = v.get("length").as<int>();
-        std::vector<T> ret;
-        ret.reserve(sz);
+        len = sz;
+        T *ret = (T *)malloc(sizeof(T) * sz);
         for (int i = 0; i < sz; i++) {
-            ret.push_back(v[i].as<T>());
+            ret[i] = v[i].as<T>();
         }
-        return ret;
+        return UniqCPtr<T[]>(ret);
     }
-#endif
 };
 
 class Console : public Val {
