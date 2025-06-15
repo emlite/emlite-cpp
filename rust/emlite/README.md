@@ -1,12 +1,11 @@
 # emlite
-
-Emlite is a tiny JS bridge for native Rust code via Wasm. It can be used with either the wasm32-wasip1 or the wasm32-unknown-unknown targets, without the need to bring in tools like emscripten nor wasm-bindgen.
+Emlite is a tiny JS bridge for native Rust code via Wasm. It can be used with either the wasm32-wasip1 or the wasm32-unknown-unknown targets, and is agnostic to the underlying toolchain.
 
 ## Usage
 Add emlite to your Cargo.toml:
 ```toml
 [dependencies]
-emlite = "0.1.0"
+emlite = "0.1"
 ```
 
 Then you can import and use the Val wrapper and its associated methods:

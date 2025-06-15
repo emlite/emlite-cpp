@@ -1,24 +1,20 @@
 # Emlite
-
-Emlite is a tiny JS bridge for native code (C/C++/Rust/Zig) via Wasm (wasi), which doesn't require the emscripten toolchain.
-It provides a single C or C++ header and a single javascript file that allows plain C or C++ code — compiled with wasm32-wasi — to talk to interoperate with javascript (including the DOM) and other JavaScript objects without writing much JS “glue.”
-It provides both a C api and a higher level C++ api similar to emscripten's val api.
+Emlite is a tiny JS bridge for native code (C/C++/Rust/Zig) via Wasm, which is agnostic of the underlying toolchain. Thus it can target wasm32-unknown-unknown (freestanding, via stock clang), wasm32-wasi (via wasi-libc or wasi-sysroot), wasm32-wasip1 (via wasi-sdk or wasi-sysroot) and emscripten. 
+It provides a header only library and a single javascript file that allows plain C or C++ code — compiled for wasm — to interoperate with javascript (including the DOM) and other JavaScript objects/runtimes without writing much JS “glue.”
+It provides both a C api and a higher level C++ api similar to emscripten's val api. The repo also provides higher-level Rust and Zig bindings to emlite.
 
 ## Requirements
-
-To use the C++ api, you need a C++-20 capable compiler. The wasi-sdk bundles clang-19 which should cover your requirements.
+To use the C++ api, you need a C++-20 capable compiler. 
 To use the C api, a C99 capable compiler should be sufficient.
 
-## Why wasm32-wasi instead of emscripten
-
+## Since emscripten exists, why would I want to use wasm32-wasi or wasm32-wasip1?
 - Emscripten is a large install (around 1.4 gb), and bundles clang, python, node and java.
 - In contrast, if you already have clang installed, wasi-libc's sysroot is around 2.4mb if you're only using Emlite's C api.
-- If you're using C++, the wasi-sysroot/wasm32-wasi is only 44mb (headers and libraries).
+- The wasi-sysroot/wasm32-wasi is only 44mb (headers and libraries).
 - Even if you install the wasi-sdk, it still is less than 1/4 the size of emscripten.
 - Emscripten javascript glue is sometimes difficult to navigate when a problem occurs.
 
 ## Why emscripten instead of wasm32-wasi
-
 - More established.
 - Offers other bundled libraries like SDL, boost and other ports.
 - Offers emscripten_sleep which allows better compatibilty for compiling sources containing event-loops like games.
@@ -26,7 +22,6 @@ To use the C api, a C99 capable compiler should be sufficient.
 - Offers more optimisations by bundling binaryen, wasm-opt and google's Closure compiler.
 
 ## Examples
-
 C++ example:
 ```c++
 // define EMLITE_IMPL in only one implementation unit (source file)!
@@ -62,17 +57,16 @@ EMLITE_USED int main() {
 }
 ```
 
-## Usage
+## Deployment
 
-### In the browser
-
-If you target wasm32 (freestanding) with stock clang, you can import emlite using:
+### Using wasm32-unknown-unknow
+#### In the browser
 ```javascript
 import { Emlite } from "./src/emlite.js";
 
 window.onload = async () => {
     let emlite = new Emlite();
-    let wasm = await WebAssembly.compileStreaming(fetch("./dom_test2_nostdlib.wasm"));
+    let wasm = await WebAssembly.compileStreaming(fetch("./bin_freestanding/dom_test1_nostdlib.wasm"));
     let inst = await WebAssembly.instantiate(wasm, {
         env: emlite.env,
     });
@@ -81,7 +75,36 @@ window.onload = async () => {
 };
 ```
 
-To use emlite with wasm32-wasi in your web stack, you will need a wasi javascript polyfill, here we use @bjorn3/browser_wasi_shim (via unpkg) and we vendor the emlite.js file into our src directory:
+#### With a javascript engine like nodejs
+You can get emlite from npm:
+```
+npm install emlite
+```
+
+Then in your javascript file:
+```javascript
+import { Emlite } from "emlite";
+import { readFile } from "node:fs/promises";
+
+async function main() {
+    const emlite = new Emlite();
+    const wasm = await WebAssembly.compile(
+        await readFile("./bin/console.wasm"),
+    );
+    const instance = await WebAssembly.instantiate(wasm, {
+        env: emlite.env,
+    });
+    emlite.setExports(instance.exports);
+    // if you have another exported function marked with EMLITE_USED, you can get it in the instance exports
+    instance.exports.some_func();
+}
+
+await main();
+```
+
+### Using wasm32-wasi or wasm32-wasip1
+#### In the browser
+To use emlite with wasm32-wasi or wasm32-wasip1 in your web stack, you will need a wasi javascript polyfill, here we use @bjorn3/browser_wasi_shim (via unpkg) and we vendor the emlite.js file into our src directory (note that both can also be installed via npm):
 ```javascript
 // see the index.html for an example
 import { WASI, File, OpenFile, ConsoleStdout } from "https://unpkg.com/@bjorn3/browser_wasi_shim";
@@ -115,11 +138,15 @@ import { WASI, File, OpenFile, ConsoleStdout } from "@bjorn3/browser_wasi_shim";
 import { Emlite } from "emlite";
 ```
 
-### With a javascript engine like nodejs
+#### With a javascript engine like nodejs
+You can get emlite from npm:
+```
+npm install emlite
+```
 
-If you're vendoring the emlite.js file:
+Then in your javascript file:
 ```javascript
-import { Emlite } from "./src/emlite.js";
+import { Emlite } from "emlite";
 import { WASI } from "node:wasi";
 import { readFile } from "node:fs/promises";
 import { argv, env } from "node:process";
@@ -149,23 +176,81 @@ await main();
 ```
 Note that nodejs as of version 22.16 requires a _start function in the wasm module. That can be achieved by defining an `int main() {}` function. It's also why we use `wasi.start(instance)` in the js module.
 
-You can also install emlite via npm `npm install emlite` and import it using:
+### Using Emscripten
+#### In the browser
+```javascript
+import { Emlite } from "./src/emlite.js";
+
+window.onload = async () => {
+    let emlite = new Emlite();
+    let wasm = await WebAssembly.compileStreaming(fetch("./bin_emscripten/dom_test1_nostdlib.wasm"));
+    let inst = await WebAssembly.instantiate(wasm, {
+        env: emlite.env,
+    });
+    emlite.setExports(inst.exports);
+    window.alert(inst.exports.add(1, 2));
+};
+```
+
+#### With a javascript engine like nodejs
+You can get emlite from npm:
+```
+npm install emlite
+```
+
+Then in your javascript file:
 ```javascript
 import { Emlite } from "emlite";
+import { readFile } from "node:fs/promises";
+
+async function main() {
+    const emlite = new Emlite();
+    const wasm = await WebAssembly.compile(
+        await readFile("./bin/console.wasm"),
+    );
+    const instance = await WebAssembly.instantiate(wasm, {
+        env: emlite.env,
+    });
+    emlite.setExports(instance.exports);
+    // if you have another exported function marked with EMLITE_USED, you can get it in the instance exports
+    instance.exports.some_func();
+}
+
+await main();
 ```
 
 ## Building
+### Using CMake
+You can use CMake's FetchContent to get this repo, otherwise you can just copy the header files into your project.
+
+To build with the wasi-sdk or emscripten, it's sufficient to pass the necessary toolchain file:
+```bash
+cmake -Bbin -GNinja -DCMAKE_TOOLCHAIN_FILE=$EMSCRIPTEN_ROOT/cmake/Modules/Platform/Emscripten.cmake && cmake --build bin
+# or
+cmake -Bbin -GNinja -DCMAKE_TOOLCHAIN_FILE=$WASI_SDK/share/cmake/wasi-sdk.cmake && cmake --build bin
+# You would have to set $EMSCRIPTEN_ROOT or $WASI_SDK accordingly
+```
+
+To build using cmake for freestanding or with wasi-libc or wasi-sysroot, it's preferable to create a cmake toolchain file and pass that to your invocation:
+```
+cmake -Bbin -GNinja -DCMAME_TOOLCHAIN_FILE=./my_toolchain_file.cmake
+```
+
+The contents of your toolchain file should be adjust according to your needs. Please check the cmake directory of this repo for examples.
+
+Note that there are certain flags which must be passed to wasm-ld in your CMakeLists.txt file:
+```cmake
+set_target_properties(mytarget PROPERTIES LINKER_LANGUAGE CXX SUFFIX .wasm LINK_FLAGS "-Wl,--no-entry,--allow-undefined,--export-all,--import-memory,--export-memory,--strip-all")
+```
+Also check the CMakeLists.txt file in the repo to see how the examples and tests are built.
 
 ### Using clang bundled with wasi-sdk
-
 - No need to pass a sysroot, nor a target:
 ```
 clang++ -Iinclude -o my.wasm main.cpp -Wl,--no-entry,--allow-undefined,--export-all,--import-memory,--export-memory,--strip-all
 ```
-To use CMake, you can pass the wasi-sdk.cmake to CMake via the `-DCMAKE_TOOLCHAIN_FILE=/path/to/wasi-sdk/share/cmake/wasi-sdk.cmake`.
 
 ### Using stock clang
-
 - clang capable of targeting wasm32-wasi is required. 
 If you installed your clang via a package manager, you might require an extra package like libclang-rt-dev-wasm32 (note that it should match the version of your clang install, i.e libclang-rt-18-dev-wasm32). 
 Additionally you might require lld to get wasm-ld. Similarly, it should match your clang version.
@@ -177,40 +262,16 @@ To compile, you'll need to tell clang to target wasm32-wasi, and point it to the
 clang++ --target=wasm32-wasi -Iinclude -o my.wasm main.cpp --sysroot /path/to/wasi-sysroot -Wl,--no-entry,--allow-undefined,--export-all,--import-memory,--export-memory,--strip-all
 ```
 
-To use CMake, you can configure the target and sysroot using:
-```cmake
-set(CMAKE_SYSTEM_NAME WASI)
-set(CMAKE_SYSTEM_VERSION 1)
-set(CMAKE_SYSTEM_PROCESSOR wasm32)
-set(triple wasm32-wasi)
-
-set(CMAKE_C_COMPILER_TARGET ${triple})
-set(CMAKE_CXX_COMPILER_TARGET ${triple})
-set(CMAKE_ASM_COMPILER_TARGET ${triple})
-```
-
-You can also instruct CMake to generate a wasm file, and apply the necessary link flags:
-```cmake
-add_executable(mytarget main.cpp)
-target_include_directories(cppexample PRIVATE path/to/include/dir)
-set_target_properties(mytarget PROPERTIES SUFFIX .wasm LINK_FLAGS "-Wl,--no-entry,--allow-undefined,--export-all,--import-memory,--export-memory,--strip-all")
-```
-
-Then when invoking cmake, set the CC and/or CXX environment variables to point to clang, or set the CMAKE_C_COMPILER/CMAKE_CXX_COMPILER via the command line or in your CMakeLists.txt:
-```
-CC=clang CXX=clang++ cmake -Bbin -DCMAKE_SYSROOT=/path/to/wasi-sysroot && cmake --build bin --parallel
-```
-
 ## Testing
-
 You can build the current test using:
 ```
-cmake -Bbin -DCMAKE_TOOLCHAIN_FILE=~/wasi-sdk-25.0-x86_64-macos/share/cmake/wasi-sdk.cmake -DEMLITE_BUILD_TESTS=ON -DEMLITE_BUILD_EXAMPLES=ON && cmake --build bin
+./build_tests.sh
 ```
+The tests are built by default for freestanding, wasi-libc, wasi-sysroot, wasi-sdk, and emscripten.
+
 The index.html file in the root of the repo is there to run the tests.
 Starting a server is required to run wasm code in the browser, this can be done using any of the lightweight server apps available, or if you have python, you can run `python3 -m http.server`
 
 ## TODO
-
 - Support binding C/C++ classes to js.
 - Support ownership.

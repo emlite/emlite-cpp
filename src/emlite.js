@@ -63,8 +63,31 @@ let nextCbId = 0;
 export class Emlite {
     constructor(memory) {
         this._memory = memory ?? new WebAssembly.Memory({ initial: 258, maximum: 4096 });
-        this.brk = 0;   
-        this.freelist = 0;   
+        this._updateViews();
+        this.brk = 0;
+        this.freelist = 0;
+    }
+
+    _updateViews() {
+        const b = this._memory.buffer;
+
+        this._i8 = new Int8Array(b);
+        this._u8 = new Uint8Array(b);
+        this._i16 = new Int16Array(b);
+        this._u16 = new Uint16Array(b);
+        this._i32 = new Int32Array(b);
+        this._u32 = new Uint32Array(b);
+        this._f32 = new Float32Array(b);
+        this._f64 = new Float64Array(b);
+
+        globalThis.HEAP8 = this._i8;
+        globalThis.HEAPU8 = this._u8;
+        globalThis.HEAP16 = this._i16;
+        globalThis.HEAPU16 = this._u16;
+        globalThis.HEAP32 = this._i32;
+        globalThis.HEAPU32 = this._u32;
+        globalThis.HEAPF32 = this._f32;
+        globalThis.HEAPF64 = this._f64;
     }
 
     setExports(exports) {
@@ -79,11 +102,12 @@ export class Emlite {
     setSize(off, sz) { this.u32()[off >>> 2] = sz; }
     setNext(off, nx) { this.u32()[(off >>> 2) + 1] = nx; }
 
-    grow(bytes) {
+    growAndRefresh(bytes) {
         const shortfall = this.brk + bytes - this._memory.buffer.byteLength;
         if (shortfall > 0) {
             const pages = Math.ceil(shortfall / PAGE_SIZE);
             this._memory.grow(pages);
+            this._updateViews();
         }
     }
 
@@ -128,7 +152,7 @@ export class Emlite {
         }
 
         const off = this.brk;
-        this.grow(n + HEADER_BYTES);
+        this.growAndRefresh(n + HEADER_BYTES);
         this.setSize(off, n);
         this.brk += HEADER_BYTES + n;
         return off + HEADER_BYTES;
@@ -291,7 +315,7 @@ export class Emlite {
                 this.emlite_free(ptr);
                 return newPtr;
             },
-            emscripten_notify_memory_growth: (i) => {},
+            emscripten_notify_memory_growth: (i) => this._updateViews(),
         };
     }
 }
