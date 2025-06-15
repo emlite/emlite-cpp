@@ -10,8 +10,6 @@
 #define EMLITE_HAS_STD_VECTOR 0
 #endif
 
-extern "C" size_t strlen(const char *s);
-
 namespace emlite {
 
 namespace detail {
