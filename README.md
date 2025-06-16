@@ -132,6 +132,12 @@ The @bjorn3/browser_wasi_shim dependency is not required for freestanding builds
 
 ### Using wasm32-unknown-unknow
 #### In the browser
+Install emlite via npm:
+```bash
+npm install emlite
+```
+
+In your javascript code:
 ```javascript
 import { Emlite } from "emlite";
 
@@ -150,7 +156,7 @@ await main();
 
 #### With a javascript engine like nodejs
 You can get emlite from npm:
-```
+```bash
 npm install emlite
 ```
 
@@ -177,7 +183,13 @@ await main();
 
 ### Using wasm32-wasi, wasm32-wasip1 or emscripten
 #### In the browser
-To use emlite with wasm32-wasi, wasm32-wasip1 or emscripten** in your web stack, you will need a wasi javascript polyfill, here we use @bjorn3/browser_wasi_shim (via unpkg) and we vendor the emlite.js file into our src directory (note that both can also be installed via npm):
+To use emlite with wasm32-wasi, wasm32-wasip1 or emscripten** in your web stack, you will need a wasi javascript polyfill, here we use @bjorn3/browser_wasi_shim to provides us with said polyfill:
+```bash
+npm install emlite
+npm install @bjorn3/browser_wasi_shim
+```
+
+In your javascript code:
 ```javascript
 import { Emlite } from "emlite";
 import { WASI, File, OpenFile, ConsoleStdout } from "@bjorn3/browser_wasi_shim";
@@ -204,20 +216,13 @@ async function main() => {
 
 await main();
 ```
-Note that the example uses unpkg for demonstration purposes, to get better results, use the npm package and a bundler.
-Both @bjorn3/browser_wasi_shim and emlite can be installed via npm.
-If installed via npm, they can be imported using:
-```javascript
-import { WASI, File, OpenFile, ConsoleStdout } from "@bjorn3/browser_wasi_shim";
-import { Emlite } from "emlite";
-```
 
 ** Note that this depends on emscripten's ability to create standalone wasm files, which will also require a wasi shim:
 https://v8.dev/blog/emscripten-standalone-wasm
 
 #### With a javascript engine like nodejs
 You can get emlite from npm:
-```
+```bash
 npm install emlite
 ```
 
@@ -297,12 +302,14 @@ clang++ --target=wasm32-wasi -Iinclude -o my.wasm main.cpp --sysroot /path/to/wa
 ```
 
 ## Testing
+To test emlite, you can clone this repo and run it's test suite:
 ```bash
 git clone https://github.com/MoAlyousef/emlite
 cd emlite
 npm install
 npm run test_node
 npm run build_tests
+npm run gen_html_tests
 npm run serve
 ```
 
@@ -313,7 +320,7 @@ It will also build for wasi-libc, wasi-sysroot, wasi-sdk, and emscripten if the 
 - WASI_SDK
 - EMSCRIPTEN_ROOT
 
-The build_tests script also genererates the necessary javascript glue code, runs webpack and creates the html files for testing. Each build directory should have an index.html file which has links to the rest of the files.
+The gen_html_tests script also genererates the necessary javascript glue code, runs webpack and creates the html files for testing. Each build directory should have an index.html file which has links to the rest of the html files.
 Running wasm code requires starting a server, which can be done using npm run serve.
 
 ## TODO

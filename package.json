@@ -9,8 +9,9 @@
     "test": "tests"
   },
   "scripts": {
+    "test_node": "node tests/node_test.js",
     "build_tests": "node tests/build_tests.js",
-    "test_node": "node tests/index.js",
+    "gen_html_tests": "node tests/gen_html_tests.js",
     "serve": "http-server"
   },
   "repository": {
@@ -33,7 +34,6 @@
   "devDependencies": {
     "@bjorn3/browser_wasi_shim": "^0.4.1",
     "http-server": "^14.1.1",
-    "webpack": "^5.99.9",
     "webpack-cli": "^6.0.1"
   }
 }
