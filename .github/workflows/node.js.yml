@@ -40,5 +40,4 @@ jobs:
       env:
         WASI_SDK: wasi-sdk-25.0-x86_64-linux
         WASI_LIBC: /usr
-        WASI_SYSROOT: $PWD/wasi-sysroot-25.0
-      run: npm run test_all
+      run: WASI_SYSROOT=$(pwd)/wasi-sysroot-25.0 npm run test_all
