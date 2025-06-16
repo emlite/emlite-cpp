@@ -1,5 +1,11 @@
+import { execSync } from "child_process";
 import fs from 'fs';
 import * as path from "path";
+
+function run(cmd) {
+    console.log(`\x1b[36m$ ${cmd}\x1b[0m`);
+    execSync(cmd, { stdio: "inherit", shell: true });
+}
 
 
 function* walk(dir, ext) {
@@ -20,11 +26,11 @@ function bundleWasm(wasmPath) {
 
     if (dir.includes("freestanding")) {
         fs.writeFileSync(wrapper, `
-            import { Emlite } from "emlite";
+            import { Emlite } from "../src/emlite.js";
 
             async function main() {
                 let emlite = new Emlite();
-                let wasm = await WebAssembly.compileStreaming(fetch("./bin_freestanding/dom_test1_nostdlib.wasm"));
+                let wasm = await WebAssembly.compileStreaming(fetch("${path.basename(wasmPath)}"));
                 let inst = await WebAssembly.instantiate(wasm, {
                     env: emlite.env,
                 });

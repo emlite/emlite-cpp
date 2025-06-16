@@ -9,7 +9,7 @@ int main() {
     auto require = Val::global("require");
     auto fs = require(Val("fs"));
     
-    fs.call("readFile", Val("index.html"), Val("utf8"), Val([](Handle h) -> Handle {
+    fs.call("readFile", Val("README.md"), Val("utf8"), Val([](Handle h) -> Handle {
         puts(Val::from_handle(Val::from_handle(h)[1].as<int>()).as<UniqCPtr<char[]>>().get());
         return Val::undefined().as_handle();
     }));

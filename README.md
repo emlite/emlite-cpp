@@ -310,20 +310,18 @@ To test emlite, you can clone this repo and run it's test suite:
 git clone https://github.com/MoAlyousef/emlite
 cd emlite
 npm install
-npm run test_node
-npm run build_tests
-npm run gen_html_tests
+npm run test_all
 npm run serve
 ```
 
-build_tests builds by default for freestanding.
+test_all also runs build_tests which builds by default for freestanding.
 It will also build for wasi-libc, wasi-sysroot, wasi-sdk, and emscripten if the necessary environment variables are set:
 - WASI_LIBC
 - WASI_SYSROOT
 - WASI_SDK
 - EMSCRIPTEN_ROOT
 
-The gen_html_tests script also genererates the necessary javascript glue code, runs webpack and creates the html files for testing. Each build directory should have an index.html file which has links to the rest of the html files.
+It also runs gen_html_tests which genererates the necessary javascript glue code, runs webpack and creates the html files for testing. Each build directory should have an index.html file which has links to the rest of the html files.
 Running wasm code requires starting a server, which can be done using npm run serve.
 
 ## Creating a browser wasm32-wasi application using npm and emlite
