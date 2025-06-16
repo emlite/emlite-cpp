@@ -28,7 +28,7 @@ clang --target=wasm32-wasi -I../include -o my.wasm main.c --sysroot /path/to/was
 
 To build the C++ example:
 ```
-clang++-18 --target=wasm32-wasi -I../include -o my.wasm main.cpp --sysroot /path/to/wasi-sysroot -Wl,--no-entry,--allow-undefined,--export-all,--import-memory,--export-memory,--strip-all
+clang++ --target=wasm32-wasi -I../include -o my.wasm main.cpp --sysroot /path/to/wasi-sysroot -Wl,--no-entry,--allow-undefined,--export-all,--import-memory,--export-memory,--strip-all
 ```
 
 CMake can also be used. It needs to be invoked while passing clang as your CC and CXX compiler, and you will need to point it to your sysroot (using an absolute path):

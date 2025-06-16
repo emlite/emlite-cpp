@@ -47,7 +47,7 @@ In your web stack:
 import { WASI, File, OpenFile, ConsoleStdout } from "@bjorn3/browser_wasi_shim";
 import { Emlite } from "emlite";
 
-window.onload = async () => {
+async function main() => {
     let fds = [
         new OpenFile(new File([])), // 0, stdin
         ConsoleStdout.lineBuffered(msg => console.log(`[WASI stdout] ${msg}`)), // 1, stdout
@@ -63,7 +63,9 @@ window.onload = async () => {
     });
     emlite.setExports(inst.exports);
     wasi.start(inst);
-};
+}
+
+await main();
 ```
 
 ## Building your project

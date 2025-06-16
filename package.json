@@ -1,7 +1,7 @@
 {
   "name": "emlite",
-  "version": "0.1.7",
-  "description": "A tiny JS bridge for C/C++ via wasm(-wasi)",
+  "version": "0.1.8",
+  "description": "A tiny JS bridge for C/C++ via wasm",
   "main": "src/emlite.js",
   "type": "module",
   "directories": {
@@ -9,7 +9,9 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "node tests/index.js"
+    "build_tests": "node tests/build_tests.js",
+    "test_node": "node tests/index.js",
+    "serve": "http-server"
   },
   "repository": {
     "type": "git",
@@ -27,5 +29,11 @@
   "bugs": {
     "url": "https://github.com/MoAlyousef/emlite/issues"
   },
-  "homepage": "https://github.com/MoAlyousef/emlite#readme"
+  "homepage": "https://github.com/MoAlyousef/emlite#readme",
+  "devDependencies": {
+    "@bjorn3/browser_wasi_shim": "^0.4.1",
+    "http-server": "^14.1.1",
+    "webpack": "^5.99.9",
+    "webpack-cli": "^6.0.1"
+  }
 }

@@ -6,3 +6,5 @@
 /rust/emlite/Cargo.lock
 /zig/emlite/zig-out
 /zig/emlite/.zig-cache
+/node_modules
+/package-lock.json

@@ -57,14 +57,85 @@ EMLITE_USED int main() {
 }
 ```
 
+To quickly try out emlite in the browser, create an index.html file:
+(Note this is not the recommended way to deploy. You should install the required dependencies via npm and use a bundler like webpack to handle bundling, minifying, tree-shaking ...etc).
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script type="module">
+        import { WASI, File, OpenFile, ConsoleStdout } from "https://unpkg.com/@bjorn3/browser_wasi_shim";
+        import { Emlite } from "https://unpkg.com/emlite";
+        // or (if you decide to vendor emlite.js)
+        // import { Emlite } from "./src/emlite.js";
+
+        window.onload = async () => {
+            let fds = [
+                new OpenFile(new File([])), // 0, stdin
+                ConsoleStdout.lineBuffered(msg => console.log(`[WASI stdout] ${msg}`)), // 1, stdout
+                ConsoleStdout.lineBuffered(msg => console.warn(`[WASI stderr] ${msg}`)), // 2, stderr
+            ];
+            let wasi = new WASI([], [], fds);
+            let emlite = new Emlite();
+            let wasm = await WebAssembly.compileStreaming(fetch("./bin/mywasm.wasm"));
+            let inst = await WebAssembly.instantiate(wasm, {
+                "wasi_snapshot_preview1": wasi.wasiImport,
+                "env": emlite.env,
+            });
+            emlite.setExports(inst.exports);
+            // if your C/C++ has a main function, use: `wasi.start(inst)`. If not, use `wasi.initialize(inst)`.
+            wasi.start(inst);
+            // test our exported function `add` in tests/dom_test1.cpp works
+            window.alert(inst.exports.add(1, 2));
+        };
+    </script>
+</body>
+</html>
+```
+
+The @bjorn3/browser_wasi_shim dependency is not required for freestanding builds:
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script type="module">
+        import { Emlite } from "https://unpkg.com/emlite";
+        // or (if you decide to vendor emlite.js)
+        // import { Emlite } from "./src/emlite.js";
+
+        window.onload = async () => {
+            let emlite = new Emlite();
+            let wasm = await WebAssembly.compileStreaming(fetch("./bin/mywasm.wasm"));
+            let inst = await WebAssembly.instantiate(wasm, {
+                "env": emlite.env,
+            });
+            emlite.setExports(inst.exports);
+            // test our exported function `add` in tests/dom_test1.cpp works
+            window.alert(inst.exports.add(1, 2));
+        };
+    </script>
+</body>
+</html>
+```
+
 ## Deployment
 
 ### Using wasm32-unknown-unknow
 #### In the browser
 ```javascript
-import { Emlite } from "./src/emlite.js";
+import { Emlite } from "emlite";
 
-window.onload = async () => {
+async function main() {
     let emlite = new Emlite();
     let wasm = await WebAssembly.compileStreaming(fetch("./bin_freestanding/dom_test1_nostdlib.wasm"));
     let inst = await WebAssembly.instantiate(wasm, {
@@ -72,7 +143,9 @@ window.onload = async () => {
     });
     emlite.setExports(inst.exports);
     window.alert(inst.exports.add(1, 2));
-};
+}
+
+await main();
 ```
 
 #### With a javascript engine like nodejs
@@ -106,11 +179,10 @@ await main();
 #### In the browser
 To use emlite with wasm32-wasi, wasm32-wasip1 or emscripten** in your web stack, you will need a wasi javascript polyfill, here we use @bjorn3/browser_wasi_shim (via unpkg) and we vendor the emlite.js file into our src directory (note that both can also be installed via npm):
 ```javascript
-// see the index.html for an example
-import { WASI, File, OpenFile, ConsoleStdout } from "https://unpkg.com/@bjorn3/browser_wasi_shim";
-import { Emlite } from "./src/emlite.js";
+import { Emlite } from "emlite";
+import { WASI, File, OpenFile, ConsoleStdout } from "@bjorn3/browser_wasi_shim";
 
-window.onload = async () => {
+async function main() => {
     let fds = [
         new OpenFile(new File([])), // 0, stdin
         ConsoleStdout.lineBuffered(msg => console.log(`[WASI stdout] ${msg}`)), // 1, stdout
@@ -128,7 +200,9 @@ window.onload = async () => {
     wasi.start(inst);
     // test our exported function `add` in tests/dom_test1.cpp works
     window.alert(inst.exports.add(1, 2));
-};
+}
+
+await main();
 ```
 Note that the example uses unpkg for demonstration purposes, to get better results, use the npm package and a bundler.
 Both @bjorn3/browser_wasi_shim and emlite can be installed via npm.
@@ -223,14 +297,24 @@ clang++ --target=wasm32-wasi -Iinclude -o my.wasm main.cpp --sysroot /path/to/wa
 ```
 
 ## Testing
-You can build the current test using:
+```bash
+git clone https://github.com/MoAlyousef/emlite
+cd emlite
+npm install
+npm run test_node
+npm run build_tests
+npm run serve
 ```
-./build_tests.sh
-```
-The tests are built by default for freestanding, wasi-libc, wasi-sysroot, wasi-sdk, and emscripten.
 
-The index.html file in the root of the repo is there to run the tests.
-Starting a server is required to run wasm code in the browser, this can be done using any of the lightweight server apps available, or if you have python, you can run `python3 -m http.server`
+build_tests builds by default for freestanding.
+It will also build for wasi-libc, wasi-sysroot, wasi-sdk, and emscripten if the necessary environment variables are set:
+- WASI_LIBC
+- WASI_SYSROOT
+- WASI_SDK
+- EMSCRIPTEN_ROOT
+
+The build_tests script also genererates the necessary javascript glue code, runs webpack and creates the html files for testing. Each build directory should have an index.html file which has links to the rest of the files.
+Running wasm code requires starting a server, which can be done using npm run serve.
 
 ## TODO
 - Support binding C/C++ classes to js.

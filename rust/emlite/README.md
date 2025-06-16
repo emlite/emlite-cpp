@@ -132,7 +132,7 @@ To use it in your web stack, you will need a wasi javascript polyfill, here we u
 import { WASI, File, OpenFile, ConsoleStdout } from "@bjorn3/browser_wasi_shim";
 import { Emlite } from "emlite";
 
-window.onload = async () => {
+async function main() {
     let fds = [
         new OpenFile(new File([])), // 0, stdin
         ConsoleStdout.lineBuffered(msg => console.log(`[WASI stdout] ${msg}`)), // 1, stdout
@@ -150,7 +150,9 @@ window.onload = async () => {
     wasi.start(inst);
     // test our exported function `add` in tests/dom_test1.cpp works
     window.alert(inst.exports.add(1, 2));
-};
+}
+
+await main();
 ```
 
 #### With a javascript engine like nodejs
@@ -196,7 +198,7 @@ Emlite-rs can be used with Rust's wasm32-unknown-unknown target:
 ```javascript
 import { Emlite } from "./src/emlite.js";
 
-window.onload = async () => {
+async function main() => {
     let emlite = new Emlite();
     let wasm = await WebAssembly.compileStreaming(fetch("./target/wasm32-unknown-unknown/release/examples/audio.wasm"));
     let inst = await WebAssembly.instantiate(wasm, {
@@ -204,7 +206,9 @@ window.onload = async () => {
     });
     emlite.setExports(inst.exports);
     inst.exports.main();
-};
+}
+
+await main();
 ```
 
 #### Targeting node and other javascript engins
