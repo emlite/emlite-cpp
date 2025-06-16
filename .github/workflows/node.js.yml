@@ -29,7 +29,6 @@ jobs:
         wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-25/wasi-sdk-25.0-x86_64-linux.tar.gz
         tar -xf wasi-sdk-25.0-x86_64-linux.tar.gz
         rm -rf wasi-sdk-25.0-x86_64-linux.tar.gz
-        - name: Get wasi-sdk
     - name: Get wasi-sysroot
       run: |
         wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-25/wasi-sysroot-25.0.tar.gz
