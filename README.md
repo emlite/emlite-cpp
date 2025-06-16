@@ -59,6 +59,8 @@ EMLITE_USED int main() {
 
 To quickly try out emlite in the browser, create an index.html file:
 (Note this is not the recommended way to deploy. You should install the required dependencies via npm and use a bundler like webpack to handle bundling, minifying, tree-shaking ...etc).
+
+- Using wasi (wasi-libc, wasi-sysroot, wasi-sdk or emscripten):
 ```html
 <!DOCTYPE html>
 <html lang="en">
@@ -98,6 +100,7 @@ To quickly try out emlite in the browser, create an index.html file:
 </html>
 ```
 
+- Freestanding
 The @bjorn3/browser_wasi_shim dependency is not required for freestanding builds:
 ```html
 <!DOCTYPE html>
@@ -130,7 +133,7 @@ The @bjorn3/browser_wasi_shim dependency is not required for freestanding builds
 
 ## Deployment
 
-### Using wasm32-unknown-unknow
+### Using wasm32-unknown-unknown
 #### In the browser
 Install emlite via npm:
 ```bash

@@ -18,32 +18,50 @@ function bundleWasm(wasmPath) {
     const bundlePath = path.join(dir, bundle);
     const htmlPath = path.join(dir, `${base}.html`);
 
-    fs.writeFileSync(
-        wrapper,
-        `import { Emlite } from "../src/emlite.js";
-import { WASI, File, OpenFile, ConsoleStdout } from "@bjorn3/browser_wasi_shim";
+    if (dir.includes("freestanding")) {
+        fs.writeFileSync(wrapper, `
+            import { Emlite } from "emlite";
 
-async function main() {
-  const fds = [
-    new OpenFile(new File([])),
-    ConsoleStdout.lineBuffered(msg => console.log("[WASI] " + msg)),
-    ConsoleStdout.lineBuffered(msg => console.warn("[WASI] " + msg))
-  ];
-  const wasi = new WASI([], [], fds);
-  const emlite = new Emlite();
+            async function main() {
+                let emlite = new Emlite();
+                let wasm = await WebAssembly.compileStreaming(fetch("./bin_freestanding/dom_test1_nostdlib.wasm"));
+                let inst = await WebAssembly.instantiate(wasm, {
+                    env: emlite.env,
+                });
+                emlite.setExports(inst.exports);
+                inst.exports.main?.();
+                window.alert("1 + 2 = " + (inst.exports.add?.(1,2) ?? "n/a"));
+            }
 
-  const wasm = await WebAssembly.compileStreaming(fetch("${path.basename(wasmPath)}"));
-  const inst = await WebAssembly.instantiate(wasm, {
-    wasi_snapshot_preview1: wasi.wasiImport,
-    env: emlite.env,
-  });
+            await main();\n`
+        );
+    } else {
+        fs.writeFileSync(wrapper, `
+            import { Emlite } from "../src/emlite.js";
+            import { WASI, File, OpenFile, ConsoleStdout } from "@bjorn3/browser_wasi_shim";
 
-  emlite.setExports(inst.exports);
-  wasi.start(inst);
-  alert("1 + 2 = " + (inst.exports.add?.(1,2) ?? "n/a"));
-}
-main();\n`,
-    );
+            async function main() {
+                const fds = [
+                    new OpenFile(new File([])),
+                    ConsoleStdout.lineBuffered(msg => console.log("[WASI] " + msg)),
+                    ConsoleStdout.lineBuffered(msg => console.warn("[WASI] " + msg))
+                ];
+                const wasi = new WASI([], [], fds);
+                const emlite = new Emlite();
+
+                const wasm = await WebAssembly.compileStreaming(fetch("${path.basename(wasmPath)}"));
+                const inst = await WebAssembly.instantiate(wasm, {
+                    wasi_snapshot_preview1: wasi.wasiImport,
+                    env: emlite.env,
+                });
+
+                emlite.setExports(inst.exports);
+                wasi.start(inst);
+                window.alert("1 + 2 = " + (inst.exports.add?.(1,2) ?? "n/a"));
+            }
+            await main();\n`,
+        );
+    }
 
     run(
         [
