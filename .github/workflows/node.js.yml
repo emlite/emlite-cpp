@@ -25,6 +25,8 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
+    - name: Get wasi-libc via apt
+      run: sudo apt-get update && sudo apt-get install wasi-libc
     - name: Get wasi-sdk
       run: |
         wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-25/wasi-sdk-25.0-x86_64-linux.tar.gz
@@ -33,4 +35,4 @@ jobs:
     - name: npm install
       run: npm install
     - name: build tests
-      run: WASI_SDK=wasi-sdk-25.0-x86_64-linux npm run test_all
+      run: WASI_SDK=wasi-sdk-25.0-x86_64-linux WASI_LIBC=/usr npm run test_all
