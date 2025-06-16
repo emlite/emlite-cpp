@@ -314,7 +314,9 @@ npm run test_all
 npm run serve
 ```
 
-test_all also runs build_tests which builds by default for freestanding.
+Building the tests requires CMake and Ninja.
+
+test_all runs build_tests which builds by default for freestanding.
 It will also build for wasi-libc, wasi-sysroot, wasi-sdk, and emscripten if the necessary environment variables are set:
 - WASI_LIBC
 - WASI_SYSROOT
