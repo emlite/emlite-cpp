@@ -1,6 +1,3 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
-
 name: Node.js CI
 
 on:
@@ -32,7 +29,17 @@ jobs:
         wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-25/wasi-sdk-25.0-x86_64-linux.tar.gz
         tar -xf wasi-sdk-25.0-x86_64-linux.tar.gz
         rm -rf wasi-sdk-25.0-x86_64-linux.tar.gz
+        - name: Get wasi-sdk
+    - name: Get wasi-sysroot
+      run: |
+        wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-25/wasi-sysroot-25.0.tar.gz
+        tar -xf wasi-sysroot-25.0.tar.gz
+        rm -rf wasi-sysroot-25.0.tar.gz
     - name: npm install
       run: npm install
-    - name: build tests
-      run: WASI_SDK=wasi-sdk-25.0-x86_64-linux WASI_LIBC=/usr npm run test_all
+    - name: build tests for freestanding, wasi-libc, wasi-sysroot and wasi-sdk
+      env:
+        WASI_SDK: wasi-sdk-25.0-x86_64-linux
+        WASI_LIBC: /usr
+        WASI_SYSROOT: wasi-sysroot-25.0
+      run: npm run test_all
