@@ -33,7 +33,7 @@ async function main() {
         // 1- Freestanding (stock clang, wasm32-unknown-unknown)
         buildSet(
             "FREESTANDING",
-            "bin_freestanding",
+            "bin/freestanding",
             "./cmake/freestanding.cmake",
         );
 
@@ -43,7 +43,7 @@ async function main() {
         if (WASI_SDK) {
             buildSet(
                 "WASI_SDK",
-                "bin_wasi_sdk",
+                "bin/wasi_sdk",
                 join(WASI_SDK, "share/cmake/wasi-sdk.cmake"),
             );
         }
@@ -52,7 +52,7 @@ async function main() {
         if (WASI_SYSROOT) {
             buildSet(
                 "WASI_SYSROOT",
-                "bin_wasi_sysroot",
+                "bin/wasi_sysroot",
                 "./cmake/wasi_sysroot.cmake",
             );
         }
@@ -61,7 +61,7 @@ async function main() {
         if (WASI_LIBC) {
             buildSet(
                 "WASI_LIBC",
-                "bin_wasi_libc",
+                "bin/wasi_libc",
                 "./cmake/wasi_libc.cmake",
             );
         }
@@ -70,7 +70,7 @@ async function main() {
         if (EMSCRIPTEN_ROOT) {
             buildSet(
                 "EMSCRIPTEN_ROOT",
-                "bin_emscripten",
+                "bin/emscripten",
                 join(
                     EMSCRIPTEN_ROOT,
                     "cmake/Modules/Platform/Emscripten.cmake",

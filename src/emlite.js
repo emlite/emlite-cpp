@@ -41,11 +41,6 @@ class UniqueList {
     [Symbol.iterator]() { return this._items.values(); }
 }
 
-const HEADER_BYTES = 8;
-const ALIGN = 8;
-const PAGE_SIZE = 65536;
-const alignUp = (x, a) => ((x + a - 1) >>> 0) & ~(a - 1);
-
 const OBJECT_MAP = new UniqueList();
 globalThis.ValMap = OBJECT_MAP;
 OBJECT_MAP.add(null);
@@ -97,7 +92,6 @@ export class Emlite {
     }
 
     copyStringToWasm(str) {
-        console.log("here");
         if (typeof this.exports.malloc !== "undefined") {
             const utf8 = enc.encode(str + "\0");
             const ptr = this.exports.malloc(utf8.length);

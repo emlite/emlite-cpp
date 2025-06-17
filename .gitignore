@@ -1,5 +1,4 @@
 /bin
-/bin_*
 *.wasm
 .clangd
 /rust/emlite/target

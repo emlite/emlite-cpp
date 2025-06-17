@@ -147,7 +147,7 @@ import { Emlite } from "emlite";
 
 async function main() {
     let emlite = new Emlite();
-    let wasm = await WebAssembly.compileStreaming(fetch("./bin_freestanding/dom_test1_nostdlib.wasm"));
+    let wasm = await WebAssembly.compileStreaming(fetch("./bin/freestanding/dom_test1_nostdlib.wasm"));
     let inst = await WebAssembly.instantiate(wasm, {
         env: emlite.env,
     });

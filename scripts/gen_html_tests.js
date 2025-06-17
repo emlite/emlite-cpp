@@ -21,12 +21,11 @@ function bundleWasm(wasmPath) {
     const base = path.basename(wasmPath, ".wasm");
     const wrapper = path.join(dir, `${base}.wrapper.js`);
     const bundle = `${base}.bundle.js`;
-    const bundlePath = path.join(dir, bundle);
     const htmlPath = path.join(dir, `${base}.html`);
 
     if (dir.includes("freestanding")) {
         fs.writeFileSync(wrapper, `
-            import { Emlite } from "../src/emlite.js";
+            import { Emlite } from "../../src/emlite.js";
 
             async function main() {
                 let emlite = new Emlite();
@@ -43,7 +42,7 @@ function bundleWasm(wasmPath) {
         );
     } else {
         fs.writeFileSync(wrapper, `
-            import { Emlite } from "../src/emlite.js";
+            import { Emlite } from "../../src/emlite.js";
             import { WASI, File, OpenFile, ConsoleStdout } from "@bjorn3/browser_wasi_shim";
 
             async function main() {
@@ -107,7 +106,7 @@ function writeDirIndex(dir, pages) {
         .map(({ base, html }) => `  <li><a href="./${html}">${base}</a></li>`)
         .join("\n");
     fs.writeFileSync(
-        path.join(dir, "index.html"),
+        path.join(path.join("./bin", dir), "index.html"),
         `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><title>Index of ${path.basename(dir)}</title></head>
@@ -126,10 +125,10 @@ async function main() {
         console.log("\n\u2705  Starting WASM packaging …");
 
         for (const binDir of fs
-            .readdirSync(".")
-            .filter((d) => d.startsWith("bin_") && fs.statSync(d).isDirectory())) {
+            .readdirSync("./bin")
+            .filter((d) => fs.statSync(path.join("./bin", d)).isDirectory())) {
             const pages = [];
-            for (const wasm of walk(binDir, ".wasm")) {
+            for (const wasm of walk(path.join("./bin", binDir), ".wasm")) {
                 pages.push(bundleWasm(wasm));
             }
             if (pages.length) writeDirIndex(binDir, pages);

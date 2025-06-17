@@ -19,7 +19,7 @@ async function main() {
 
     const emlite = new Emlite();
     const wasm = await WebAssembly.compile(
-        await readFile("./bin_wasi_sdk/node_readfile.wasm"),
+        await readFile("./bin/wasi_sdk/node_readfile.wasm"),
     );
     const instance = await WebAssembly.instantiate(wasm, {
         wasi_snapshot_preview1: wasi.wasiImport,

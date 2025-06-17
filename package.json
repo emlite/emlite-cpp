@@ -13,8 +13,8 @@
     "test_node": "node tests/node_test.js",
     "gen_html_tests": "node scripts/gen_html_tests.js",
     "test_all": "npm run build_tests && npm run test_node && npm run gen_html_tests",
-    "serve": "http-server",
-    "clean": "rm -rf bin_*"
+    "serve": "http-server ./bin",
+    "clean": "rm -rf bin"
   },
   "repository": {
     "type": "git",

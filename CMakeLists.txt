@@ -50,8 +50,10 @@ if (EMLITE_BUILD_EXAMPLS OR EMLITE_BUILD_TESTS)
             LACKS_TIME_H
             NO_MALLOC_STATS=1
             HAVE_MMAP=0
+            HAVE_MORECORE=1
+            MORECORE=sbrk
             MORECORE_CANNOT_TRIM=1
-            ABORT
+            MORECORE_CONTIGUOUS=1
             NO_MALLINFO=1
         )
         set(DLMALLOC_LIB dlmalloc)
