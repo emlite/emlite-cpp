@@ -35,9 +35,6 @@ extern "env" fn emlite_val_make_callback(id: Handle) Handle;
 extern "env" fn emlite_val_instanceof(a: Handle, b: Handle) bool;
 extern "env" fn emlite_val_delete(val: Handle) void;
 extern "env" fn emlite_val_throw(val: Handle) void;
-// extern "env" fn emlite_malloc(len: usize) -> *mut c_void;
-// extern "env" fn emlite_realloc(ptr: *mut c_void, len: usize) -> *mut c_void;
-// extern "env" fn emlite_free(ptr: *mut c_void);
 
 pub const Val = struct {
     handle: Handle,

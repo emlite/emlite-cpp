@@ -12,14 +12,19 @@ extern "C" {
 #if __has_include(<stdlib.h>)
 #include <stdlib.h>
 #else
-void *malloc(size_t);
-void *realloc(void *, size_t);
-void free(void *);
+void *emlite_malloc(size_t);
+void *emlite_realloc(void *, size_t);
+void emlite_free(void *);
+extern void *malloc(size_t);
+extern void *realloc(void *, size_t);
+extern void free(void *);
 #endif
 
 #if __has_include(<string.h>)
 #include <string.h>
 #else
+void *memset(void *dest, int ch, size_t count);
+void *memcpy(void *dest, const void *src, size_t n);
 size_t strlen(const char *);
 #endif
 
@@ -31,52 +36,46 @@ typedef uint32_t Handle;
 
 typedef Handle (*Callback)(Handle);
 
-// externs
-Handle emlite_val_null(void);
-Handle emlite_val_undefined(void);
-Handle emlite_val_false(void);
-Handle emlite_val_true(void);
-Handle emlite_val_global_this();
-Handle emlite_val_new_array(void);
-Handle emlite_val_new_object(void);
-char *emlite_val_typeof(Handle);
-Handle emlite_val_construct_new(Handle, Handle argv);
-Handle emlite_val_func_call(Handle func, Handle argv);
-void emlite_val_push(Handle arr, Handle v);
-Handle emlite_val_make_int(int t);
-Handle emlite_val_make_double(double t);
-Handle emlite_val_make_str(const char *, size_t);
-int emlite_val_get_value_int(Handle);
-double emlite_val_get_value_double(Handle);
-char *emlite_val_get_value_string(Handle);
-Handle emlite_val_get_elem(Handle, size_t);
-bool emlite_val_is_string(Handle);
-bool emlite_val_is_number(Handle);
-bool emlite_val_not(Handle);
-bool emlite_val_gt(Handle, Handle);
-bool emlite_val_gte(Handle, Handle);
-bool emlite_val_lt(Handle, Handle);
-bool emlite_val_lte(Handle, Handle);
-bool emlite_val_equals(Handle, Handle);
-bool emlite_val_strictly_equals(Handle, Handle);
-bool emlite_val_instanceof(Handle, Handle);
-void emlite_val_delete(Handle);
-void emlite_val_throw(Handle);
-
-Handle emlite_val_obj_call(
+extern Handle emlite_val_null(void);
+extern Handle emlite_val_undefined(void);
+extern Handle emlite_val_false(void);
+extern Handle emlite_val_true(void);
+extern Handle emlite_val_global_this();
+extern Handle emlite_val_new_array(void);
+extern Handle emlite_val_new_object(void);
+extern char *emlite_val_typeof(Handle);
+extern Handle emlite_val_construct_new(Handle, Handle argv);
+extern Handle emlite_val_func_call(Handle func, Handle argv);
+extern void emlite_val_push(Handle arr, Handle v);
+extern Handle emlite_val_make_int(int t);
+extern Handle emlite_val_make_double(double t);
+extern Handle emlite_val_make_str(const char *, size_t);
+extern int emlite_val_get_value_int(Handle);
+extern double emlite_val_get_value_double(Handle);
+extern char *emlite_val_get_value_string(Handle);
+extern Handle emlite_val_get_elem(Handle, size_t);
+extern bool emlite_val_is_string(Handle);
+extern bool emlite_val_is_number(Handle);
+extern bool emlite_val_not(Handle);
+extern bool emlite_val_gt(Handle, Handle);
+extern bool emlite_val_gte(Handle, Handle);
+extern bool emlite_val_lt(Handle, Handle);
+extern bool emlite_val_lte(Handle, Handle);
+extern bool emlite_val_equals(Handle, Handle);
+extern bool emlite_val_strictly_equals(Handle, Handle);
+extern bool emlite_val_instanceof(Handle, Handle);
+extern void emlite_val_delete(Handle);
+extern void emlite_val_throw(Handle);
+extern Handle emlite_val_obj_call(
     Handle obj, const char *name, size_t len, Handle argv
 );
-Handle emlite_val_obj_prop(Handle obj, const char *prop, size_t len);
-void emlite_val_obj_set_prop(
+extern Handle emlite_val_obj_prop(Handle obj, const char *prop, size_t len);
+extern void emlite_val_obj_set_prop(
     Handle obj, const char *prop, size_t len, Handle val
 );
-bool emlite_val_obj_has_prop(Handle, const char *prop, size_t len);
-bool emlite_val_obj_has_own_prop(Handle, const char *prop, size_t len);
-Handle emlite_val_make_callback(Handle id);
-void *emlite_malloc(size_t);
-void *emlite_realloc(void *, size_t);
-void emlite_free(void *);
-// end externs
+extern bool emlite_val_obj_has_prop(Handle, const char *prop, size_t len);
+extern bool emlite_val_obj_has_own_prop(Handle, const char *prop, size_t len);
+extern Handle emlite_val_make_callback(Handle id);
 
 typedef struct {
     Handle h;
@@ -135,9 +134,33 @@ em_Val emlite_eval_v(const char *src, ...);
 // present in freestanding environments
 #include <stdarg.h>
 
+#if __has_include(<errno.h>)
+#include <errno.h>
+#else
+extern _Thread_local int __errno_tls;
+#define errno __errno_tls
+#define ENOMEM 12
+#endif
+
 #if __has_include(<string.h>)
 #include <string.h>
 #else
+void *memset(void *dest, int ch, size_t count) {
+    unsigned char *d   = (unsigned char *)dest;
+    unsigned char byte = (unsigned char)ch;
+    while (count--)
+        *d++ = byte;
+
+    return dest;
+}
+void *memcpy(void *dest, const void *src, size_t n) {
+    unsigned char *d       = (unsigned char *)dest;
+    const unsigned char *s = (const unsigned char *)src;
+    while (n--)
+        *d++ = *s++;
+
+    return dest;
+}
 size_t strlen(const char *s) {
     const char *p = s;
     while (*p)
@@ -149,17 +172,81 @@ size_t strlen(const char *s) {
 #if __has_include(<stdlib.h>)
 #include <stdlib.h>
 #else
-void *malloc(size_t s) {
-    return emlite_malloc(s);
+void abort(void) { __builtin_unreachable(); }
+
+// If we don't have the above, we most likely don't have sbrk.
+// If we link dlmalloc, it expects sbrk:
+#define WASM_PAGESIZE 65536u
+
+extern unsigned char __heap_base;
+static uintptr_t heap_top = (uintptr_t)&__heap_base;
+
+/* Round p up to the next multiple of n (n must be a power-of-two). */
+static inline uintptr_t align_up(uintptr_t p, uintptr_t n) {
+    return (p + n - 1u) & ~(n - 1u);
 }
 
-void *realloc(void * p, size_t s) {
-    return emlite_realloc(p, s);
+void *sbrk(intptr_t increment) {
+    // sbrk(0) returns the current memory size.
+    if (increment == 0) {
+        // The wasm spec doesn't guarantee that memory.grow of 0 always
+        // succeeds.
+        return (void *)(__builtin_wasm_memory_size(0) * WASM_PAGESIZE);
+    }
+
+    // We only support page-size increments.
+    if (increment % WASM_PAGESIZE != 0) {
+        abort();
+    }
+
+    // WebAssembly doesn't support shrinking linear memory.
+    if (increment < 0) {
+        abort();
+    }
+
+    uintptr_t old =
+        __builtin_wasm_memory_grow(0, (uintptr_t)increment / WASM_PAGESIZE);
+
+    if (old == SIZE_MAX) {
+        errno = ENOMEM;
+        return (void *)-1;
+    }
+
+    return (void *)(old * WASM_PAGESIZE);
 }
 
-void free(void *p) {
-    emlite_free(p);
+void *emlite_malloc(size_t size) {
+    uintptr_t aligned_top = align_up(heap_top, 8u);
+    uintptr_t new_top     = aligned_top + (uintptr_t)size;
+
+    uintptr_t cur_brk = (uintptr_t)sbrk(0);
+
+    if (new_top > cur_brk) {
+        uintptr_t diff      = new_top - cur_brk;
+        uintptr_t increment = align_up(diff, WASM_PAGESIZE);
+        if (sbrk((intptr_t)increment) == (void *)-1)
+            return NULL;
+    }
+    heap_top = new_top;
+    return (void *)aligned_top;
 }
+void emlite_free(void *ptr) { (void)ptr; }
+void *emlite_realloc(void *old, size_t sz) {
+    (void)old;
+    return emlite_malloc(sz);
+}
+
+#ifndef HAVE_DLMALLOC
+    void *malloc(size_t s) {
+        return emlite_malloc(s);
+    }
+    void free(void *ptr) {
+        emlite_free(ptr);
+    }
+    void *realloc(void *ptr, size_t s) {
+        return emlite_realloc(ptr, s);
+    }
+#endif
 #endif
 
 #if __has_include(<stdio.h>)
@@ -473,8 +560,8 @@ em_Val emlite_eval_v(const char *src, ...) {
     size_t len = vsnprintf(NULL, 0, src, args_len);
     va_end(args_len);
     char *ptr = (char *)malloc(len + 1);
-    // check if ptr was allocated
-    vsnprintf(ptr, len + 1, src, args);
+    // check ptr!
+    (void)vsnprintf(ptr, len + 1, src, args);
     va_end(args);
     em_Val ret = emlite_eval(ptr);
     free(ptr);

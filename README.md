@@ -2,10 +2,11 @@
 Emlite is a tiny JS bridge for native code (C/C++/Rust/Zig) via Wasm, which is agnostic of the underlying toolchain. Thus it can target wasm32-unknown-unknown (freestanding, via stock clang), wasm32-wasi (via wasi-libc or wasi-sysroot), wasm32-wasip1 (via wasi-sdk or wasi-sysroot) and emscripten. 
 It provides a header only library and a single javascript file that allows plain C or C++ code — compiled for wasm — to interoperate with javascript (including the DOM) and other JavaScript objects/runtimes without writing much JS “glue.”
 It provides both a C api and a higher level C++ api similar to emscripten's val api. The repo also provides higher-level Rust and Zig bindings to emlite.
+For freestanding builds, it provides a simple bump allocator (invocable via malloc), however this repo also vendors dlmalloc in the src directory. Please check the CMakeLists.txt to see how it's used in the tests and examples.
 
 ## Requirements
 To use the C++ api, you need a C++-20 capable compiler. 
-To use the C api, a C99 capable compiler should be sufficient.
+To use the C api, a C11 capable compiler should be sufficient.
 
 ## Since emscripten exists, why would I want to use wasm32-wasi or wasm32-wasip1?
 - Emscripten is a large install (around 1.4 gb), and bundles clang, python, node and java.
@@ -274,7 +275,7 @@ cmake -Bbin -GNinja -DCMAKE_TOOLCHAIN_FILE=$WASI_SDK/share/cmake/wasi-sdk.cmake 
 ```
 
 To build using cmake for freestanding or with wasi-libc or wasi-sysroot, it's preferable to create a cmake toolchain file and pass that to your invocation:
-```
+```bash
 cmake -Bbin -GNinja -DCMAME_TOOLCHAIN_FILE=./my_toolchain_file.cmake
 ```
 
@@ -288,21 +289,33 @@ Also check the CMakeLists.txt file in the repo to see how the examples and tests
 
 ### Using clang bundled with wasi-sdk
 - No need to pass a sysroot, nor a target:
-```
+```bash
 clang++ -std=c++20 -Iinclude -o my.wasm main.cpp -Wl,--no-entry,--allow-undefined,--export-all,--import-memory,--export-memory,--strip-all
 ```
 
 ### Using stock clang
-- clang capable of targeting wasm32-wasi is required. 
+clang capable of targeting wasm32 is required. 
 If you installed your clang via a package manager, you might require an extra package like libclang-rt-dev-wasm32 (note that it should match the version of your clang install, i.e libclang-rt-18-dev-wasm32). 
 Additionally you might require lld to get wasm-ld. Similarly, it should match your clang version.
+
+#### Targeting wasi
 - If only using C, you can get the wasi-libc sources from the [wasi-libc](https://github.com/WebAssembly/wasi-libc) repo. This will require compiling the source using the given instructions. There are also packages for debian/ubuntu, arch linux, and msys2.
 - If using C++ as well, you can grab the wasi-sysroot from the [wasi-sdk](https://github.com/WebAssembly/wasi-sdk/releases) releases page.
 
 To compile, you'll need to tell clang to target wasm32-wasi, and point it to the sysroot you require:
-```
+```bash
 clang++ -std=c++20 --target=wasm32-wasi -Iinclude -o my.wasm main.cpp --sysroot /path/to/wasi-sysroot -Wl,--no-entry,--allow-undefined,--export-all,--import-memory,--export-memory,--strip-all
 ```
+
+#### Building for a wasm32-unknown-unknown
+You don't need a sysroot in that case.
+You can invoke clang with the `-nostdlib` flag:
+```bash
+clang++ -std=c++20 --target=wasm32-unknown-unknown -Iinclude -o my.wasm examples/eval.cpp -nostdlib -Wl,--no-entry,--al
+low-undefined,--export-all,--import-memory,--export-memory,--strip-all
+```
+You can also pass wasm32 as the target, which clang will understand as wasm32-unknown-unknown.
+As mentioned previously, emlite only includes a simple bump allocator. It's advisable to utilise something like dlmalloc (vendored in the source directory).
 
 ## Testing
 To test emlite, you can clone this repo and run it's test suite:

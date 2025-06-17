@@ -64,8 +64,6 @@ export class Emlite {
     constructor(memory) {
         this._memory = memory ?? new WebAssembly.Memory({ initial: 258, maximum: 4096 });
         this._updateViews();
-        this.brk = 0;
-        this.freelist = 0;
     }
 
     _updateViews() {
@@ -92,113 +90,23 @@ export class Emlite {
 
     setExports(exports) {
         this.exports = exports;
-        this.brk = alignUp(this.exports.__heap_base.value, ALIGN);
-    }
-
-    u32() { return new Uint32Array(this._memory.buffer); }
-
-    sizeAt(off) { return this.u32()[off >>> 2]; }
-    nextAt(off) { return this.u32()[(off >>> 2) + 1]; }
-    setSize(off, sz) { this.u32()[off >>> 2] = sz; }
-    setNext(off, nx) { this.u32()[(off >>> 2) + 1] = nx; }
-
-    growAndRefresh(bytes) {
-        const shortfall = this.brk + bytes - this._memory.buffer.byteLength;
-        if (shortfall > 0) {
-            const pages = Math.ceil(shortfall / PAGE_SIZE);
-            this._memory.grow(pages);
-            this._updateViews();
-        }
     }
 
     cStr(ptr, len) {
         return dec.decode(new Uint8Array(this._memory.buffer, ptr, len));
     }
 
-    emlite_malloc(n) {
-        n = alignUp(n, ALIGN);
-
-        let prev = 0;
-        let cur = this.freelist;
-        while (cur !== 0 && Math.abs(this.sizeAt(cur)) < n) {
-            prev = cur;
-            cur = this.nextAt(cur);
-        }
-
-        if (cur !== 0) {
-            const blkSize = Math.abs(this.sizeAt(cur));
-            const remain = blkSize - n;
-
-            if (remain > HEADER_BYTES) {
-                const newFree = cur + HEADER_BYTES + n;
-                this.setSize(newFree, -(remain - HEADER_BYTES));
-                this.setNext(newFree, this.nextAt(cur));
-
-                this.setSize(cur, n);
-                if (prev === 0) {
-                    this.freelist = newFree;
-                } else {
-                    this.setNext(prev, newFree);
-                }
-            } else {
-                if (prev === 0) {
-                    this.freelist = this.nextAt(cur);
-                } else {
-                    this.setNext(prev, this.nextAt(cur));
-                }
-                this.setSize(cur, blkSize);
-            }
-            return cur + HEADER_BYTES;
-        }
-
-        const off = this.brk;
-        this.growAndRefresh(n + HEADER_BYTES);
-        this.setSize(off, n);
-        this.brk += HEADER_BYTES + n;
-        return off + HEADER_BYTES;
-    }
-
-    emlite_free(ptr) {
-        if (!ptr) return;
-        const blk = ptr - HEADER_BYTES;
-        const sz = this.sizeAt(blk);
-        if (sz <= 0) throw new Error("double free / corrupted block");
-
-        this.setSize(blk, -sz);
-
-        if (this.freelist === 0 || blk < this.freelist) {
-            this.setNext(blk, this.freelist);
-            this.freelist = blk;
-        } else {
-            let cur = this.freelist;
-            while (this.nextAt(cur) !== 0 && this.nextAt(cur) < blk) cur = this.nextAt(cur);
-            this.setNext(blk, this.nextAt(cur));
-            this.setNext(cur, blk);
-        }
-
-        const nxt = this.nextAt(blk);
-        if (nxt && blk + HEADER_BYTES + Math.abs(this.sizeAt(blk)) === nxt && this.sizeAt(nxt) < 0) {
-            this.setSize(blk, -(Math.abs(this.sizeAt(blk)) + HEADER_BYTES + Math.abs(this.sizeAt(nxt))));
-            this.setNext(blk, this.nextAt(nxt));
-        }
-
-        if (this.freelist !== blk) {
-            let cur = this.freelist;
-            while (this.nextAt(cur) !== 0 && this.nextAt(cur) < blk) cur = this.nextAt(cur);
-            if (cur + HEADER_BYTES + Math.abs(this.sizeAt(cur)) === blk && this.sizeAt(cur) < 0) {
-                this.setSize(cur, -(Math.abs(this.sizeAt(cur)) + HEADER_BYTES + Math.abs(this.sizeAt(blk))));
-                this.setNext(cur, this.nextAt(blk));
-            }
-        }
-    }
-
     copyStringToWasm(str) {
-        const utf8 = enc.encode(str + "\0");
-        const allocFn = this.exports?.malloc ?? this.emlite_malloc.bind(this);
-        const ptr = allocFn(utf8.length);
-        if (ptr === 0) throw new Error("malloc failed in copyStringToWasm");
-        new Uint8Array(this._memory.buffer).set(utf8, ptr);
-        return ptr;
+        console.log("here");
+        if (typeof this.exports.malloc !== "undefined") {
+            const utf8 = enc.encode(str + "\0");
+            const ptr = this.exports.malloc(utf8.length);
+            if (ptr === 0) throw new Error("malloc failed in copyStringToWasm");
+            new Uint8Array(this._memory.buffer).set(utf8, ptr);
+            return ptr;
+        } else {
+            return 0;
+        }
     }
 
     get env() {
@@ -296,24 +204,6 @@ export class Emlite {
                 const target = OBJECT_MAP.get(objRef);
                 const args = OBJECT_MAP.get(argvRef).map(h => OBJECT_MAP.get(h));
                 return OBJECT_MAP.add(Reflect.apply(target, undefined, args));
-            },
-
-            emlite_malloc: n => this.emlite_malloc(n),
-            emlite_free: ptr => this.emlite_free(ptr),
-            emlite_realloc: (ptr, n) => {
-                if (!ptr) return this.emlite_malloc(n);
-                if (n === 0) { this.emlite_free(ptr); return 0; }
-
-                const blk = ptr - HEADER_BYTES;
-                const oldSize = Math.abs(this.sizeAt(blk));
-                if (n <= oldSize) return ptr;
-
-                const newPtr = this.emlite_malloc(n);
-                new Uint8Array(this._memory.buffer, newPtr, n).set(
-                    new Uint8Array(this._memory.buffer, ptr, oldSize)
-                );
-                this.emlite_free(ptr);
-                return newPtr;
             },
             emscripten_notify_memory_growth: (i) => this._updateViews(),
         };

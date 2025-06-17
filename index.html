@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script type="module">
+        import { WASI, File, OpenFile, ConsoleStdout } from "https://unpkg.com/@bjorn3/browser_wasi_shim";
+        import { Emlite } from "https://unpkg.com/emlite";
+        // or (if you decide to vendor emlite.js)
+        // import { Emlite } from "./src/emlite.js";
+
+        window.onload = async () => {
+            let fds = [
+                new OpenFile(new File([])), // 0, stdin
+                ConsoleStdout.lineBuffered(msg => console.log(`[WASI stdout] ${msg}`)), // 1, stdout
+                ConsoleStdout.lineBuffered(msg => console.warn(`[WASI stderr] ${msg}`)), // 2, stderr
+            ];
+            let wasi = new WASI([], [], fds);
+            let emlite = new Emlite();
+            let wasm = await WebAssembly.compileStreaming(fetch("./rust/emlite/target/wasm32-wasip1/debug/examples/dom.wasm"));
+            let inst = await WebAssembly.instantiate(wasm, {
+                "wasi_snapshot_preview1": wasi.wasiImport,
+                "env": emlite.env,
+            });
+            emlite.setExports(inst.exports);
+            // if your C/C++ has a main function, use: `wasi.start(inst)`. If not, use `wasi.initialize(inst)`.
+            wasi.start(inst);
+            // test our exported function `add` in tests/dom_test1.cpp works
+            // window.alert(inst.exports.add(1, 2));
+        };
+    </script>
+</body>
+</html>

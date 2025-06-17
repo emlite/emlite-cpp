@@ -59,10 +59,4 @@ unsafe extern "C" {
     pub fn emlite_val_obj_has_own_prop(obj: Handle, prop: *const c_char, len: usize) -> bool;
 
     pub fn emlite_val_make_callback(id: Handle) -> Handle;
-
-    pub fn emlite_malloc(len: usize) -> *mut c_void;
-
-    pub fn emlite_realloc(ptr: *mut c_void, len: usize) -> *mut c_void;
-
-    pub fn emlite_free(ptr: *mut c_void);
 }
