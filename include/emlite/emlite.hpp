@@ -373,7 +373,7 @@ T Val::as() const {
         return emlite_val_get_value_int(v_);
     else if constexpr (detail::is_same_v<T, UniqCPtr<char[]>>)
         return UniqCPtr<char[]>(emlite_val_get_value_string(v_));
-    return T{};
+    else return T::from_handle(v_);
 }
 
 template <class... Args>
