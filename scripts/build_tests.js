@@ -1,6 +1,6 @@
 // initialize necessary env variables: WASI_SDK, WASI_SYSROOT, WASI_LIBC, EMSCRIPTEN_ROOT
 // export WASI_SDK=~/wasi-sdk-25.0-x86_64-linux
-// export WASI_LIBC=~/dev/wasi-libc/sysroot or export WASI_LIBC=$MINGW_PREFIX/share/wasi-sysroot
+// export WASI_LIBC=~/dev/wasi-libc/sysroot # or $MINGW_PREFIX/share/wasi-sysroot or /usr depending on the pkg manager
 // export WASI_SYSROOT=~/dev/wasi-sysroot-25.0
 // export EMSCRIPTEN_ROOT=~/emsdk/upstream/emscripten
 

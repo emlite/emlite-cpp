@@ -4,6 +4,7 @@ set(CMAKE_SYSTEM_PROCESSOR wasm32)
 set(CMAKE_C_COMPILER clang)
 set(CMAKE_CXX_COMPILER clang++)
 
+# change the following to wasm32-wasip1 if targeting that triplet
 set(CMAKE_C_COMPILER_TARGET wasm32-wasi)
 set(CMAKE_CXX_COMPILER_TARGET wasm32-wasi)
 
