@@ -24,7 +24,7 @@ install(EXPORT emliteTargets
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/emlite
 )
 
-if (EMLITE_BUILD_EXAMPLS OR EMLITE_BUILD_TESTS)
+if (EMLITE_BUILD_EXAMPLES OR EMLITE_BUILD_TESTS)
     option(EMLITE_TEST_DLMALLOC "Build examples and tests for freestanding with dlmalloc" OFF)
     set(DEFAULT_LINK_FLAGS)
     set(DLMALLOC_LIB)
