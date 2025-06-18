@@ -1,3 +1,10 @@
+// clang-format off
+// example build command:
+// clang-tidy -checks="*,-llvmlibc*" tests/dom_test1.cpp -- -Iinclude -std=c++20 --target=wasm32-wasi --sysroot=/home/ray/dev/wasi-sysroot-25.0/
+// clang-format on
+
+#include <cstddef>
+#include <cstdio>
 #include <vector>
 
 #define EMLITE_IMPL

@@ -3,6 +3,8 @@
 // clang++ --target=wasm32 -o dom_test1_nostdlib.wasm -Iinclude tests/dom_test1_nostdlib.cpp -nostdlib -Os -Wl,--allow-undefined,--no-entry,--import-memory,--export-memory,--export-all,--strip-all
 // clang-format on
 
+
+
 #define EMLITE_IMPL
 #include <emlite/emlite.hpp>
 
