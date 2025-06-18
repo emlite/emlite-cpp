@@ -10,21 +10,29 @@ EMLITE_USED extern "C" int add(int a, int b) {
 
     auto doc = Val::global("document");
     // operator[]
-    auto body = doc.call("getElementsByTagName", Val("body"))[0];
-    auto btn  = doc.call("createElement", Val("BUTTON"));
+    auto body =
+        doc.call("getElementsByTagName", Val("body"))[0];
+    auto btn = doc.call("createElement", Val("BUTTON"));
     btn.set("textContent", Val("Click Me!"));
     // test as<> and wasi's fd_write
-    printf("%s\n", btn.get("textContent").as<UniqCPtr<char[]>>().get());
+    printf(
+        "%s\n",
+        btn.get("textContent").as<Uniq<char[]>>().get()
+    );
     fflush(stdout);
     printf("%s\n", btn.type_of().get());
 
     body.call("appendChild", btn);
 
     // emlite_val_make_callback
-    btn.call("addEventListener", Val("click"), Val([](auto) -> Handle {
-                 Console().call("log", Val("Clicked"));
-                 return Val::undefined().as_handle();
-             }));
+    btn.call(
+        "addEventListener",
+        Val("click"),
+        Val([](auto) -> Handle {
+            Console().call("log", Val("Clicked"));
+            return Val::undefined().as_handle();
+        })
+    );
 
     // check memory growth!
     std::vector<int> vals = {0, 1, 2};
@@ -37,8 +45,12 @@ EMLITE_USED extern "C" int add(int a, int b) {
 
     // check Val::new_
     auto String = Val::global("String");
-    auto str1   = String.new_(Val("created a string object number 1"));
-    auto str2   = String.new_(Val("created a string object number 2"));
+    auto str1 =
+        String.new_(Val("created a string object number 1")
+        );
+    auto str2 =
+        String.new_(Val("created a string object number 2")
+        );
 
     // check uniqueness of objects of the same type!
     Console().log(str1);
@@ -46,9 +58,9 @@ EMLITE_USED extern "C" int add(int a, int b) {
     Console().log(str1);
 
     // check copyStringToWasm
-    Console().log(Val(str1.as<UniqCPtr<char[]>>().get()));
-    Console().log(Val(str2.as<UniqCPtr<char[]>>().get()));
-    Console().log(Val(str1.as<UniqCPtr<char[]>>().get()));
+    Console().log(Val(str1.as<Uniq<char[]>>().get()));
+    Console().log(Val(str2.as<Uniq<char[]>>().get()));
+    Console().log(Val(str1.as<Uniq<char[]>>().get()));
 
     // operator()
     auto floor = Val::global("Math").get("floor");
@@ -68,13 +80,16 @@ EMLITE_USED extern "C" int add(int a, int b) {
 
     // test await
     auto Notification = Val::global("Notification");
-    auto status       = Notification.call("requestPermission").await();
+    auto status =
+        Notification.call("requestPermission").await();
     Console().log(status);
 
-    auto arr = Val::global("eval")(Val("let arr = [1, 2, 3, 4, 5]; arr"));
+    auto arr = Val::global("eval")(
+        Val("let arr = [1, 2, 3, 4, 5]; arr")
+    );
 
     size_t len = 0;
-    auto arr2 = Val::vec_from_js_array<int>(arr, len);
+    auto arr2  = Val::vec_from_js_array<int>(arr, len);
 
     printf("%ld\n", len);
     for (size_t i = 0; i < len; i++) {

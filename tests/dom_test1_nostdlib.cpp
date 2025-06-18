@@ -11,23 +11,36 @@ using namespace emlite;
 EMLITE_USED extern "C" int add(int a, int b) {
     Console().log(Val("Hello from Emlite"));
 
+    auto arr = Uniq<int[]>(new int[200]);
+    for (int i = 0; i < 200; i++)
+        arr[i] = i;
+
     auto doc = Val::global("document");
     // operator[]
-    auto body = doc.call("getElementsByTagName", Val("body"))[0];
-    auto btn  = doc.call("createElement", Val("BUTTON"));
+    auto body =
+        doc.call("getElementsByTagName", Val("body"))[0];
+    auto btn = doc.call("createElement", Val("BUTTON"));
     btn.set("textContent", Val("Click Me!"));
     body.call("appendChild", btn);
 
     // emlite_val_make_callback
-    btn.call("addEventListener", Val("click"), Val([](auto) -> Handle {
-                 Console().call("log", Val("Clicked"));
-                 return Val::undefined().as_handle();
-             }));
+    btn.call(
+        "addEventListener",
+        Val("click"),
+        Val([](auto) -> Handle {
+            Console().call("log", Val("Clicked"));
+            return Val::undefined().as_handle();
+        })
+    );
 
     // check Val::new_
     auto String = Val::global("String");
-    auto str1   = String.new_(Val("created a string object number 1"));
-    auto str2   = String.new_(Val("created a string object number 2"));
+    auto str1 =
+        String.new_(Val("created a string object number 1")
+        );
+    auto str2 =
+        String.new_(Val("created a string object number 2")
+        );
 
     // check uniqueness of objects of the same type!
     Console().log(str1);
@@ -35,9 +48,9 @@ EMLITE_USED extern "C" int add(int a, int b) {
     Console().log(str1);
 
     // check copyStringToWasm
-    Console().log(Val(str1.as<UniqCPtr<char[]>>().get()));
-    Console().log(Val(str2.as<UniqCPtr<char[]>>().get()));
-    Console().log(Val(str1.as<UniqCPtr<char[]>>().get()));
+    Console().log(Val(str1.as<Uniq<char[]>>().get()));
+    Console().log(Val(str2.as<Uniq<char[]>>().get()));
+    Console().log(Val(str1.as<Uniq<char[]>>().get()));
 
     // operator()
     auto floor = Val::global("Math").get("floor");
@@ -57,10 +70,11 @@ EMLITE_USED extern "C" int add(int a, int b) {
 
     // test await
     auto Notification = Val::global("Notification");
-    auto status       = Notification.call("requestPermission").await();
+    auto status =
+        Notification.call("requestPermission").await();
     Console().log(status);
-
-    return a + b;
+    auto twenty = arr[20];
+    return a + twenty + b;
 }
 
 int main() {}

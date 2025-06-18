@@ -14,26 +14,34 @@ function run(cmd) {
 
 function buildSet(label, binDir, toolchain) {
     console.log(`\n\u25B6  Building for ${label} …`);
+    let cmd = [
+        "cmake",
+        `-B${binDir}`,
+        "-GNinja",
+        "-DEMLITE_BUILD_EXAMPLES=ON",
+        "-DEMLITE_BUILD_TESTS=ON",
+        "-DCMAKE_BUILD_TYPE=MinSizeRel",
+        `-DCMAKE_TOOLCHAIN_FILE=${toolchain}`,
+    ];
+    if (label === "FREESTANDING_WITH_DLMALLOC") cmd.push("-DEMLITE_TEST_DLMALLOC=ON");
     run(
-        [
-            "cmake",
-            `-B${binDir}`,
-            "-GNinja",
-            "-DEMLITE_BUILD_EXAMPLES=ON",
-            "-DEMLITE_BUILD_TESTS=ON",
-            "-DCMAKE_BUILD_TYPE=MinSizeRel",
-            `-DCMAKE_TOOLCHAIN_FILE=${toolchain}`,
-        ].join(" "),
+        cmd.join(" "),
     );
     run(`cmake --build ${binDir}`);
 }
 
 async function main() {
     try {
-        // 1- Freestanding (stock clang, wasm32-unknown-unknown)
+        // 1- Freestanding, no dlmalloc (stock clang, wasm32-unknown-unknown)
         buildSet(
             "FREESTANDING",
             "bin/freestanding",
+            "./cmake/freestanding.cmake",
+        );
+
+        buildSet(
+            "FREESTANDING_WITH_DLMALLOC",
+            "bin/freestanding_dl",
             "./cmake/freestanding.cmake",
         );
 

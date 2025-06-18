@@ -25,6 +25,7 @@ install(EXPORT emliteTargets
 )
 
 if (EMLITE_BUILD_EXAMPLS OR EMLITE_BUILD_TESTS)
+    option(EMLITE_TEST_DLMALLOC "Build examples and tests for freestanding with dlmalloc" OFF)
     set(DEFAULT_LINK_FLAGS)
     set(DLMALLOC_LIB)
     set(DEFAULT_DEFINES)
@@ -33,7 +34,7 @@ if (EMLITE_BUILD_EXAMPLS OR EMLITE_BUILD_TESTS)
     if (EMSCRIPTEN)
         set(DEFAULT_LINK_FLAGS "${DEFAULT_LINK_FLAGS} -sERROR_ON_UNDEFINED_SYMBOLS=0 -sALLOW_MEMORY_GROWTH=1")
     endif()
-    if (USING_FREESTANDING)
+    if (USING_FREESTANDING AND EMLITE_TEST_DLMALLOC)
         # dlmalloc is optional but recommended. Otherwise emlite's malloc is a simple bump allocator
         add_library(dlmalloc src/dlmalloc.c)
         target_compile_definitions(dlmalloc PUBLIC 

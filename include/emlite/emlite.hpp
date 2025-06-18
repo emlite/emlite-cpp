@@ -23,14 +23,17 @@ struct remove_reference<T &&> {
 };
 
 template <typename T>
-constexpr T &&forward(typename remove_reference<T>::type &t) noexcept {
+constexpr T &&forward(typename remove_reference<T>::type &t
+) noexcept {
     return static_cast<T &&>(t);
 }
 
 template <typename T>
-constexpr T &&forward(typename remove_reference<T>::type &&t) noexcept {
+constexpr T &&forward(typename remove_reference<T>::type &&t
+) noexcept {
     static_assert(
-        !__is_lvalue_reference(T), "forwarding an rvalue as an lvalue"
+        !__is_lvalue_reference(T),
+        "forwarding an rvalue as an lvalue"
     );
     return static_cast<T &&>(t);
 }
@@ -137,29 +140,32 @@ struct is_floating_point<long double> {
 };
 
 template <typename T>
-constexpr bool is_floating_point_v = is_floating_point<T>::value;
+constexpr bool is_floating_point_v =
+    is_floating_point<T>::value;
 } // namespace detail
 
 template <typename T>
     requires(!detail::is_same_v<T, void>)
-class UniqCPtr {
+class Uniq {
   private:
     T *ptr;
 
-    UniqCPtr(const UniqCPtr &)            = delete;
-    UniqCPtr &operator=(const UniqCPtr &) = delete;
+    Uniq(const Uniq &)            = delete;
+    Uniq &operator=(const Uniq &) = delete;
 
   public:
-    UniqCPtr() : ptr(nullptr) {}
+    Uniq() : ptr(nullptr) {}
 
-    explicit UniqCPtr(T *p) : ptr(p) {}
+    explicit Uniq(T *p) : ptr(p) {}
 
-    UniqCPtr(UniqCPtr &&other) : ptr(other.ptr) { other.ptr = nullptr; }
+    Uniq(Uniq &&other) : ptr(other.ptr) {
+        other.ptr = nullptr;
+    }
 
-    UniqCPtr &operator=(UniqCPtr &&other) {
+    Uniq &operator=(Uniq &&other) {
         if (this != &other) {
             if (ptr) {
-                delete_(ptr);
+                delete ptr;
             }
             ptr       = other.ptr;
             other.ptr = nullptr;
@@ -167,9 +173,9 @@ class UniqCPtr {
         return *this;
     }
 
-    ~UniqCPtr() {
+    ~Uniq() {
         if (ptr) {
-            delete_(ptr);
+            delete ptr;
         }
     }
 
@@ -186,38 +192,36 @@ class UniqCPtr {
 
     void reset(T *p = nullptr) {
         if (ptr) {
-            delete_(ptr);
+            delete ptr;
         }
         ptr = p;
     }
 
     operator bool() const { return ptr != nullptr; }
-
-    void delete_(void *ptr) {
-        free(ptr);
-    }
 };
 
 template <typename T>
     requires(!detail::is_same_v<T, void>)
-class UniqCPtr<T[]> {
+class Uniq<T[]> {
   private:
     T *ptr;
 
-    UniqCPtr(const UniqCPtr &)            = delete;
-    UniqCPtr &operator=(const UniqCPtr &) = delete;
+    Uniq(const Uniq &)            = delete;
+    Uniq &operator=(const Uniq &) = delete;
 
   public:
-    UniqCPtr() : ptr(nullptr) {}
+    Uniq() : ptr(nullptr) {}
 
-    explicit UniqCPtr(T *p) : ptr(p) {}
+    explicit Uniq(T *p) : ptr(p) {}
 
-    UniqCPtr(UniqCPtr &&other) : ptr(other.ptr) { other.ptr = nullptr; }
+    Uniq(Uniq &&other) : ptr(other.ptr) {
+        other.ptr = nullptr;
+    }
 
-    UniqCPtr &operator=(UniqCPtr &&other) {
+    Uniq &operator=(Uniq &&other) {
         if (this != &other) {
             if (ptr) {
-                delete_(ptr);
+                delete[] ptr;
             }
             ptr       = other.ptr;
             other.ptr = nullptr;
@@ -225,13 +229,13 @@ class UniqCPtr<T[]> {
         return *this;
     }
 
-    ~UniqCPtr() {
+    ~Uniq() {
         if (ptr) {
-            delete_(ptr);
+            delete[] ptr;
         }
     }
 
-    T& operator[](size_t i) const { return ptr[i]; }
+    T &operator[](size_t i) const { return ptr[i]; }
 
     T *get() const { return ptr; }
 
@@ -243,16 +247,12 @@ class UniqCPtr<T[]> {
 
     void reset(T *p = nullptr) {
         if (ptr) {
-            delete_(ptr);
+            delete[] ptr;
         }
         ptr = p;
     }
 
     operator bool() const { return ptr != nullptr; }
-
-    void delete_(void *ptr) {
-        free(ptr);
-    }
 };
 
 class Val {
@@ -289,7 +289,7 @@ class Val {
     void set(const char *prop, const Val &val) const;
     bool has(const char *prop) const;
     bool has_own_property(const char *prop) const;
-    UniqCPtr<char[]> type_of() const;
+    Uniq<char[]> type_of() const;
     Val operator[](size_t idx) const;
     Val await() const;
     bool is_number() const;
@@ -316,16 +316,18 @@ class Val {
     T as() const;
 
     template <typename T>
-    static UniqCPtr<T[]> vec_from_js_array(const Val &v, size_t &len)
+    static Uniq<T[]> vec_from_js_array(
+        const Val &v, size_t &len
+    )
         requires(detail::is_integral_v<T> || detail::is_floating_point_v<T>)
     {
         auto sz = v.get("length").as<int>();
-        len = sz;
-        T *ret = (T *)malloc(sizeof(T) * sz);
+        len     = sz;
+        T *ret  = new T[sz];
         for (int i = 0; i < sz; i++) {
             ret[i] = v[i].as<T>();
         }
-        return UniqCPtr<T[]>(ret);
+        return Uniq<T[]>(ret);
     }
 };
 
@@ -339,22 +341,34 @@ class Console : public Val {
 template <class... Args>
 Val Val::call(const char *method, Args &&...vals) const {
     Handle arr = emlite_val_new_array();
-    (emlite_val_push(arr, detail::forward<Args>(vals).as_handle()), ...);
-    return Val::from_handle(emlite_val_obj_call(v_, method, strlen(method), arr)
+    (emlite_val_push(
+         arr, detail::forward<Args>(vals).as_handle()
+     ),
+     ...);
+    return Val::from_handle(
+        emlite_val_obj_call(v_, method, strlen(method), arr)
     );
 }
 
 template <class... Args>
 Val Val::new_(Args &&...vals) const {
     Handle arr = emlite_val_new_array();
-    (emlite_val_push(arr, detail::forward<Args>(vals).as_handle()), ...);
-    return Val::from_handle(emlite_val_construct_new(v_, arr));
+    (emlite_val_push(
+         arr, detail::forward<Args>(vals).as_handle()
+     ),
+     ...);
+    return Val::from_handle(
+        emlite_val_construct_new(v_, arr)
+    );
 }
 
 template <class... Args>
 Val Val::operator()(Args &&...vals) const {
     Handle arr = emlite_val_new_array();
-    (emlite_val_push(arr, detail::forward<Args>(vals).as_handle()), ...);
+    (emlite_val_push(
+         arr, detail::forward<Args>(vals).as_handle()
+     ),
+     ...);
     return Val::from_handle(emlite_val_func_call(v_, arr));
 }
 
@@ -371,9 +385,11 @@ T Val::as() const {
         }
     } else if constexpr (detail::is_floating_point_v<T>)
         return emlite_val_get_value_int(v_);
-    else if constexpr (detail::is_same_v<T, UniqCPtr<char[]>>)
-        return UniqCPtr<char[]>(emlite_val_get_value_string(v_));
-    else return T::from_handle(v_);
+    else if constexpr (detail::is_same_v<T, Uniq<char[]>>)
+        return Uniq<char[]>(emlite_val_get_value_string(v_)
+        );
+    else
+        return T::from_handle(v_);
 }
 
 template <class... Args>
@@ -381,14 +397,24 @@ void Console::log(Args &&...args) const {
     call("log", detail::forward<Args>(args)...);
 }
 
-#define EMLITE_EVAL(x, ...)                                                    \
-    Val::from_handle(                                                          \
-        em_Val_as_handle(emlite_eval_v(#x __VA_OPT__(, __VA_ARGS__)))          \
-    )
+#define EMLITE_EVAL(x, ...)                                \
+    Val::from_handle(em_Val_as_handle(                     \
+        emlite_eval_v(#x __VA_OPT__(, __VA_ARGS__))        \
+    ))
 
 } // namespace emlite
 
 #ifdef EMLITE_IMPL
+#if __has_include(<new>)
+#else
+void *operator new(size_t size) { return malloc(size); }
+
+void *operator new[](size_t size) { return malloc(size); }
+
+void operator delete(void *val) noexcept { free(val); }
+
+void operator delete[](void *val) noexcept { free(val); }
+#endif
 namespace emlite {
 Val::Val() : v_(0) {}
 
@@ -399,10 +425,13 @@ Val Val::from_handle(uint32_t v) {
 }
 
 Val Val::global(const char *v) {
-    return Val::from_handle(emlite_val_global_this()).get(v);
+    return Val::from_handle(emlite_val_global_this())
+        .get(v);
 }
 
-Val Val::global() { return Val::from_handle(emlite_val_global_this()); }
+Val Val::global() {
+    return Val::from_handle(emlite_val_global_this());
+}
 
 Val Val::null() { return Val::from_handle(0); }
 
@@ -424,20 +453,28 @@ void Val::delete_(Val v) { emlite_val_delete(v.v_); }
 
 void Val::throw_(Val v) { return emlite_val_throw(v.v_); }
 
-Val::Val(const char *v) : v_(emlite_val_make_str(v, strlen(v))) {}
+Val::Val(const char *v)
+    : v_(emlite_val_make_str(v, strlen(v))) {}
 
-Val::Val(Callback f) : v_(Val::make_js_function(f).as_handle()) {}
+Val::Val(Callback f)
+    : v_(Val::make_js_function(f).as_handle()) {}
 
 Handle Val::as_handle() const { return v_; }
 
-UniqCPtr<char[]> Val::type_of() const { return UniqCPtr<char[]>(emlite_val_typeof(v_)); }
+Uniq<char[]> Val::type_of() const {
+    return Uniq<char[]>(emlite_val_typeof(v_));
+}
 
 Val Val::get(const char *prop) const {
-    return Val::from_handle(emlite_val_obj_prop(v_, prop, strlen(prop)));
+    return Val::from_handle(
+        emlite_val_obj_prop(v_, prop, strlen(prop))
+    );
 }
 
 void Val::set(const char *prop, const Val &val) const {
-    emlite_val_obj_set_prop(v_, prop, strlen(prop), val.as_handle());
+    emlite_val_obj_set_prop(
+        v_, prop, strlen(prop), val.as_handle()
+    );
 }
 
 bool Val::has(const char *prop) const {
@@ -445,7 +482,9 @@ bool Val::has(const char *prop) const {
 }
 
 bool Val::has_own_property(const char *prop) const {
-    return emlite_val_obj_has_own_prop(v_, prop, strlen(prop));
+    return emlite_val_obj_has_own_prop(
+        v_, prop, strlen(prop)
+    );
 }
 
 Val Val::operator[](size_t idx) const {
@@ -453,19 +492,19 @@ Val Val::operator[](size_t idx) const {
 }
 
 Val Val::make_js_function(Callback f) {
-    uint32_t fidx = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(f));
+    uint32_t fidx =
+        static_cast<uint32_t>(reinterpret_cast<uintptr_t>(f)
+        );
     return Val::from_handle(emlite_val_make_callback(fidx));
 }
 
 // clang-format off
 Val Val::await() const {
-    return EMLITE_EVAL({
-       (async () => {
-        let obj = ValMap.toValue(%d);
-        let ret = await obj;
-        return ValMap.toHandle(ret);
-       })()
-    }, v_);
+    return Val::from_handle(em_Val_as_handle(emlite_eval_v(
+        "(async() => { let obj = ValMap.toValue(%d); let ret = await obj; "
+        "return ValMap.toHandle(ret); })()",
+        v_
+    )));
 }
 
 bool Val::is_number() const {
