@@ -4,7 +4,7 @@
 // clang-format on
 
 #include <cstddef>
-#include <cstdio>
+#include <iostream>
 #include <vector>
 
 #define EMLITE_IMPL
@@ -22,12 +22,11 @@ EMLITE_USED extern "C" int add(int a, int b) {
     auto btn = doc.call("createElement", Val("BUTTON"));
     btn.set("textContent", Val("Click Me!"));
     // test as<> and wasi's fd_write
-    printf(
-        "%s\n",
-        btn.get("textContent").as<Uniq<char[]>>().get()
-    );
-    fflush(stdout);
-    printf("%s\n", btn.type_of().get());
+    std::cout
+        << btn.get("textContent").as<Uniq<char[]>>().get()
+        << std::endl;
+
+    std::cout << btn.type_of().get() << std::endl;
 
     body.call("appendChild", btn);
 
@@ -48,7 +47,7 @@ EMLITE_USED extern "C" int add(int a, int b) {
     }
 
     // check wasi's fd_write shim works
-    printf("%d\n", vals.back());
+    std::cout << vals.back() << std::endl;
 
     // check Val::new_
     auto String = Val::global("String");
@@ -98,9 +97,9 @@ EMLITE_USED extern "C" int add(int a, int b) {
     size_t len = 0;
     auto arr2  = Val::vec_from_js_array<int>(arr, len);
 
-    printf("%ld\n", len);
+    std::cout << len << std::endl;
     for (size_t i = 0; i < len; i++) {
-        printf("%d\n", arr2[i]);
+        std::cout << arr2[i] << std::endl;
     }
 
     return a + b;

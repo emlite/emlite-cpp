@@ -40,7 +40,7 @@ EMLITE_USED int add(int a, int b) {
         "%s\n",
         em_Val_as_string(em_Val_get(btn, "textContent"))
     );
-    fflush(stdout);
+    (void)fflush(stdout);
     printf("%s\n", em_Val_typeof(btn));
 
     em_Val_call(body, "appendChild", 1, btn);

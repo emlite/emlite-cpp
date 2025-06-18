@@ -1,0 +1,12 @@
+---
+Checks: 'clang-diagnostic-*,
+clang-analyzer-*,
+cppcoreguidelines-*,
+modernize-*,
+cert-*,
+-modernize-use-trailing-return-type,
+-cppcoreguidelines-pro-bounds-pointer-arithmetic,
+-cppcoreguidelines-avoid-magic-numbers,
+-cppcoreguidelines-pro-type-vararg,
+-llvmlibc*'
+HeaderFilterRegex: ''
