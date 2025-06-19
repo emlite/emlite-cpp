@@ -1,6 +1,9 @@
 mod defs;
+mod shared;
 use crate::defs::*;
 use std::ffi::CStr;
+
+use crate::shared::Shared;
 
 #[macro_export]
 macro_rules! eval {
@@ -21,28 +24,38 @@ macro_rules! argv {
     }};
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Debug)]
+struct Inner {
+    handle: Handle,
+}
+
+impl Drop for Inner {
+    fn drop(&mut self) {
+        unsafe { emlite_val_delete(self.handle) };
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct Val {
-    v_: Handle,
+    inner: Shared<Inner>,
 }
 
 impl Val {
-    pub fn from_handle(handle: Handle) -> Val {
-        Val { v_: handle }
+    pub fn take_ownership(handle: Handle) -> Val {
+        Val { inner: Shared::new(Inner { handle }) }
     }
 
     pub fn from_val(v: Val) -> Self {
-        let handle = v.as_handle();
-        Self { v_: handle }
+        Val { inner: v.inner.clone() }
     }
 
     pub fn global_this() -> Val {
-        Val::from_handle(unsafe { emlite_val_global_this() })
+        Val::take_ownership(unsafe { emlite_val_global_this() })
     }
 
     pub fn get(&self, prop: &str) -> Val {
-        let h = unsafe { emlite_val_obj_prop(self.v_, prop.as_ptr() as _, prop.len()) };
-        Val::from_handle(h)
+        let h = unsafe { emlite_val_obj_prop(self.as_handle(), prop.as_ptr() as _, prop.len()) };
+        Val::take_ownership(h)
     }
 
     pub fn global(name: &str) -> Val {
@@ -50,78 +63,78 @@ impl Val {
     }
 
     pub fn null() -> Val {
-        Val::from_handle(unsafe { emlite_val_null() })
+        Val::take_ownership(unsafe { emlite_val_null() })
     }
 
     pub fn undefined() -> Val {
-        Val::from_handle(unsafe { emlite_val_undefined() })
+        Val::take_ownership(unsafe { emlite_val_undefined() })
     }
 
     pub fn object() -> Val {
-        Val::from_handle(unsafe { emlite_val_new_object() })
+        Val::take_ownership(unsafe { emlite_val_new_object() })
     }
 
     pub fn array() -> Val {
-        Val::from_handle(unsafe { emlite_val_new_array() })
+        Val::take_ownership(unsafe { emlite_val_new_array() })
     }
 
     pub fn from_i32(i: i32) -> Val {
-        Val::from_handle(unsafe { emlite_val_make_int(i) })
+        Val::take_ownership(unsafe { emlite_val_make_int(i) })
     }
 
     pub fn from_f64(f: f64) -> Val {
-        Val::from_handle(unsafe { emlite_val_make_double(f) })
+        Val::take_ownership(unsafe { emlite_val_make_double(f) })
     }
 
     #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Val {
-        Val::from_handle(unsafe { emlite_val_make_str(s.as_ptr() as _, s.len()) })
+        Val::take_ownership(unsafe { emlite_val_make_str(s.as_ptr() as _, s.len()) })
     }
 
     pub fn as_handle(&self) -> Handle {
-        self.v_
+        self.inner.handle
     }
 
     pub fn set(&self, prop: &str, val: Val) {
         unsafe {
-            emlite_val_obj_set_prop(self.v_, prop.as_ptr() as _, prop.len(), val.as_handle())
+            emlite_val_obj_set_prop(self.as_handle(), prop.as_ptr() as _, prop.len(), val.as_handle())
         };
     }
 
     pub fn has(&self, prop: &str) -> bool {
-        unsafe { emlite_val_obj_has_prop(self.v_, prop.as_ptr() as _, prop.len()) }
+        unsafe { emlite_val_obj_has_prop(self.as_handle(), prop.as_ptr() as _, prop.len()) }
     }
 
     pub fn has_own_property(&self, prop: &str) -> bool {
-        unsafe { emlite_val_obj_has_own_prop(self.v_, prop.as_ptr() as _, prop.len()) }
+        unsafe { emlite_val_obj_has_own_prop(self.as_handle(), prop.as_ptr() as _, prop.len()) }
     }
 
     pub fn type_of(&self) -> String {
         unsafe {
-            let ptr = emlite_val_typeof(self.v_);
+            let ptr = emlite_val_typeof(self.as_handle());
             String::from_utf8_lossy(CStr::from_ptr(ptr).to_bytes()).to_string()
         }
     }
 
     pub fn at(&self, idx: usize) -> Val {
-        Val::from_handle(unsafe { emlite_val_get_elem(self.v_, idx) })
+        Val::take_ownership(unsafe { emlite_val_get_elem(self.as_handle(), idx) })
     }
 
     pub fn as_i32(&self) -> i32 {
-        unsafe { emlite_val_get_value_int(self.v_) as i32 }
+        unsafe { emlite_val_get_value_int(self.as_handle()) as i32 }
     }
 
     pub fn as_bool(&self) -> bool {
-        self.v_ > 3
+        self.as_handle() > 3
     }
 
     pub fn as_f64(&self) -> f64 {
-        unsafe { emlite_val_get_value_double(self.v_) as _ }
+        unsafe { emlite_val_get_value_double(self.as_handle()) as _ }
     }
 
     pub fn as_string(&self) -> String {
         unsafe {
-            let ptr = emlite_val_get_value_string(self.v_);
+            let ptr = emlite_val_get_value_string(self.as_handle());
             String::from_utf8_lossy(CStr::from_ptr(ptr).to_bytes()).to_string()
         }
     }
@@ -146,37 +159,37 @@ impl Val {
 
     pub fn call(&self, f: &str, args: &[Val]) -> Val {
         unsafe {
-            let arr = emlite_val_new_array();
+            let arr = Val::take_ownership(emlite_val_new_array());
             for arg in args {
-                emlite_val_push(arr, arg.as_handle());
+                emlite_val_push(arr.as_handle(), arg.as_handle());
             }
-            Val::from_handle(emlite_val_obj_call(self.v_, f.as_ptr() as _, f.len(), arr))
+            Val::take_ownership(emlite_val_obj_call(self.as_handle(), f.as_ptr() as _, f.len(), arr.as_handle()))
         }
     }
 
     pub fn new(&self, args: &[Val]) -> Val {
         unsafe {
-            let arr = emlite_val_new_array();
+            let arr = Val::take_ownership(emlite_val_new_array());
             for arg in args {
-                emlite_val_push(arr, arg.as_handle());
+                emlite_val_push(arr.as_handle(), arg.as_handle());
             }
-            Val::from_handle(emlite_val_construct_new(self.v_, arr))
+            Val::take_ownership(emlite_val_construct_new(self.as_handle(), arr.as_handle()))
         }
     }
 
     pub fn invoke(&self, args: &[Val]) -> Val {
         unsafe {
-            let arr = emlite_val_new_array();
+            let arr = Val::take_ownership(emlite_val_new_array());
             for arg in args {
-                emlite_val_push(arr, arg.as_handle());
+                emlite_val_push(arr.as_handle(), arg.as_handle());
             }
-            Val::from_handle(emlite_val_func_call(self.v_, arr))
+            Val::take_ownership(emlite_val_func_call(self.as_handle(), arr.as_handle()))
         }
     }
 
-    pub fn make_js_function(f: fn(Handle) -> Handle) -> Val {
+    pub fn make_fn(f: fn(Handle) -> Handle) -> Val {
         let idx: u32 = f as usize as u32;
-        unsafe { Val::from_handle(emlite_val_make_callback(idx)) }
+        unsafe { Val::take_ownership(emlite_val_make_callback(idx)) }
     }
 
     pub fn await_(&self) -> Val {
@@ -188,24 +201,24 @@ impl Val {
                 return ValMap.toHandle(ret);
             }})()
         "#,
-            self.v_
+            self.as_handle()
         )
     }
 
     pub fn delete(v: Val) {
         unsafe {
-            emlite_val_delete(v.v_);
+            emlite_val_delete(v.as_handle());
         }
     }
 
     pub fn throw(v: Val) {
         unsafe {
-            emlite_val_throw(v.v_);
+            emlite_val_throw(v.as_handle());
         }
     }
 
     pub fn instanceof(&self, v: Val) -> bool {
-        unsafe { emlite_val_instanceof(self.v_, v.v_) }
+        unsafe { emlite_val_instanceof(self.as_handle(), v.as_handle()) }
     }
 }
 
@@ -241,7 +254,7 @@ impl From<String> for Val {
 
 use std::ops::{Deref, DerefMut};
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct Console {
     val: Val,
 }
@@ -258,7 +271,7 @@ impl Console {
     }
 
     pub fn as_handle(&self) -> Handle {
-        self.val.v_
+        self.val.as_handle()
     }
 }
 
@@ -281,18 +294,18 @@ use std::ops::Not;
 
 impl PartialEq for Val {
     fn eq(&self, other: &Val) -> bool {
-        unsafe { emlite_val_strictly_equals(self.v_, other.v_) }
+        unsafe { emlite_val_strictly_equals(self.as_handle(), other.as_handle()) }
     }
 }
 
 impl PartialOrd for Val {
     fn partial_cmp(&self, other: &Val) -> Option<Ordering> {
         unsafe {
-            if emlite_val_strictly_equals(self.v_, other.v_) {
+            if emlite_val_strictly_equals(self.as_handle(), other.as_handle()) {
                 Some(Ordering::Equal)
-            } else if emlite_val_gt(self.v_, other.v_) {
+            } else if emlite_val_gt(self.as_handle(), other.as_handle()) {
                 Some(Ordering::Greater)
-            } else if emlite_val_lt(self.v_, other.v_) {
+            } else if emlite_val_lt(self.as_handle(), other.as_handle()) {
                 Some(Ordering::Less)
             } else {
                 None
@@ -305,6 +318,6 @@ impl Not for Val {
     type Output = bool;
 
     fn not(self) -> Self::Output {
-        unsafe { emlite_val_not(self.v_) }
+        unsafe { emlite_val_not(self.as_handle()) }
     }
 }

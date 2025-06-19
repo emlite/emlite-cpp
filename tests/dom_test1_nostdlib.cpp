@@ -28,7 +28,7 @@ EMLITE_USED extern "C" int add(int a, int b) {
     btn.call(
         "addEventListener",
         Val("click"),
-        Val([](auto) -> Handle {
+        Val::make_fn([](auto) -> Handle {
             Console().call("log", Val("Clicked"));
             return Val::undefined().as_handle();
         })

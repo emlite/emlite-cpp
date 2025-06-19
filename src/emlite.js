@@ -1,47 +1,41 @@
-class UniqueList {
+class HandleTable {
     constructor() {
-        // duplicate storage gives us two‑way O(1) lookup at the cost of extra memory.
-        this._items = [];
-        this._index = new Map();
+        this._h2v = new Map();   // handle   ➜ value
+        this._v2h = new Map();   // value(id)➜ handle
+        this._next = 0;          // monotonic counter
     }
 
+    /* create or reuse ------------------------------------------------*/
     add(value) {
-        if (this._index.has(value)) {
-            return this._index.get(value);
-        }
-        const i = this._items.length;
-        this._items.push(value);
-        this._index.set(value, i);
-        return i;
+        if (this._v2h.has(value))          // O(1) lookup
+            return this._v2h.get(value);
+
+        const h = this._next++;            // never reused
+        this._h2v.set(h, value);
+        this._v2h.set(value, h);
+        return h;
     }
 
-    toHandle(value) { return this.add(value); }
-    get(i) { return this._items[i]; }
-    toValue(i) { return this.get(i); }
-    has(value) { return this._index.has(value); }
-    get size() { return this._items.length; }
-
-    delete(value) {
-        const i = this._index.get(value);
-        if (i === undefined) return false;
-
-        const lastIdx = this._items.length - 1;
-        const lastVal = this._items[lastIdx];
-
-        if (i !== lastIdx) {
-            this._items[i] = lastVal;
-            this._index.set(lastVal, i);
-        }
-
-        this._items.pop();
-        this._index.delete(value);
+    /* delete by handle ----------------------------------------------*/
+    deleteHandle(h) {
+        const v = this._h2v.get(h);
+        if (v === undefined) return false;
+        this._h2v.delete(h);
+        this._v2h.delete(v);
         return true;
     }
 
-    [Symbol.iterator]() { return this._items.values(); }
+    /* helpers --------------------------------------------------------*/
+    get(h)           { return this._h2v.get(h); }
+    toHandle(value)  { return this.add(value); }
+    toValue(h)       { return this.get(h); }
+    has(value)       { return this._v2h.has(value); }
+    get size()       { return this._h2v.size; }
+
+    [Symbol.iterator]() { return this._h2v.values(); }
 }
 
-const OBJECT_MAP = new UniqueList();
+const OBJECT_MAP = new HandleTable();
 globalThis.ValMap = OBJECT_MAP;
 OBJECT_MAP.add(null);
 OBJECT_MAP.add(undefined);
@@ -166,7 +160,12 @@ export class Emlite {
                 return Object.prototype.hasOwnProperty.call(target, prop);
             },
 
-            emlite_val_delete: n => OBJECT_MAP.delete(n),
+            emlite_val_delete: n => {
+                if (n > 4) {
+                    // console.log(OBJECT_MAP.get(n)); 
+                    OBJECT_MAP.deleteHandle(n);
+                }
+            },
             emlite_val_throw: n => { throw OBJECT_MAP.get(n); },
 
             emlite_val_make_callback: fidx => {
@@ -177,7 +176,6 @@ export class Emlite {
                     const arrHandle = OBJECT_MAP.add(args.map(v => OBJECT_MAP.add(v)));
                     const ret = this.exports.__indirect_function_table.get(fidx)(arrHandle);
 
-                    OBJECT_MAP.delete(arrHandle);
                     return ret;
                 };
                 return OBJECT_MAP.add(jsFn);
@@ -201,7 +199,8 @@ export class Emlite {
             },
             // eslint-disable-next-line no-unused-vars
             emscripten_notify_memory_growth: (i) => this._updateViews(),
-            _msync_js: () => {},
+            _msync_js: () => { },
+            emlite_print_object_map: () => console.log(OBJECT_MAP),
         };
     }
 }

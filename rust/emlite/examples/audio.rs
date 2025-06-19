@@ -27,7 +27,7 @@ fn main() {
         "addEventListener",
         &argv![
             "click",
-            Val::make_js_function(|_| {
+            Val::make_fn(|_| {
                 let oscillator = Val::global("oscillator");
                 let context = Val::global("context");
                 println!("Playing");

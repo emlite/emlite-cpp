@@ -84,6 +84,7 @@ extern bool emlite_val_obj_has_own_prop(
     Handle, const char *prop, size_t len
 );
 extern Handle emlite_val_make_callback(Handle id);
+extern void emlite_print_object_map(void);
 
 typedef struct {
     Handle h;
@@ -99,7 +100,7 @@ em_Val em_Val_null();
 em_Val em_Val_undefined();
 em_Val em_Val_object();
 em_Val em_Val_array();
-em_Val em_Val_make_js_function(Callback f);
+em_Val em_Val_make_fn(Callback f);
 void em_Val_delete(em_Val);
 void em_Val_throw(em_Val);
 
@@ -437,7 +438,7 @@ em_Val em_Val_array() {
     return em_Val_from_handle(emlite_val_new_array());
 }
 
-em_Val em_Val_make_js_function(Callback f) {
+em_Val em_Val_make_fn(Callback f) {
     uint32_t fidx = (uint32_t)f;
     return em_Val_from_handle(emlite_val_make_callback(fidx)
     );

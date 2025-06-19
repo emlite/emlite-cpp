@@ -5,7 +5,7 @@ using namespace emlite;
 
 class MyJsClass : public Val {
     explicit MyJsClass(Handle h)
-        : Val(Val::from_handle(h)) {}
+        : Val(Val::take_ownership(h)) {}
 
   public:
     static void define() {
@@ -19,7 +19,7 @@ class MyJsClass : public Val {
             } globalThis["MyJsClass"] = MyJsClass;
         });
     }
-    static MyJsClass from_handle(Handle h) {
+    static MyJsClass take_ownership(Handle h) {
         return MyJsClass(h);
     }
     MyJsClass(int x, int y)

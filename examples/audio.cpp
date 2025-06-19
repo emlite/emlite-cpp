@@ -34,7 +34,7 @@ int main() {
     btn.call(
         "addEventListener",
         Val("click"),
-        Val([](auto) -> Handle {
+        Val::make_fn([](auto) -> Handle {
             auto oscillator = Val::global("oscillator");
             auto context    = Val::global("context");
             printf("Playing\n");

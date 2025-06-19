@@ -44,7 +44,7 @@ EMLITE_USED int add(int a, int b) {
         "addEventListener",
         2,
         em_Val_from_string("click"),
-        em_Val_make_js_function(btn_click_cb)
+        em_Val_make_fn(btn_click_cb)
     );
 
     // check em_Val_new
@@ -78,14 +78,21 @@ EMLITE_USED int add(int a, int b) {
         em_Val_invoke(floor, 1, em_Val_from_double(2.5));
     console_log(ret);
 
-    // // clang-format off
-    em_Val retval = EMLITE_EVAL(let a = % d; let b = % d;
-                                console.log(a, b);
-                                b, 5, 6);
+    // clang-format off
+    em_Val retval = EMLITE_EVAL(
+        {
+            let a = %d;
+            let b = %d;
+            console.log(a, b);
+            b
+        },
+        5,
+        6
+    );
     // clang-format on
     console_log(retval);
 
-    // // test await
+    // test await
     em_Val Notification = em_Val_global("Notification");
     em_Val status       = em_Val_await(
         em_Val_call(Notification, "requestPermission", 0)

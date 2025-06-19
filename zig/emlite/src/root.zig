@@ -129,7 +129,7 @@ pub const Val = struct {
     pub fn delete(self: Val) void { emlite_val_delete(self.handle); }
     pub fn throw(self: Val) void  { emlite_val_throw(self.handle); }
 
-    pub fn makeCallback(fn_ptr: fn (Handle) Handle) Val {
+    pub fn makeFn(fn_ptr: fn (Handle) Handle) Val {
         return fromHandle(emlite_val_make_callback(@intCast(@intFromPtr(fn_ptr))));
     }
 };

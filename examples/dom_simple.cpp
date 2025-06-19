@@ -15,12 +15,12 @@ int main() {
     btn.call(
         "addEventListener",
         Val("click"),
-        Val([](auto h) -> Handle {
+        Val::make_fn([](auto h) -> Handle {
             size_t len     = 0;
             auto param_vec = Val::vec_from_js_array<Handle>(
-                Val::from_handle(h), len
+                Val::take_ownership(h), len
             );
-            Console().log(Val::from_handle(param_vec[0]));
+            Console().log(Val::take_ownership(param_vec[0]));
             return Val::undefined().as_handle();
         })
     );
