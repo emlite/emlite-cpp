@@ -34,15 +34,24 @@ using namespace emlite;
 EMLITE_USED extern "C" void some_func() {
     Console().log(Val("Hello from Emlite"));
 
-    auto doc  = Val::global("document");
-    auto body = doc.call("getElementsByTagName", Val("body"))[0];
-    auto btn  = doc.call("createElement", Val("BUTTON"));
+    auto doc = Val::global("document");
+    auto body =
+        doc.call("getElementsByTagName", Val("body"))[0];
+    auto btn = doc.call("createElement", Val("BUTTON"));
     btn.set("textContent", Val("Click Me!"));
     body.call("appendChild", btn);
-    btn.call("addEventListener", Val("click"), Val([](auto h) -> Handle {
-                 Console().log(Val::from_handle(h));
-                 return Val::undefined().as_handle();
-             }));
+    btn.call(
+        "addEventListener",
+        Val("click"),
+        Val([](auto h) -> Handle {
+            size_t len     = 0;
+            auto param_vec = Val::vec_from_js_array<Handle>(
+                Val::from_handle(h), len
+            );
+            Console().log(Val::from_handle(param_vec[0]));
+            return Val::undefined().as_handle();
+        })
+    );
 }
 ```
 
@@ -448,7 +457,3 @@ npm run cmake
 npm run build
 npm run serve
 ```
-
-## TODO
-- Support binding C/C++ classes to js.
-- Support ownership.

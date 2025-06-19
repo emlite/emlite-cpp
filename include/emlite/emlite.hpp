@@ -7,6 +7,12 @@ namespace emlite {
 
 namespace detail {
 
+#if __has_include(<stdatomic.h>)
+using refcount_t = _Atomic size_t;
+#else
+using refcount_t = size_t;
+#endif
+
 template <typename T>
 struct remove_reference {
     typedef T type;
@@ -255,12 +261,160 @@ class Uniq<T[]> {
     operator bool() const { return ptr != nullptr; }
 };
 
+template <class T>
+    requires(!detail::is_same_v<T, void>)
+class Shared {
+    struct Control {
+        T value;
+        void (*deleter)(T)      = nullptr;
+        detail::refcount_t refs = 1;
+
+        Control(T v, void (*d)(T)) : value(v), deleter(d) {}
+    };
+
+    Control *ctrl_ = nullptr;
+
+    void inc() const {
+        if (ctrl_)
+            ++ctrl_->refs;
+    }
+
+    void dec() {
+        if (!ctrl_)
+            return;
+        if (--ctrl_->refs == 0) {
+            if (ctrl_->deleter)
+                ctrl_->deleter(ctrl_->value);
+            delete ctrl_;
+        }
+        ctrl_ = nullptr;
+    }
+
+  public:
+    Shared() = default;
+
+    Shared(T v, void (*d)(T) = nullptr)
+        : ctrl_(new Control(v, d)) {}
+
+    Shared(const Shared &o) : ctrl_(o.ctrl_) { inc(); }
+
+    Shared(Shared &&o) noexcept : ctrl_(o.ctrl_) {
+        o.ctrl_ = nullptr;
+    }
+
+    Shared &operator=(const Shared &o) {
+        if (this != &o) {
+            dec();
+            ctrl_ = o.ctrl_;
+            inc();
+        }
+        return *this;
+    }
+
+    Shared &operator=(Shared &&o) noexcept {
+        if (this != &o) {
+            dec();
+            ctrl_   = o.ctrl_;
+            o.ctrl_ = nullptr;
+        }
+        return *this;
+    }
+
+    ~Shared() { dec(); }
+    T &operator*() const { return ctrl_->value; }
+
+    T *operator->() const { return &ctrl_->value; }
+
+    T *get() const {
+        return ctrl_ ? &ctrl_->value : nullptr;
+    }
+    explicit operator bool() const {
+        return ctrl_ != nullptr;
+    }
+    size_t use_count() const {
+        return ctrl_ ? ctrl_->refs : 0;
+    }
+};
+
+template <class T>
+    requires(!detail::is_same_v<T, void>)
+class Shared<T[]> {
+    struct Control {
+        T *ptr;
+        void (*deleter)(T *);
+        detail::refcount_t refs;
+
+        Control(T *p, void (*d)(T *))
+            : ptr(p), deleter(d), refs(1) {}
+    };
+
+    Control *ctrl_ = nullptr;
+
+    void inc() const {
+        if (ctrl_)
+            ++ctrl_->refs;
+    }
+
+    void dec() {
+        if (!ctrl_)
+            return;
+        if (--ctrl_->refs == 0) {
+            if (ctrl_->deleter)
+                ctrl_->deleter(ctrl_->ptr);
+            delete ctrl_;
+        }
+        ctrl_ = nullptr;
+    }
+
+  public:
+    Shared() = default;
+
+    explicit Shared(
+        T *p, void (*d)(T *) = [](T *q) { delete[] q; }
+    )
+        : ctrl_(p ? new Control(p, d) : nullptr) {}
+
+    Shared(const Shared &o) : ctrl_(o.ctrl_) { inc(); }
+    Shared(Shared &&o) noexcept : ctrl_(o.ctrl_) {
+        o.ctrl_ = nullptr;
+    }
+
+    Shared &operator=(const Shared &o) {
+        if (this != &o) {
+            dec();
+            ctrl_ = o.ctrl_;
+            inc();
+        }
+        return *this;
+    }
+    Shared &operator=(Shared &&o) noexcept {
+        if (this != &o) {
+            dec();
+            ctrl_   = o.ctrl_;
+            o.ctrl_ = nullptr;
+        }
+        return *this;
+    }
+
+    ~Shared() { dec(); }
+
+    T &operator[](size_t i) const { return ctrl_->ptr[i]; }
+
+    T *get() const { return ctrl_ ? ctrl_->ptr : nullptr; }
+    size_t use_count() const {
+        return ctrl_ ? ctrl_->refs : 0;
+    }
+    explicit operator bool() const {
+        return ctrl_ != nullptr;
+    }
+};
+
 class Val {
     Handle v_;
     Val();
 
   public:
-    static Val from_handle(uint32_t v);
+    static Val from_handle(Handle v);
     static Val global(const char *name);
     static Val global();
     static Val null();
@@ -418,9 +572,9 @@ void operator delete[](void *val) noexcept { free(val); }
 namespace emlite {
 Val::Val() : v_(0) {}
 
-Val Val::from_handle(uint32_t v) {
+Val Val::from_handle(Handle h) {
     Val val;
-    val.v_ = v;
+    val.v_ = h;
     return val;
 }
 

@@ -199,7 +199,9 @@ export class Emlite {
                 const args = OBJECT_MAP.get(argvRef).map(h => OBJECT_MAP.get(h));
                 return OBJECT_MAP.add(Reflect.apply(target, undefined, args));
             },
+            // eslint-disable-next-line no-unused-vars
             emscripten_notify_memory_growth: (i) => this._updateViews(),
+            _msync_js: () => {},
         };
     }
 }
