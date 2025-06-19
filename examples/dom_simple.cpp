@@ -11,7 +11,6 @@ int main() {
         doc.call("getElementsByTagName", Val("body"))[0];
     auto btn = doc.call("createElement", Val("BUTTON"));
     btn.set("textContent", Val("Click Me!"));
-    body.call("appendChild", btn);
     btn.call(
         "addEventListener",
         Val("click"),
@@ -24,4 +23,5 @@ int main() {
             return Val::undefined().as_handle();
         })
     );
+    body.call("appendChild", btn);
 }

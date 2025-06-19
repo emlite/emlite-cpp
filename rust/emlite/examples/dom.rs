@@ -12,7 +12,10 @@ fn main() {
             Val::make_fn(|ev| {
                 let console = Val::global("console");
                 console.call("clear", &[]);
-                println!("client x: {}", Val::take_ownership(ev).get("clientX").as_i32());
+                println!(
+                    "client x: {}",
+                    Val::take_ownership(ev).get("clientX").as_i32()
+                );
                 println!("hello from Rust");
                 Val::undefined().as_handle()
             })

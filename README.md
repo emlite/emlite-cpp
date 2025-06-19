@@ -5,7 +5,7 @@ It provides both a C api and a higher level C++ api similar to emscripten's val 
 For freestanding builds, it provides a simple bump allocator (invocable via malloc), however this repo also vendors dlmalloc in the src directory. Please check the CMakeLists.txt to see how it's used in the tests and examples.
 
 ## Requirements
-To use the C++ api, you need a C++-20 capable compiler. 
+To use the C++ api, you need a C++-17 capable compiler. 
 To use the C api, a C11 capable compiler should be sufficient.
 
 ## Since emscripten exists, why would I want to use wasm32-wasi or wasm32-wasip1?
@@ -39,7 +39,6 @@ EMLITE_USED extern "C" void some_func() {
         doc.call("getElementsByTagName", Val("body"))[0];
     auto btn = doc.call("createElement", Val("BUTTON"));
     btn.set("textContent", Val("Click Me!"));
-    body.call("appendChild", btn);
     btn.call(
         "addEventListener",
         Val("click"),
@@ -52,6 +51,7 @@ EMLITE_USED extern "C" void some_func() {
             return Val::undefined().as_handle();
         })
     );
+    body.call("appendChild", btn);
 }
 ```
 
@@ -64,6 +64,7 @@ C example:
 EMLITE_USED int main() {
     em_Val console = em_Val_global("console");
     em_Val_call(console, "log", 1, em_Val_from_string("200"));
+    emlite_reset_object_map();
 }
 ```
 
@@ -299,7 +300,7 @@ Also check the CMakeLists.txt file in the repo to see how the examples and tests
 ### Using clang bundled with wasi-sdk
 - No need to pass a sysroot, nor a target:
 ```bash
-clang++ -std=c++20 -Iinclude -o my.wasm main.cpp -Wl,--no-entry,--allow-undefined,--export-all,--import-memory,--export-memory,--strip-all
+clang++ -Iinclude -o my.wasm main.cpp -Wl,--no-entry,--allow-undefined,--export-all,--import-memory,--export-memory,--strip-all
 ```
 
 ### Using stock clang
@@ -313,14 +314,14 @@ Additionally you might require lld to get wasm-ld. Similarly, it should match yo
 
 To compile, you'll need to tell clang to target wasm32-wasi (or wasm32-wasip1), and point it to the sysroot you require:
 ```bash
-clang++ -std=c++20 --target=wasm32-wasi -Iinclude -o my.wasm main.cpp --sysroot /path/to/wasi-sysroot -Wl,--no-entry,--allow-undefined,--export-all,--import-memory,--export-memory,--strip-all
+clang++ --target=wasm32-wasi -Iinclude -o my.wasm main.cpp --sysroot /path/to/wasi-sysroot -Wl,--no-entry,--allow-undefined,--export-all,--import-memory,--export-memory,--strip-all
 ```
 
 #### Building for a wasm32-unknown-unknown
 You don't need a sysroot in that case.
 You can invoke clang with the `-nostdlib` flag:
 ```bash
-clang++ -std=c++20 --target=wasm32-unknown-unknown -Iinclude -o my.wasm examples/eval.cpp -nostdlib -Wl,--no-entry,--al
+clang++ --target=wasm32-unknown-unknown -Iinclude -o my.wasm examples/eval.cpp -nostdlib -Wl,--no-entry,--al
 low-undefined,--export-all,--import-memory,--export-memory,--strip-all
 ```
 You can also pass wasm32 as the target, which clang will understand as wasm32-unknown-unknown.

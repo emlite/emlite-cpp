@@ -1,6 +1,6 @@
-mod defs;
+pub mod env;
 mod shared;
-use crate::defs::*;
+use crate::env::*;
 use std::ffi::CStr;
 
 use crate::shared::Shared;
@@ -42,11 +42,15 @@ pub struct Val {
 
 impl Val {
     pub fn take_ownership(handle: Handle) -> Val {
-        Val { inner: Shared::new(Inner { handle }) }
+        Val {
+            inner: Shared::new(Inner { handle }),
+        }
     }
 
     pub fn from_val(v: Val) -> Self {
-        Val { inner: v.inner.clone() }
+        Val {
+            inner: v.inner.clone(),
+        }
     }
 
     pub fn global_this() -> Val {
@@ -97,7 +101,12 @@ impl Val {
 
     pub fn set(&self, prop: &str, val: Val) {
         unsafe {
-            emlite_val_obj_set_prop(self.as_handle(), prop.as_ptr() as _, prop.len(), val.as_handle())
+            emlite_val_obj_set_prop(
+                self.as_handle(),
+                prop.as_ptr() as _,
+                prop.len(),
+                val.as_handle(),
+            )
         };
     }
 
@@ -163,7 +172,12 @@ impl Val {
             for arg in args {
                 emlite_val_push(arr.as_handle(), arg.as_handle());
             }
-            Val::take_ownership(emlite_val_obj_call(self.as_handle(), f.as_ptr() as _, f.len(), arr.as_handle()))
+            Val::take_ownership(emlite_val_obj_call(
+                self.as_handle(),
+                f.as_ptr() as _,
+                f.len(),
+                arr.as_handle(),
+            ))
         }
     }
 

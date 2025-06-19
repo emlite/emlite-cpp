@@ -35,6 +35,8 @@ extern "env" fn emlite_val_make_callback(id: Handle) Handle;
 extern "env" fn emlite_val_instanceof(a: Handle, b: Handle) bool;
 extern "env" fn emlite_val_delete(val: Handle) void;
 extern "env" fn emlite_val_throw(val: Handle) void;
+extern "env" fn emlite_print_object_map() void;
+extern "env" fn emlite_reset_object_map() void;
 
 pub const Val = struct {
     handle: Handle,
@@ -82,7 +84,10 @@ pub const Val = struct {
     }
 
     pub fn len(self: Val) usize {
-        return @intCast(self.get("length").asInt());
+        const l = self.get("length");
+        const ret: usize = @intCast(l.asInt());
+        Val.delete(l);
+        return ret;
     }
 
     pub fn asInt(self: Val) i32  { return @as(i32, emlite_val_get_value_int(self.handle)); }
@@ -91,27 +96,33 @@ pub const Val = struct {
 
     pub fn toOwnedString(self: Val, alloc: std.mem.Allocator) ![]u8 {
         const z = emlite_val_get_value_string(self.handle);
-        const slice = std.mem.spanZ(z);
+        const slice = std.mem.sliceTo(z, 0);
         return alloc.dupe(u8, slice);
     }
 
     pub fn call(self: Val, method: []const u8, args: []const Val) Val {
         const arr = emlite_val_new_array();
         for (args) |v| emlite_val_push(arr, v.handle);
-        return fromHandle(emlite_val_obj_call(
+        const ret = Val.fromHandle(emlite_val_obj_call(
             self.handle, method.ptr, method.len, arr));
+        emlite_val_delete(arr);
+        return ret;
     }
 
     pub fn construct(self: Val, args: []const Val) Val {
         const arr = emlite_val_new_array();
         for (args) |v| emlite_val_push(arr, v.handle);
-        return fromHandle(emlite_val_construct_new(self.handle, arr));
+        const ret = Val.fromHandle(emlite_val_construct_new(self.handle, arr));
+        emlite_val_delete(arr);
+        return ret;
     }
 
     pub fn invoke(self: Val, args: []const Val) Val {
         const arr = emlite_val_new_array();
         for (args) |v| emlite_val_push(arr, v.handle);
-        return fromHandle(emlite_val_func_call(self.handle, arr));
+        const ret = fromHandle(emlite_val_func_call(self.handle, arr));
+        emlite_val_delete(arr);
+        return ret;
     }
 
     pub fn strictEquals(a: Val, b: Val) bool {
@@ -135,5 +146,16 @@ pub const Val = struct {
 };
 
 pub fn emlite_eval(alloc: std.mem.Allocator, comptime fmt: [] const u8, args: anytype) !Val {
-    return Val.global("eval").invoke(&.{Val.fromStr(try std.fmt.allocPrint(alloc, fmt, args))});
+    const eval = Val.global("eval");
+    const str = try std.fmt.allocPrint(alloc, fmt, args);
+    const str_val = Val.fromStr(str);
+    const ret = eval.invoke(&.{str_val});
+    Val.delete(str_val);
+    alloc.free(str);
+    Val.delete(eval);
+    return ret;
+}
+
+test "all" {
+    @import("std").testing.refAllDeclsRecursive(@This());
 }

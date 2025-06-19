@@ -85,6 +85,7 @@ extern bool emlite_val_obj_has_own_prop(
 );
 extern Handle emlite_val_make_callback(Handle id);
 extern void emlite_print_object_map(void);
+extern void emlite_reset_object_map(void);
 
 typedef struct {
     Handle h;
@@ -564,9 +565,11 @@ em_Val em_Val_call(
         emlite_val_push(arr, em_Val_as_handle(c));
     }
     va_end(args);
-    return em_Val_from_handle(emlite_val_obj_call(
+    em_Val ret = em_Val_from_handle(emlite_val_obj_call(
         self.h, method, strlen(method), arr
     ));
+    emlite_val_delete(arr);
+    return ret; 
 }
 
 em_Val em_Val_new(em_Val self, int n, ...) {
@@ -578,9 +581,11 @@ em_Val em_Val_new(em_Val self, int n, ...) {
         emlite_val_push(arr, em_Val_as_handle(c));
     }
     va_end(args);
-    return em_Val_from_handle(
+    em_Val ret = em_Val_from_handle(
         emlite_val_construct_new(self.h, arr)
     );
+    emlite_val_delete(arr);
+    return ret;
 }
 
 em_Val em_Val_invoke(em_Val self, int n, ...) {
@@ -592,14 +597,20 @@ em_Val em_Val_invoke(em_Val self, int n, ...) {
         emlite_val_push(arr, em_Val_as_handle(c));
     }
     va_end(args);
-    return em_Val_from_handle(
+    em_Val ret = em_Val_from_handle(
         emlite_val_func_call(self.h, arr)
     );
+    emlite_val_delete(arr);
+    return ret;
 }
 
 em_Val emlite_eval(const char *src) {
     em_Val eval = em_Val_global("eval");
-    return em_Val_invoke(eval, 1, em_Val_from_string(src));
+    em_Val js_src = em_Val_from_string(src);
+    em_Val ret = em_Val_invoke(eval, 1, js_src);
+    em_Val_delete(js_src);
+    em_Val_delete(eval);
+    return ret;
 }
 
 em_Val emlite_eval_v(const char *src, ...) {
@@ -610,7 +621,10 @@ em_Val emlite_eval_v(const char *src, ...) {
     size_t len = vsnprintf(NULL, 0, src, args_len);
     va_end(args_len);
     char *ptr = (char *)malloc(len + 1);
-    // check ptr!
+    if (!ptr) {
+        va_end(args);
+        return em_Val_null();
+    }
     (void)vsnprintf(ptr, len + 1, src, args);
     va_end(args);
     em_Val ret = emlite_eval(ptr);

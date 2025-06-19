@@ -1,22 +1,20 @@
 class HandleTable {
     constructor() {
-        this._h2v = new Map();   // handle   ➜ value
-        this._v2h = new Map();   // value(id)➜ handle
-        this._next = 0;          // monotonic counter
+        this._h2v = new Map();
+        this._v2h = new Map();
+        this._next = 0;
     }
 
-    /* create or reuse ------------------------------------------------*/
     add(value) {
-        if (this._v2h.has(value))          // O(1) lookup
+        if (this._v2h.has(value))
             return this._v2h.get(value);
 
-        const h = this._next++;            // never reused
+        const h = this._next++;
         this._h2v.set(h, value);
         this._v2h.set(value, h);
         return h;
     }
 
-    /* delete by handle ----------------------------------------------*/
     deleteHandle(h) {
         const v = this._h2v.get(h);
         if (v === undefined) return false;
@@ -25,7 +23,6 @@ class HandleTable {
         return true;
     }
 
-    /* helpers --------------------------------------------------------*/
     get(h)           { return this._h2v.get(h); }
     toHandle(value)  { return this.add(value); }
     toValue(h)       { return this.get(h); }
@@ -201,6 +198,11 @@ export class Emlite {
             emscripten_notify_memory_growth: (i) => this._updateViews(),
             _msync_js: () => { },
             emlite_print_object_map: () => console.log(OBJECT_MAP),
+            emlite_reset_object_map: () => {
+                for (const h of OBJECT_MAP._h2v.keys()) {
+                    if (h > 4) OBJECT_MAP.deleteHandle(h);
+                }
+            },
         };
     }
 }

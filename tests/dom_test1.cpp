@@ -1,6 +1,6 @@
 // clang-format off
 // example build command:
-// clang-tidy -checks="*,-llvmlibc*" tests/dom_test1.cpp -- -Iinclude -std=c++20 --target=wasm32-wasi --sysroot=/home/ray/dev/wasi-sysroot-25.0/
+// clang-tidy tests/dom_test1.cpp -- -Iinclude -std=c++20 --target=wasm32-wasi --sysroot=/home/ray/dev/wasi-sysroot-25.0/
 // clang-format on
 
 #include <cstddef>
@@ -27,6 +27,7 @@ EMLITE_USED extern "C" int add(int a, int b) {
         << std::endl;
 
     std::cout << btn.type_of().get() << std::endl;
+    
     // emlite_val_make_callback
     btn.call(
         "addEventListener",

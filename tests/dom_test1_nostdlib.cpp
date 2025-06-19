@@ -22,8 +22,7 @@ EMLITE_USED extern "C" int add(int a, int b) {
         doc.call("getElementsByTagName", Val("body"))[0];
     auto btn = doc.call("createElement", Val("BUTTON"));
     btn.set("textContent", Val("Click Me!"));
-    body.call("appendChild", btn);
-
+    
     // emlite_val_make_callback
     btn.call(
         "addEventListener",
@@ -33,7 +32,8 @@ EMLITE_USED extern "C" int add(int a, int b) {
             return Val::undefined().as_handle();
         })
     );
-
+    
+    body.call("appendChild", btn);
     // check Val::new_
     auto String = Val::global("String");
     auto str1 =

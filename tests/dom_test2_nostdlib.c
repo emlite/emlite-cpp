@@ -99,6 +99,7 @@ EMLITE_USED int add(int a, int b) {
     );
     console_log(status);
 
+    emlite_reset_object_map();
     return a + b;
 }
 
