@@ -3,7 +3,7 @@
 #define EMLITE_IMPL
 #include <emlite/emlite.h>
 
-em_Val console_log(const char *s) {
+em_Val console_log(char *s) {
     em_Val str     = em_Val_from_string(s);
     em_Val console = em_Val_global("console");
     em_Val ret     = em_Val_call(console, "log", 1, str);
@@ -34,7 +34,9 @@ EMLITE_USED int add(int a, int b) {
     em_Val textContent = em_Val_get(btn, "textContent");
     printf("%s\n", em_Val_as_string(textContent));
     (void)fflush(stdout);
-    printf("%s\n", em_Val_typeof(btn));
+    char *typeofbtn = em_Val_typeof(btn);
+    printf("%s\n", typeofbtn);
+    free(typeofbtn);
 
     em_Val appended = em_Val_call(body, "appendChild", 1, btn);
 

@@ -6,10 +6,14 @@
 using namespace emlite;
 
 int main() {
+    // `require` was exposed to Emlite in tests/node_test.js
     auto require = Val::global("require");
-    auto fs      = require(Val("fs"));
 
-    fs.call(
+    auto process = require(Val("process"));
+    Console().log(process.call("cwd"));
+
+    // `fs` was exposed to Emlite in tests/node_test.js
+    Val::global("fs").call(
         "readFile",
         Val("LICENSE"),
         Val("utf8"),

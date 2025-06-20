@@ -43,7 +43,7 @@ To use build.zig.zon, currently no packages are distributed. You can clone the g
 ```
 
 In your web stack:
-```
+```javascript
 import { WASI, File, OpenFile, ConsoleStdout } from "@bjorn3/browser_wasi_shim";
 import { Emlite } from "emlite";
 
@@ -55,7 +55,7 @@ async function main() => {
     ];
     let wasi = new WASI([], [], fds);
     // the zig wasm32-wasi target expects an initial memory of 257
-    let emlite = new Emlite(new WebAssembly.Memory({ initial: 257 }));
+    let emlite = new Emlite({ memory: new WebAssembly.Memory({ initial: 257 }) });
     let wasm = await WebAssembly.compileStreaming(fetch("./zig-out/bin/zigwasm.wasm"));
     let inst = await WebAssembly.instantiate(wasm, {
         wasi_snapshot_preview1: wasi.wasiImport,
@@ -69,6 +69,6 @@ await main();
 ```
 
 ## Building your project
-```
+```bash
 zig build -Dtarget=wasm32-wasi
 ```

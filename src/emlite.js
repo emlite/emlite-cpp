@@ -60,9 +60,37 @@ const CB_STORE = new Map();
 let nextCbId = 0;
 
 export class Emlite {
-    constructor(memory) {
+    /**
+     * @param {Object} opts
+     *        {
+     *          memory?:   WebAssembly.Memory,
+     *          env?:      Record<string, any>,    // extra `env` imports
+     *          globals?:  Record<string, any>,    // things to pin on `globalThis`
+     *        }
+     */
+    constructor(opts = {}) {
+        const {
+            memory = undefined,
+            env = {},
+            globals = {},
+        } = opts;
+
         this._memory = memory ?? new WebAssembly.Memory({ initial: 258, maximum: 4096 });
+        this._extraEnv = { ...env };
+        for (const [name, value] of Object.entries(globals)) {
+            if (name in globalThis) {
+                console.warn(`[Emlite] globalThis.${name} already exists; skipping`);
+                continue;
+            }
+            globalThis[name] = value;
+        }
         this._updateViews();
+    }
+
+    _ensureViewsFresh() {
+        if (this._u8.buffer !== this._memory.buffer) {
+            this._updateViews();
+        }
     }
 
     _updateViews() {
@@ -87,35 +115,51 @@ export class Emlite {
         globalThis.HEAPF64 = this._f64;
     }
 
+    /**
+     * Pass your WebAssemly.Instance exports to Emlite
+     * @param {WebAssembly.Exports} exports
+     */
     setExports(exports) {
         this.exports = exports;
     }
 
+    /**
+     * Convert a C string to a javascript string
+     * @param {Number} ptr - represents an offset in wasm's memory
+     * @param {Number} len - represents the length from the offset
+     * @returns {string} returns a javascript string
+     */
     cStr(ptr, len) {
-        return dec.decode(new Uint8Array(this._memory.buffer, ptr, len));
+        this._ensureViewsFresh();
+        return dec.decode(this._u8.subarray(ptr, ptr + len));
     }
 
+    /**
+     * Convert a javascript string to a C string
+     * @param {string} str - The javascript string
+     * @returns {Number} - represents the offset in memory of a null-terminated char array
+     */
     copyStringToWasm(str) {
+        this._ensureViewsFresh();
         if (typeof this.exports.malloc !== "undefined") {
             const utf8 = enc.encode(str + "\0");
             const ptr = this.exports.malloc(utf8.length);
             if (ptr === 0) throw new Error("malloc failed in copyStringToWasm");
-            new Uint8Array(this._memory.buffer).set(utf8, ptr);
+            this._u8.set(utf8, ptr);
             return ptr;
         } else {
             return 0;
         }
     }
 
+    /** Returns the env required for wasm instantiation. @returns {Object} env object */
     get env() {
-        return {
+        const core = {
             emlite_val_null: () => 0,
             emlite_val_undefined: () => 1,
             emlite_val_false: () => 2,
             emlite_val_true: () => 3,
             emlite_val_global_this: () => 4,
-
-            memory: this._memory,
 
             __cxa_allocate_exception: () => { },
             __cxa_free_exception: () => { },
@@ -216,6 +260,11 @@ export class Emlite {
                     }
                 }
             },
+        };
+        return {
+            memory: this._memory,
+            ...core,
+            ...this._extraEnv,
         };
     }
 }

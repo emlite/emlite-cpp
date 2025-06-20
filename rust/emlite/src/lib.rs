@@ -302,6 +302,12 @@ impl DerefMut for Console {
     }
 }
 
+impl Into<Val> for Console {
+    fn into(self) -> Val {
+        Val::take_ownership(self.inner)
+    }
+}
+
 use std::cmp::Ordering;
 use std::ops::Not;
 

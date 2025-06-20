@@ -14,6 +14,7 @@ using namespace std;
 #endif
 } // namespace detail
 
+/// A smart pointer class with unique ownershipt
 template <
     class T,
     typename = typename detail::enable_if_t<
@@ -74,6 +75,7 @@ class Uniq {
     T *operator->() const noexcept { return ptr_; }
 };
 
+/// A specialization of Uniq, the smart pointer with unique ownership, for array types
 template <class T>
 class Uniq<T[]> {
     T *ptr_ = nullptr;
@@ -132,39 +134,67 @@ class Uniq<T[]> {
     }
 };
 
+/// A helper swap function for Uniq objects
 template <class T>
 inline void swap(Uniq<T> &a, Uniq<T> &b) noexcept {
     a.swap(b);
 }
 
+/// A helper swap function for Uniq objects
 template <class T>
 inline void swap(Uniq<T[]> &a, Uniq<T[]> &b) noexcept {
     a.swap(b);
 }
 
+/// A high-level RAII wrapper around javascript Handle's
 class Val {
     Handle v_;
     Val();
 
   public:
+    /// The copy constructor. This increments the refcount of the javascript object
     Val(const Val &other);
+    /// The copy assignment operator. This increments the refcount of the javascript object
     Val &operator=(const Val &other);
-    Val &operator=(Val &&other) noexcept;
+    /// The default move constructor. This changes ownership without incrementing the ref count.
     Val(Val &&other) noexcept;
+    /// The move assignment operator. This doesn't increment the ref count
+    Val &operator=(Val &&other) noexcept;
+    /// The destructor, this decrements the ref count.
     ~Val();
 
+    /// Creates a new Val object from a raw handle.
+    /// @param v is a raw javascript handle
+    /// @returns a Val object
     static Val take_ownership(Handle v);
+    /// Gets a global object by its name. 
+    /// @param name the name of the object
     static Val global(const char *name);
+    /// Gets the globalThis object.
     static Val global();
+    /// Returns a javascript null
     static Val null();
+    /// Returns a javascript undefined
     static Val undefined();
+    /// Returns a javascript empty object
     static Val object();
+    /// Returns an empty javascript array
     static Val array();
+    /// Creates a javascript function
+    /// @param f is function pointer of type Handle (*)(Handle)
     static Val make_fn(Callback f);
-    static void delete_(Val);
-    static void throw_(Val);
-    static Val dup(Handle);
+    /// Deletes a Val object
+    /// @param v has its refcount decremented
+    static void delete_(Val v);
+    /// Throws a Val on the js side
+    /// @param v the object thrown
+    static void throw_(Val v);
+    /// Creates a new Val from a Handle, while also incrementing its refcount
+    /// @param h the Handle to duplicate
+    static Val dup(Handle h);
 
+    /// A Val constructor from numeric types
+    /// @tparam T any numeric value which conforms to is_integral or is_floating_point
     template <
         typename T,
         typename = typename detail::enable_if_t<
@@ -177,49 +207,106 @@ class Val {
             v_ = emlite_val_make_double(v);
         }
     }
+    
+    /// A Val constructor from a C string
     explicit Val(const char *v);
 
+    /// @returns the raw javascript handle from this Val
     [[nodiscard]] Handle as_handle() const
         __attribute__((always_inline));
+    /// Get the Val object's property
+    /// @param prop the property name
     Val get(const char *prop) const;
+    /// Set the Val object's property
+    /// @param prop the property name
+    /// @param val the property's value
     void set(const char *prop, const Val &val) const;
+    /// Checks whether a property exists
+    /// @param prop the property to check
     bool has(const char *prop) const;
+    /// Determine whether an object possesses a direct, 
+    /// own property with a specified name, 
+    /// as opposed to an inherited property from its prototype chain
+    /// @param prop the property name
     bool has_own_property(const char *prop) const;
+    /// @returns a string indicating the type of the javascript object
     [[nodiscard]] Uniq<char[]> type_of() const;
+    /// @returns an element in the array
+    /// @param idx at the specified index
     Val operator[](size_t idx) const;
+    /// Awaits the function object
     [[nodiscard]] Val await() const;
+    /// @returns bool if Val is a number
     [[nodiscard]] bool is_number() const;
+    /// @returns bool if Val is a string
     [[nodiscard]] bool is_string() const;
+    /// @returns bool if Val is an instanceof 
+    /// @param v the other Val
     [[nodiscard]] bool instanceof (const Val &v) const;
+    /// Not applied to Val
     bool operator!() const;
+    /// @returns whether this Val strictly equals
+    /// @param other the other Val
     bool operator==(const Val &other) const;
+    /// @returns whether this Val doesn't equal
+    /// @param other the other Val
     bool operator!=(const Val &other) const;
+    /// @returns whether this Val is greater than
+    /// @param other the other Val
     bool operator>(const Val &other) const;
+    /// @returns whether this Val is greater than or equals
+    /// @param other the other Val
     bool operator>=(const Val &other) const;
+    /// @returns whether this Val is less than
+    /// @param other the other Val
     bool operator<(const Val &other) const;
+    /// @returns whether this Val is less than or equals
+    /// @param other the other Val
     bool operator<=(const Val &other) const;
 
+    /// Calls the specified method of the Val object
+    /// @param method the method name
+    /// @tparam the arguments to the method should be of type Val or derived from it
+    /// @param vals the arguments to the method
+    /// @returns a Val object which also could be undefined in js terms
     template <
         class... Args,
         typename detail::enable_if_t<
             detail::is_base_of_v<Val, Args>>...>
     Val call(const char *method, Args &&...vals) const;
 
+    /// Calls the specified constructor of the Val object
+    /// @tparam the arguments to the method should be of type Val or derived from it
+    /// @param vals the arguments to the constructor
+    /// @returns a Val object
     template <
         class... Args,
         typename detail::enable_if_t<
             detail::is_base_of_v<Val, Args>>...>
     Val new_(Args &&...vals) const;
 
+    /// Invokes the function object represented by Val
+    /// @tparam the arguments to the method should be of type Val or derived from it
+    /// @param vals the arguments the invocation
+    /// @returns a Val object which also could be undefined in js terms
     template <
         class... Args,
         typename detail::enable_if_t<
             detail::is_base_of_v<Val, Args>>...>
     Val operator()(Args &&...vals) const;
 
+    /// @tparam the type of the returned  object
+    /// @returns the underlying value of the Val object if possible.
+    /// requires that the underlying type is a numeric or string, 
+    /// or a type which has a `take_ownership` static method which returns Val
     template <typename T>
     [[nodiscard]] T as() const;
 
+    /// Converts a javascript array to a Uniq C++ array
+    /// @tparam any numeric type
+    /// @param v The Val representing the javascript array
+    /// @param[in,out] len the length of the C++ array that was returned
+    /// @returns a Uniq C++ array
     template <
         typename T,
         typename = typename detail::enable_if_t<
@@ -238,14 +325,36 @@ class Val {
     }
 };
 
+/// A wrapper around a console js object
 class Console : public Val {
   public:
     Console();
+    /// Logs to the console
+    /// @tparam the arguments to `log` should be of type Val or derived from it
+    /// @param args the arguments passed to `log`
     template <
         class... Args,
         typename detail::enable_if_t<
             detail::is_base_of_v<Val, Args>>...>
     void log(Args &&...args) const;
+
+    /// console.warn
+    /// @tparam the arguments to `warn` should be of type Val or derived from it
+    /// @param args the arguments passed to `warn`
+    template <
+        class... Args,
+        typename detail::enable_if_t<
+            detail::is_base_of_v<Val, Args>>...>
+    void warn(Args &&...args) const;
+
+    /// console.info
+    /// @tparam the arguments to `info` should be of type Val or derived from it
+    /// @param args the arguments passed to `info`
+    template <
+        class... Args,
+        typename detail::enable_if_t<
+            detail::is_base_of_v<Val, Args>>...>
+    void info(Args &&...args) const;
 };
 
 template <
@@ -324,6 +433,7 @@ void Console::log(Args &&...args) const {
     call("log", detail::forward<Args>(args)...);
 }
 
+/// A helper function to run javascript eval using a string literal and printf style arguments
 template <typename... Args>
 Val emlite_eval_cpp(const char *fmt, Args &&...args) {
 #pragma clang diagnostic push

@@ -1,14 +1,14 @@
 // nodejs example for examples/node_readfile.cpp
 // node tests/index.js
 
+import fs from "node:fs"; 
 import { Emlite } from "../src/emlite.js";
 import { WASI } from "node:wasi";
 import { readFile } from "node:fs/promises";
 import { argv, env } from "node:process";
 
 import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-globalThis.require = require;
+
 
 async function main() {
     const wasi = new WASI({
@@ -17,7 +17,12 @@ async function main() {
         env,
     });
 
-    const emlite = new Emlite();
+    const emlite = new Emlite({
+        globals: {
+            fs,
+            require: createRequire(import.meta.url),
+        }
+    });
     const wasm = await WebAssembly.compile(
         await readFile("./bin/wasi_sdk/node_readfile.wasm"),
     );

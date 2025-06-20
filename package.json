@@ -1,6 +1,6 @@
 {
   "name": "emlite",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "description": "A tiny JS bridge for C/C++ via wasm",
   "main": "src/emlite.js",
   "type": "module",
@@ -14,7 +14,8 @@
     "gen_html_tests": "node scripts/gen_html_tests.js",
     "test_all": "npm run build_tests && npm run test_node && npm run gen_html_tests",
     "serve": "http-server ./bin",
-    "clean": "rm -rf bin"
+    "clean": "rm -rf bin",
+    "gen_docs": "clang-doc-18 include/emlite/emlite.hpp --format=html --stylesheets=scripts/docstyle.css -- --target=wasm32-wasip1 --sysroot=$WASI_SDK/share/wasi-sysroot && cp scripts/clang-doc-default-stylesheet.css docs"
   },
   "repository": {
     "type": "git",

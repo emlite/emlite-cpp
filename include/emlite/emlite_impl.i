@@ -267,7 +267,7 @@ em_Val em_Val_from_string(const char *s) {
     return (em_Val){.h = emlite_val_make_str(s, strlen(s))};
 }
 
-em_Val em_Val_from_handle(uint32_t v) {
+em_Val em_Val_from_handle(Handle v) {
     return (em_Val){.h = v};
 }
 
