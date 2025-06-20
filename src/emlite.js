@@ -1,35 +1,48 @@
 class HandleTable {
     constructor() {
-        this._h2v = new Map();
+        this._h2e = new Map();
         this._v2h = new Map();
         this._next = 0;
     }
 
-    add(value) {
-        if (this._v2h.has(value))
-            return this._v2h.get(value);
-
+    _newEntry(value) {
         const h = this._next++;
-        this._h2v.set(h, value);
+        this._h2e.set(h, { value, refs: 1 });
         this._v2h.set(value, h);
         return h;
     }
 
-    deleteHandle(h) {
-        const v = this._h2v.get(h);
-        if (v === undefined) return false;
-        this._h2v.delete(h);
-        this._v2h.delete(v);
+    add(value) {
+        if (this._v2h.has(value)) {
+            const h = this._v2h.get(value);
+            ++this._h2e.get(h).refs;
+            return h;
+        }
+        return this._newEntry(value);
+    }
+
+    decRef(h) {
+        const e = this._h2e.get(h);
+        if (!e) return false;
+
+        if (--e.refs === 0) {
+            this._h2e.delete(h);
+            this._v2h.delete(e.value);
+        }
         return true;
     }
 
-    get(h)           { return this._h2v.get(h); }
-    toHandle(value)  { return this.add(value); }
-    toValue(h)       { return this.get(h); }
-    has(value)       { return this._v2h.has(value); }
-    get size()       { return this._h2v.size; }
+    incRef(h) {
+        const e = this._h2e.get(h);
+        if (e) ++e.refs;
+    }
 
-    [Symbol.iterator]() { return this._h2v.values(); }
+    get(h) { return this._h2e.get(h)?.value; }
+    toHandle(value) { return this.add(value); }
+    toValue(h) { return this.get(h); }
+    has(value) { return this._v2h.has(value); }
+    get size() { return this._h2e.size; }
+    [Symbol.iterator]() { return this._h2e.values(); }
 }
 
 const OBJECT_MAP = new HandleTable();
@@ -156,13 +169,8 @@ export class Emlite {
                 const prop = this.cStr(pPtr, pLen);
                 return Object.prototype.hasOwnProperty.call(target, prop);
             },
-
-            emlite_val_delete: n => {
-                if (n > 4) {
-                    // console.log(OBJECT_MAP.get(n)); 
-                    OBJECT_MAP.deleteHandle(n);
-                }
-            },
+            emlite_val_inc_ref: h => OBJECT_MAP.incRef(h),
+            emlite_val_dec_ref: h => { if (h > 4) OBJECT_MAP.decRef(h); },
             emlite_val_throw: n => { throw OBJECT_MAP.get(n); },
 
             emlite_val_make_callback: fidx => {
@@ -199,8 +207,13 @@ export class Emlite {
             _msync_js: () => { },
             emlite_print_object_map: () => console.log(OBJECT_MAP),
             emlite_reset_object_map: () => {
-                for (const h of OBJECT_MAP._h2v.keys()) {
-                    if (h > 4) OBJECT_MAP.deleteHandle(h);
+                for (const h of [...OBJECT_MAP._h2e.keys()]) {
+                    if (h > 4) {
+                        const value = OBJECT_MAP._h2e.get(h).value;
+
+                        OBJECT_MAP._h2e.delete(h);
+                        OBJECT_MAP._v2h.delete(value);
+                    }
                 }
             },
         };

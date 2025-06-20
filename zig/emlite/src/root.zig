@@ -33,7 +33,8 @@ extern "env" fn emlite_val_obj_has_prop(obj: Handle, prop: [*]const u8, len: usi
 extern "env" fn emlite_val_obj_has_own_prop(obj: Handle, prop: [*]const u8, len: usize) bool;
 extern "env" fn emlite_val_make_callback(id: Handle) Handle;
 extern "env" fn emlite_val_instanceof(a: Handle, b: Handle) bool;
-extern "env" fn emlite_val_delete(val: Handle) void;
+extern "env" fn emlite_val_dec_ref(val: Handle) void;
+extern "env" fn emlite_val_inc_ref(val: Handle) void;
 extern "env" fn emlite_val_throw(val: Handle) void;
 extern "env" fn emlite_print_object_map() void;
 extern "env" fn emlite_reset_object_map() void;
@@ -105,7 +106,7 @@ pub const Val = struct {
         for (args) |v| emlite_val_push(arr, v.handle);
         const ret = Val.fromHandle(emlite_val_obj_call(
             self.handle, method.ptr, method.len, arr));
-        emlite_val_delete(arr);
+        emlite_val_dec_ref(arr);
         return ret;
     }
 
@@ -113,7 +114,7 @@ pub const Val = struct {
         const arr = emlite_val_new_array();
         for (args) |v| emlite_val_push(arr, v.handle);
         const ret = Val.fromHandle(emlite_val_construct_new(self.handle, arr));
-        emlite_val_delete(arr);
+        emlite_val_dec_ref(arr);
         return ret;
     }
 
@@ -121,7 +122,7 @@ pub const Val = struct {
         const arr = emlite_val_new_array();
         for (args) |v| emlite_val_push(arr, v.handle);
         const ret = fromHandle(emlite_val_func_call(self.handle, arr));
-        emlite_val_delete(arr);
+        emlite_val_dec_ref(arr);
         return ret;
     }
 
@@ -137,7 +138,7 @@ pub const Val = struct {
         return emlite_val_instanceof(a.handle, ctor.handle);
     }
 
-    pub fn delete(self: Val) void { emlite_val_delete(self.handle); }
+    pub fn delete(self: Val) void { emlite_val_dec_ref(self.handle); }
     pub fn throw(self: Val) void  { emlite_val_throw(self.handle); }
 
     pub fn makeFn(fn_ptr: fn (Handle) Handle) Val {

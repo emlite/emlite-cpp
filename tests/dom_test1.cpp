@@ -26,6 +26,7 @@ EMLITE_USED extern "C" int add(int a, int b) {
 
     puts(btn.type_of().get());
     
+    body.call("appendChild", btn);
     // emlite_val_make_callback
     btn.call(
         "addEventListener",
@@ -36,7 +37,6 @@ EMLITE_USED extern "C" int add(int a, int b) {
         })
     );
     
-    body.call("appendChild", btn);
 
     // check memory growth!
     std::vector<int> vals = {0, 1, 2};

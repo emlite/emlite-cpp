@@ -3,100 +3,40 @@
 #include "emlite.h"
 #undef EMLITE_EVAL
 
-#if __has_include(<new>)
-#include <new>
-#else
-void *operator new(size_t, void *place) noexcept;
-#endif
-
 namespace emlite {
 
 namespace detail {
-#include "tiny_traits.hpp"
-
-#ifdef EMLITE_USE_THREADS
-using refcount_t = _Atomic size_t;
-inline void ref_inc(refcount_t &r) noexcept {
-    atomic_fetch_add_explicit(&r, 1u, memory_order_acq_rel);
-}
-inline bool ref_dec(refcount_t &r) noexcept {
-    return atomic_fetch_sub_explicit(
-               &r, 1u, memory_order_acq_rel
-           ) == 1u;
-}
+#if __has_include(<type_traits>)
+#include <type_traits>
+using namespace std;
 #else
-using refcount_t = size_t;
-inline void ref_inc(refcount_t &r) noexcept { ++r; }
-inline bool ref_dec(refcount_t &r) noexcept {
-    return --r == 0u;
-}
+#include "tiny_traits.hpp"
 #endif
 } // namespace detail
 
-template<class T>
+template <
+    class T,
+    typename = typename detail::enable_if_t<
+        !detail::is_same_v<T, void>>>
 class Uniq {
-    T* ptr_ = nullptr;
+    T *ptr_ = nullptr;
 
-public:
+  public:
     using element_type = T;
 
     constexpr Uniq() noexcept = default;
-    constexpr Uniq(detail::nullptr_t) noexcept : ptr_(nullptr) {}
-    explicit Uniq(T* p) noexcept : ptr_(p) {}
+    constexpr Uniq(decltype(nullptr)) noexcept
+        : ptr_(nullptr) {}
+    explicit Uniq(T *p) noexcept : ptr_(p) {}
 
-    Uniq(const Uniq&)            = delete;
-    Uniq& operator=(const Uniq&) = delete;
+    Uniq(const Uniq &)            = delete;
+    Uniq &operator=(const Uniq &) = delete;
 
-    Uniq(Uniq&& other) noexcept : ptr_(other.ptr_) { other.ptr_ = nullptr; }
-
-    Uniq& operator=(Uniq&& other) noexcept {
-        if (this != &other) {
-            reset();
-            ptr_        = other.ptr_;
-            other.ptr_  = nullptr;
-        }
-        return *this;
+    Uniq(Uniq &&other) noexcept : ptr_(other.ptr_) {
+        other.ptr_ = nullptr;
     }
 
-    ~Uniq() { reset(); }
-
-    void swap(Uniq& other) noexcept { auto tmp = ptr_; ptr_ = other.ptr_; other.ptr_ = tmp; }
-
-    void reset(T* p = nullptr) noexcept {
-        if (ptr_) delete ptr_;
-        ptr_ = p;
-    }
-
-    [[nodiscard]] T* release() noexcept {
-        T* tmp = ptr_;
-        ptr_   = nullptr;
-        return tmp;
-    }
-
-    [[nodiscard]] T* get() const noexcept { return ptr_; }
-    [[nodiscard]] explicit operator bool() const noexcept { return ptr_ != nullptr; }
-
-    T& operator*()  const noexcept { return *ptr_; }
-    T* operator->() const noexcept { return  ptr_; }
-};
-
-template<class T>
-class Uniq<T[]> {
-    T* ptr_ = nullptr;
-
-public:
-    using element_type = T;
-
-    constexpr Uniq() noexcept = default;
-    constexpr Uniq(detail::nullptr_t) noexcept : ptr_(nullptr) {}
-    explicit Uniq(T* p) noexcept : ptr_(p) {}
-
-    Uniq(const Uniq&)            = delete;
-    Uniq& operator=(const Uniq&) = delete;
-
-    Uniq(Uniq&& other) noexcept : ptr_(other.ptr_) { other.ptr_ = nullptr; }
-
-    Uniq& operator=(Uniq&& other) noexcept {
+    Uniq &operator=(Uniq &&other) noexcept {
         if (this != &other) {
             reset();
             ptr_       = other.ptr_;
@@ -107,288 +47,112 @@ public:
 
     ~Uniq() { reset(); }
 
-    void swap(Uniq& other) noexcept { auto tmp = ptr_; ptr_ = other.ptr_; other.ptr_ = tmp; }
+    void swap(Uniq &other) noexcept {
+        auto tmp   = ptr_;
+        ptr_       = other.ptr_;
+        other.ptr_ = tmp;
+    }
 
-    void reset(T* p = nullptr) noexcept {
-        if (ptr_) delete[] ptr_;
+    void reset(T *p = nullptr) noexcept {
+        if (ptr_)
+            delete ptr_;
         ptr_ = p;
     }
 
-    [[nodiscard]] T* release() noexcept {
-        T* tmp = ptr_;
+    [[nodiscard]] T *release() noexcept {
+        T *tmp = ptr_;
         ptr_   = nullptr;
         return tmp;
     }
 
-    [[nodiscard]] T* get() const noexcept { return ptr_; }
-    [[nodiscard]] explicit operator bool() const noexcept { return ptr_ != nullptr; }
+    [[nodiscard]] T *get() const noexcept { return ptr_; }
+    [[nodiscard]] explicit operator bool() const noexcept {
+        return ptr_ != nullptr;
+    }
 
-    T& operator[](size_t i) const noexcept { return ptr_[i]; }
+    T &operator*() const noexcept { return *ptr_; }
+    T *operator->() const noexcept { return ptr_; }
 };
 
-template<class T>
-inline void swap(Uniq<T>& a, Uniq<T>& b) noexcept { a.swap(b); }
-
-template<class T>
-inline void swap(Uniq<T[]>& a, Uniq<T[]>& b) noexcept { a.swap(b); }
-
 template <class T>
-class Shared {
-    struct Control {
-        T value;
-        void (*deleter)(T *) noexcept;
-        detail::refcount_t refs;
-
-        template <class... Args>
-        Control(void (*d)(T *) noexcept, Args &&...args)
-            : value(detail::forward<Args>(args)...),
-              deleter(d), refs(1u) {}
-    };
-
-    Control *ctrl_ = nullptr;
-
-    void incref() const noexcept {
-        if (ctrl_)
-            detail::ref_inc(ctrl_->refs);
-    }
-    void decref() noexcept {
-        if (!ctrl_)
-            return;
-        if (detail::ref_dec(ctrl_->refs)) {
-            if (ctrl_->deleter)
-                ctrl_->deleter(&ctrl_->value);
-            ::operator delete(ctrl_);
-        }
-        ctrl_ = nullptr;
-    }
+class Uniq<T[]> {
+    T *ptr_ = nullptr;
 
   public:
     using element_type = T;
 
-    constexpr Shared() noexcept = default;
+    constexpr Uniq() noexcept = default;
+    constexpr Uniq(decltype(nullptr)) noexcept
+        : ptr_(nullptr) {}
+    explicit Uniq(T *p) noexcept : ptr_(p) {}
 
-    explicit Shared(
-        T value, void (*d)(T *) noexcept = nullptr
-    )
-        : ctrl_(static_cast<Control *>(
-              ::operator new(sizeof(Control))
-          )) {
-        new (&ctrl_->value) T((T &&)(value));
-        ctrl_->deleter = d;
-        ctrl_->refs    = 1u;
+    Uniq(const Uniq &)            = delete;
+    Uniq &operator=(const Uniq &) = delete;
+
+    Uniq(Uniq &&other) noexcept : ptr_(other.ptr_) {
+        other.ptr_ = nullptr;
     }
 
-    template <class... Args>
-    explicit Shared(detail::in_place_t, Args &&...args)
-        : ctrl_(static_cast<Control *>(
-              ::operator new(sizeof(Control))
-          )) {
-        new (&ctrl_->value)
-            T(detail::forward<Args>(args)...);
-        ctrl_->deleter = nullptr;
-        ctrl_->refs    = 1u;
-    }
-
-    Shared(const Shared &other) noexcept
-        : ctrl_(other.ctrl_) {
-        incref();
-    }
-    Shared(Shared &&other) noexcept : ctrl_(other.ctrl_) {
-        other.ctrl_ = nullptr;
-    }
-
-    Shared &operator=(const Shared &other) noexcept {
+    Uniq &operator=(Uniq &&other) noexcept {
         if (this != &other) {
-            decref();
-            ctrl_ = other.ctrl_;
-            incref();
+            reset();
+            ptr_       = other.ptr_;
+            other.ptr_ = nullptr;
         }
         return *this;
     }
 
-    Shared &operator=(Shared &&other) noexcept {
-        if (this != &other) {
-            decref();
-            ctrl_       = other.ctrl_;
-            other.ctrl_ = nullptr;
-        }
-        return *this;
+    ~Uniq() { reset(); }
+
+    void swap(Uniq &other) noexcept {
+        auto tmp   = ptr_;
+        ptr_       = other.ptr_;
+        other.ptr_ = tmp;
     }
 
-    ~Shared() { decref(); }
-
-    void reset() noexcept { decref(); }
-
-    template <class... Args>
-    void reset_in_place(Args &&...args) {
-        decref();
-        ctrl_ = static_cast<Control *>(
-            ::operator new(sizeof(Control))
-        );
-        new (&ctrl_->value)
-            T(detail::forward<Args>(args)...);
-        ctrl_->deleter = nullptr;
-        ctrl_->refs    = 1u;
+    void reset(T *p = nullptr) noexcept {
+        if (ptr_)
+            delete[] ptr_;
+        ptr_ = p;
     }
 
-    void swap(Shared &other) noexcept {
-        auto tmp    = ctrl_;
-        ctrl_       = other.ctrl_;
-        other.ctrl_ = tmp;
+    [[nodiscard]] T *release() noexcept {
+        T *tmp = ptr_;
+        ptr_   = nullptr;
+        return tmp;
     }
 
-    [[nodiscard]] element_type *get() const noexcept {
-        return ctrl_ ? const_cast<element_type *>(
-                           &ctrl_->value
-                       )
-                     : nullptr;
-    }
-
-    [[nodiscard]] size_t use_count() const noexcept {
-        return ctrl_ ? static_cast<size_t>(ctrl_->refs)
-                     : 0u;
-    }
-
+    [[nodiscard]] T *get() const noexcept { return ptr_; }
     [[nodiscard]] explicit operator bool() const noexcept {
-        return ctrl_ != nullptr;
+        return ptr_ != nullptr;
     }
 
-    [[nodiscard]] element_type *forget() noexcept {
-        element_type *p = get();
-        ctrl_           = nullptr;
-        return p;
-    }
-
-    element_type &operator*() const noexcept {
-        return *get();
-    }
-    element_type *operator->() const noexcept {
-        return get();
+    T &operator[](size_t i) const noexcept {
+        return ptr_[i];
     }
 };
 
 template <class T>
-class Shared<T[]> {
-    struct Control {
-        T *ptr;
-        void (*deleter)(T *) noexcept;
-        detail::refcount_t refs;
-        Control(T *p, void (*d)(T *) noexcept)
-            : ptr(p), deleter(d), refs(1u) {}
-    };
-
-    Control *ctrl_ = nullptr;
-
-    void incref() const noexcept {
-        if (ctrl_)
-            detail::ref_inc(ctrl_->refs);
-    }
-    void decref() noexcept {
-        if (!ctrl_)
-            return;
-        if (detail::ref_dec(ctrl_->refs)) {
-            if (ctrl_->deleter)
-                ctrl_->deleter(ctrl_->ptr);
-            ::operator delete(ctrl_);
-        }
-        ctrl_ = nullptr;
-    }
-
-  public:
-    using element_type = T;
-
-    constexpr Shared() noexcept = default;
-
-    explicit Shared(
-        T *p,
-        void (*d)(T *) noexcept = [](T *q) { delete[] q; }
-    ) noexcept
-        : ctrl_(p ? new Control(p, d) : nullptr) {}
-
-    Shared(const Shared &other) noexcept
-        : ctrl_(other.ctrl_) {
-        incref();
-    }
-    Shared(Shared &&other) noexcept : ctrl_(other.ctrl_) {
-        other.ctrl_ = nullptr;
-    }
-
-    Shared &operator=(const Shared &other) noexcept {
-        if (this != &other) {
-            decref();
-            ctrl_ = other.ctrl_;
-            incref();
-        }
-        return *this;
-    }
-
-    Shared &operator=(Shared &&other) noexcept {
-        if (this != &other) {
-            decref();
-            ctrl_       = other.ctrl_;
-            other.ctrl_ = nullptr;
-        }
-        return *this;
-    }
-
-    ~Shared() { decref(); }
-
-    void reset() noexcept { decref(); }
-
-    void reset(
-        T *p,
-        void (*d)(T *) noexcept = [](T *q) { delete[] q; }
-    ) {
-        decref();
-        ctrl_ = p ? new Control(p, d) : nullptr;
-    }
-
-    void swap(Shared &other) noexcept {
-        auto tmp    = ctrl_;
-        ctrl_       = other.ctrl_;
-        other.ctrl_ = tmp;
-    }
-
-    [[nodiscard]] element_type *get() const noexcept {
-        return ctrl_ ? ctrl_->ptr : nullptr;
-    }
-
-    [[nodiscard]] size_t use_count() const noexcept {
-        return ctrl_ ? static_cast<size_t>(ctrl_->refs)
-                     : 0u;
-    }
-
-    [[nodiscard]] explicit operator bool() const noexcept {
-        return ctrl_ != nullptr;
-    }
-
-    [[nodiscard]] element_type *forget() noexcept {
-        element_type *p = get();
-        ctrl_           = nullptr;
-        return p;
-    }
-
-    element_type &operator[](size_t i) const noexcept {
-        return get()[i];
-    }
-};
-
-template <class T>
-inline void swap(Shared<T> &a, Shared<T> &b) noexcept {
-    a.swap(b);
-}
-template <class T>
-inline void swap(Shared<T[]> &a, Shared<T[]> &b) noexcept {
+inline void swap(Uniq<T> &a, Uniq<T> &b) noexcept {
     a.swap(b);
 }
 
-void emlite_val_deleter(Handle *h) noexcept { emlite_val_delete(*h); }
+template <class T>
+inline void swap(Uniq<T[]> &a, Uniq<T[]> &b) noexcept {
+    a.swap(b);
+}
 
 class Val {
-    Shared<Handle> v_;
+    Handle v_;
     Val();
 
   public:
+    Val(const Val &other);
+    Val &operator=(const Val &other);
+    Val &operator=(Val &&other) noexcept;
+    Val(Val &&other) noexcept;
+    ~Val();
+
     static Val take_ownership(Handle v);
     static Val global(const char *name);
     static Val global();
@@ -399,6 +163,7 @@ class Val {
     static Val make_fn(Callback f);
     static void delete_(Val);
     static void throw_(Val);
+    static Val dup(Handle);
 
     template <
         typename T,
@@ -406,21 +171,16 @@ class Val {
             detail::is_integral_v<T> ||
             detail::is_floating_point_v<T>>>
     explicit Val(T v) : v_(0) {
-        Shared<Handle> temp;
         if constexpr (detail::is_integral_v<T>) {
-            temp = Shared<Handle>(
-                emlite_val_make_int(v), emlite_val_deleter
-            );
+            v_ = emlite_val_make_int(v);
         } else {
-            temp = Shared<Handle>(
-                emlite_val_make_double(v), emlite_val_deleter
-            );
+            v_ = emlite_val_make_double(v);
         }
-        v_.swap(temp);
     }
     explicit Val(const char *v);
 
-    [[nodiscard]] Handle as_handle() const __attribute__((always_inline));
+    [[nodiscard]] Handle as_handle() const
+        __attribute__((always_inline));
     Val get(const char *prop) const;
     void set(const char *prop, const Val &val) const;
     bool has(const char *prop) const;
@@ -500,7 +260,7 @@ Val Val::call(const char *method, Args &&...vals) const {
      ),
      ...);
     return Val::take_ownership(emlite_val_obj_call(
-        *v_, method, strlen(method), arr.as_handle()
+        v_, method, strlen(method), arr.as_handle()
     ));
 }
 
@@ -516,7 +276,7 @@ Val Val::new_(Args &&...vals) const {
      ),
      ...);
     return Val::take_ownership(
-        emlite_val_construct_new(*v_, arr.as_handle())
+        emlite_val_construct_new(v_, arr.as_handle())
     );
 }
 
@@ -532,7 +292,7 @@ Val Val::operator()(Args &&...vals) const {
      ),
      ...);
     return Val::take_ownership(
-        emlite_val_func_call(*v_, arr.as_handle())
+        emlite_val_func_call(v_, arr.as_handle())
     );
 }
 
@@ -540,20 +300,20 @@ template <typename T>
 T Val::as() const {
     if constexpr (detail::is_integral_v<T>) {
         if constexpr (detail::is_same_v<T, bool>) {
-            if (*v_ > 3)
+            if (v_ > 3)
                 return true;
             else
                 return false;
         } else {
-            return emlite_val_get_value_int(*v_);
+            return emlite_val_get_value_int(v_);
         }
     } else if constexpr (detail::is_floating_point_v<T>)
-        return emlite_val_get_value_int(*v_);
+        return emlite_val_get_value_int(v_);
     else if constexpr (detail::is_same_v<T, Uniq<char[]>>)
-        return Uniq<char[]>(emlite_val_get_value_string(*v_)
+        return Uniq<char[]>(emlite_val_get_value_string(v_)
         );
     else
-        return T::take_ownership(*v_);
+        return T::take_ownership(v_);
 }
 
 template <
@@ -590,149 +350,5 @@ Val emlite_eval_cpp(const char *fmt, Args &&...args) {
 } // namespace emlite
 
 #ifdef EMLITE_IMPL
-#if __has_include(<new>)
-#else
-void *operator new(size_t size) { return malloc(size); }
-
-void *operator new[](size_t size) { return malloc(size); }
-
-void operator delete(void *val) noexcept { free(val); }
-
-void operator delete[](void *val) noexcept { free(val); }
-
-void *operator new(size_t, void *place) noexcept {
-    return place;
-}
-#endif
-namespace emlite {
-Val::Val() : v_(Shared<Handle>(0)) {}
-
-Val Val::take_ownership(Handle h) {
-    auto temp = Shared<Handle>(h, emlite_val_deleter);
-    Val val;
-    val.v_.swap(temp);
-    return val;
-}
-
-Val Val::global(const char *v) {
-    return Val::take_ownership(emlite_val_global_this())
-        .get(v);
-}
-
-Val Val::global() {
-    return Val::take_ownership(emlite_val_global_this());
-}
-
-Val Val::null() { return Val::take_ownership(0); }
-
-Val Val::undefined() { return Val::take_ownership(1); }
-
-Val Val::object() {
-    return Val::take_ownership(emlite_val_new_object());
-}
-
-Val Val::array() {
-    return Val::take_ownership(emlite_val_new_array());
-}
-
-void Val::delete_(Val v) { emlite_val_delete(*v.v_); }
-
-void Val::throw_(Val v) { return emlite_val_throw(*v.v_); }
-
-Val::Val(const char *v)
-    : v_(Shared<Handle>(
-          emlite_val_make_str(v, strlen(v)), emlite_val_deleter
-      )) {}
-
-Handle Val::as_handle() const { return *v_; }
-
-Uniq<char[]> Val::type_of() const {
-    return Uniq<char[]>(emlite_val_typeof(*v_));
-}
-
-Val Val::get(const char *prop) const {
-    return Val::take_ownership(
-        emlite_val_obj_prop(*v_, prop, strlen(prop))
-    );
-}
-
-void Val::set(const char *prop, const Val &val) const {
-    emlite_val_obj_set_prop(
-        *v_, prop, strlen(prop), val.as_handle()
-    );
-}
-
-bool Val::has(const char *prop) const {
-    return emlite_val_obj_has_prop(*v_, prop, strlen(prop));
-}
-
-bool Val::has_own_property(const char *prop) const {
-    return emlite_val_obj_has_own_prop(
-        *v_, prop, strlen(prop)
-    );
-}
-
-Val Val::operator[](size_t idx) const {
-    return Val::take_ownership(emlite_val_get_elem(*v_, idx)
-    );
-}
-
-Val Val::make_fn(Callback f) {
-    uint32_t fidx =
-        static_cast<uint32_t>(reinterpret_cast<uintptr_t>(f)
-        );
-    return Val::take_ownership(emlite_val_make_callback(fidx
-    ));
-}
-
-// clang-format off
-Val Val::await() const {
-    return emlite_eval_cpp(
-        "(async() => { let obj = ValMap.toValue(%d); let ret = await obj; "
-        "return ValMap.toHandle(ret); })()",
-        *v_
-    );
-}
-// clang-format on
-
-bool Val::is_number() const {
-    return emlite_val_is_number(*v_);
-}
-
-bool Val::is_string() const {
-    return emlite_val_is_string(*v_);
-}
-
-bool Val:: instanceof (const Val &v) const {
-    return emlite_val_instanceof(*v_, *v.v_);
-}
-
-bool Val::operator!() const { return emlite_val_not(*v_); }
-
-bool Val::operator==(const Val &other) const {
-    return emlite_val_strictly_equals(*v_, *other.v_);
-}
-
-bool Val::operator!=(const Val &other) const {
-    return !emlite_val_strictly_equals(*v_, *other.v_);
-}
-
-bool Val::operator>(const Val &other) const {
-    return emlite_val_gt(*v_, *other.v_);
-}
-
-bool Val::operator>=(const Val &other) const {
-    return emlite_val_gte(*v_, *other.v_);
-}
-
-bool Val::operator<(const Val &other) const {
-    return emlite_val_lt(*v_, *other.v_);
-}
-
-bool Val::operator<=(const Val &other) const {
-    return emlite_val_lte(*v_, *other.v_);
-}
-
-Console::Console() : Val(Val::global("console")) {}
-} // namespace emlite
+#include "emlite_impl.ipp"
 #endif

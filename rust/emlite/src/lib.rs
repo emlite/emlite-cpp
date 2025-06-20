@@ -1,9 +1,6 @@
 pub mod env;
-mod shared;
 use crate::env::*;
 use std::ffi::CStr;
-
-use crate::shared::Shared;
 
 #[macro_export]
 macro_rules! eval {
@@ -25,25 +22,14 @@ macro_rules! argv {
 }
 
 #[derive(Debug)]
-struct Inner {
-    handle: Handle,
-}
-
-impl Drop for Inner {
-    fn drop(&mut self) {
-        unsafe { emlite_val_delete(self.handle) };
-    }
-}
-
-#[derive(Clone, Debug)]
 pub struct Val {
-    inner: Shared<Inner>,
+    inner: Handle,
 }
 
 impl Val {
     pub fn take_ownership(handle: Handle) -> Val {
         Val {
-            inner: Shared::new(Inner { handle }),
+            inner: handle,
         }
     }
 
@@ -96,7 +82,7 @@ impl Val {
     }
 
     pub fn as_handle(&self) -> Handle {
-        self.inner.handle
+        self.inner
     }
 
     pub fn set(&self, prop: &str, val: Val) {
@@ -221,7 +207,7 @@ impl Val {
 
     pub fn delete(v: Val) {
         unsafe {
-            emlite_val_delete(v.as_handle());
+            emlite_val_dec_ref(v.as_handle());
         }
     }
 
@@ -263,6 +249,19 @@ impl From<&str> for Val {
 impl From<String> for Val {
     fn from(item: String) -> Self {
         Val::from_str(&item)
+    }
+}
+
+impl Drop for Val {
+    fn drop(&mut self) {
+        unsafe { emlite_val_dec_ref(self.as_handle()) }
+    }
+}
+
+impl Clone for Val {
+    fn clone(&self) -> Val {
+        unsafe { emlite_val_inc_ref(self.as_handle()); }
+        Val::take_ownership(self.as_handle())
     }
 }
 

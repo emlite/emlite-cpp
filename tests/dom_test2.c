@@ -36,7 +36,7 @@ EMLITE_USED int add(int a, int b) {
     (void)fflush(stdout);
     printf("%s\n", em_Val_typeof(btn));
 
-    em_Val_call(body, "appendChild", 1, btn);
+    em_Val appended = em_Val_call(body, "appendChild", 1, btn);
 
     em_Val event  = em_Val_from_string("click");
     em_Val btn_cb = em_Val_make_fn(btn_click_cb);
@@ -100,6 +100,7 @@ EMLITE_USED int add(int a, int b) {
     em_Val_delete(String);
     em_Val_delete(btn_cb);
     em_Val_delete(event);
+    em_Val_delete(appended);
     em_Val_delete(textContent);
     em_Val_delete(btn_label);
     em_Val_delete(btn);
