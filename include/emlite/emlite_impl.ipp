@@ -132,8 +132,8 @@ Val Val::make_fn(Callback f) {
 // clang-format off
 Val Val::await() const {
     return emlite_eval_cpp(
-        "(async() => { let obj = ValMap.toValue(%d); let ret = await obj; "
-        "return ValMap.toHandle(ret); })()",
+        "(async() => { let obj = EMLITE_VALMAP.toValue(%d); let ret = await obj; "
+        "return EMLITE_VALMAP.toHandle(ret); })()",
         v_
     );
 }

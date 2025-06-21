@@ -232,9 +232,9 @@ impl Val {
         eval!(
             r#"
             (async () => {{
-                let obj = ValMap.toValue({});
+                let obj = EMLITE_VALMAP.toValue({});
                 let ret = await obj;
-                return ValMap.toHandle(ret);
+                return EMLITE_VALMAP.toHandle(ret);
             }})()
         "#,
             self.as_handle()

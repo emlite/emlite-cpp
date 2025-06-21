@@ -32,6 +32,10 @@ size_t strlen(const char *);
 #define EMLITE_USED __attribute__((used))
 #endif
 
+#ifndef EMLITE_IMPORT
+#define EMLITE_IMPORT(NAME) __attribute__((import_module("env"), import_name(#NAME)))
+#endif
+
 /// A javascript raw handle
 typedef uint32_t Handle;
 
@@ -47,7 +51,7 @@ extern Handle emlite_val_false(void);
 /// @returns a true value handle
 extern Handle emlite_val_true(void);
 /// @returns a the globalThis handle
-extern Handle emlite_val_global_this();
+extern Handle emlite_val_global_this(void);
 /// @returns a new array handle
 extern Handle emlite_val_new_array(void);
 /// @returns a new js Object
@@ -236,10 +240,14 @@ em_Val emlite_eval(const char *src);
 
 /// Evaluates using printf-style arguments, with @param src being the fmt string.
 em_Val emlite_eval_v(const char *src, ...);
+
 #define EMLITE_EVAL(x, ...)                                \
     emlite_eval_v(#x __VA_OPT__(, __VA_ARGS__))
 
 #ifdef EMLITE_IMPL
+#ifdef EMLITE_USE_EMSCRIPTEN_JS_GLUE
+#include "emlite_emscripten_impl.i"
+#endif
 #include "emlite_impl.i"
 #endif
 

@@ -344,9 +344,9 @@ em_Val em_Val_at(em_Val self, size_t idx) {
 
 em_Val em_Val_await(em_Val self) {
     return emlite_eval_v(
-        "(async() => { let obj = ValMap.toValue(%d); let "
+        "(async() => { let obj = EMLITE_VALMAP.toValue(%d); let "
         "ret = await obj; "
-        "return ValMap.toHandle(ret); })()",
+        "return EMLITE_VALMAP.toHandle(ret); })()",
         self.h
     );
 }

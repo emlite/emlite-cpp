@@ -45,19 +45,21 @@ class HandleTable {
     [Symbol.iterator]() { return this._h2e.values(); }
 }
 
-const OBJECT_MAP = new HandleTable();
-globalThis.ValMap = OBJECT_MAP;
-OBJECT_MAP.add(null);
-OBJECT_MAP.add(undefined);
-OBJECT_MAP.add(false);
-OBJECT_MAP.add(true);
-OBJECT_MAP.add(globalThis);
+const HANDLE_MAP = new HandleTable();
+HANDLE_MAP.add(null);
+HANDLE_MAP.add(undefined);
+HANDLE_MAP.add(false);
+HANDLE_MAP.add(true);
+HANDLE_MAP.add(globalThis);
+globalThis.EMLITE_VALMAP = HANDLE_MAP;
 
-const enc = new TextEncoder('utf-8');
-const dec = new TextDecoder('utf-8');
+const enc = new TextEncoder("utf-8");
+const dec = new TextDecoder("utf-8");
 
 const CB_STORE = new Map();
 let nextCbId = 0;
+globalThis.EMLITE_CB_STORE= CB_STORE;
+globalThis.emliteNextCbId = nextCbId;
 
 export class Emlite {
     /**
@@ -131,6 +133,7 @@ export class Emlite {
      */
     cStr(ptr, len) {
         this._ensureViewsFresh();
+        // return dec.decode(new Uint8Array(this._memory.buffer, ptr, len));
         return dec.decode(this._u8.subarray(ptr, ptr + len));
     }
 
@@ -145,9 +148,10 @@ export class Emlite {
             const utf8 = enc.encode(str + "\0");
             const ptr = this.exports.malloc(utf8.length);
             if (ptr === 0) throw new Error("malloc failed in copyStringToWasm");
+            // new Uint8Array(this._memory.buffer).set(utf8, ptr);
             this._u8.set(utf8, ptr);
             return ptr;
-        } else {
+        } else {   
             return 0;
         }
     }
@@ -165,98 +169,98 @@ export class Emlite {
             __cxa_free_exception: () => { },
             __cxa_throw: () => { },
 
-            emlite_val_new_array: () => OBJECT_MAP.add([]),
-            emlite_val_new_object: () => OBJECT_MAP.add({}),
-            emlite_val_make_int: n => OBJECT_MAP.add(n | 0),
-            emlite_val_make_double: n => OBJECT_MAP.add(n),
-            emlite_val_make_str: (ptr, len) => OBJECT_MAP.add(this.cStr(ptr, len)),
+            emlite_val_new_array: () => HANDLE_MAP.add([]),
+            emlite_val_new_object: () => HANDLE_MAP.add({}),
+            emlite_val_make_int: n => HANDLE_MAP.add(n | 0),
+            emlite_val_make_double: n => HANDLE_MAP.add(n),
+            emlite_val_make_str: (ptr, len) => HANDLE_MAP.add(this.cStr(ptr, len)),
 
-            emlite_val_get_value_int: n => OBJECT_MAP.get(n),
-            emlite_val_get_value_double: n => OBJECT_MAP.get(n),
-            emlite_val_get_value_string: n => this.copyStringToWasm(OBJECT_MAP.get(n)),
-            emlite_val_typeof: n => this.copyStringToWasm(typeof OBJECT_MAP.get(n)),
+            emlite_val_get_value_int: n => HANDLE_MAP.get(n),
+            emlite_val_get_value_double: n => HANDLE_MAP.get(n),
+            emlite_val_get_value_string: n => this.copyStringToWasm(HANDLE_MAP.get(n)),
+            emlite_val_typeof: n => this.copyStringToWasm(typeof HANDLE_MAP.get(n)),
 
-            emlite_val_push: (arrRef, valRef) => OBJECT_MAP.get(arrRef).push(valRef),
-            emlite_val_get_elem: (n, idx) => OBJECT_MAP.add(OBJECT_MAP.get(n)[idx]),
+            emlite_val_push: (arrRef, valRef) => HANDLE_MAP.get(arrRef).push(valRef),
+            emlite_val_get_elem: (n, idx) => HANDLE_MAP.add(HANDLE_MAP.get(n)[idx]),
 
-            emlite_val_not: arg => !OBJECT_MAP.get(arg),
+            emlite_val_not: arg => !HANDLE_MAP.get(arg),
             emlite_val_is_string: arg => {
-                const obj = OBJECT_MAP.get(arg);
+                const obj = HANDLE_MAP.get(arg);
                 return typeof obj === "string" || obj instanceof String;
             },
-            emlite_val_is_number: arg => typeof OBJECT_MAP.get(arg) === "number",
-            emlite_val_gt: (a, b) => OBJECT_MAP.get(a) > OBJECT_MAP.get(b),
-            emlite_val_gte: (a, b) => OBJECT_MAP.get(a) >= OBJECT_MAP.get(b),
-            emlite_val_lt: (a, b) => OBJECT_MAP.get(a) < OBJECT_MAP.get(b),
-            emlite_val_lte: (a, b) => OBJECT_MAP.get(a) <= OBJECT_MAP.get(b),
-            emlite_val_equals: (a, b) => OBJECT_MAP.get(a) == OBJECT_MAP.get(b),
-            emlite_val_strictly_equals: (a, b) => OBJECT_MAP.get(a) === OBJECT_MAP.get(b),
-            emlite_val_instanceof: (a, b) => OBJECT_MAP.get(a) instanceof OBJECT_MAP.get(b),
+            emlite_val_is_number: arg => typeof HANDLE_MAP.get(arg) === "number",
+            emlite_val_gt: (a, b) => HANDLE_MAP.get(a) > HANDLE_MAP.get(b),
+            emlite_val_gte: (a, b) => HANDLE_MAP.get(a) >= HANDLE_MAP.get(b),
+            emlite_val_lt: (a, b) => HANDLE_MAP.get(a) < HANDLE_MAP.get(b),
+            emlite_val_lte: (a, b) => HANDLE_MAP.get(a) <= HANDLE_MAP.get(b),
+            emlite_val_equals: (a, b) => HANDLE_MAP.get(a) == HANDLE_MAP.get(b),
+            emlite_val_strictly_equals: (a, b) => HANDLE_MAP.get(a) === HANDLE_MAP.get(b),
+            emlite_val_instanceof: (a, b) => HANDLE_MAP.get(a) instanceof HANDLE_MAP.get(b),
 
             emlite_val_obj_prop: (objRef, pPtr, pLen) => {
-                const target = OBJECT_MAP.get(objRef);
+                const target = HANDLE_MAP.get(objRef);
                 const prop = this.cStr(pPtr, pLen);
-                return OBJECT_MAP.add(target[prop]);
+                return HANDLE_MAP.add(target[prop]);
             },
             emlite_val_obj_set_prop: (objRef, pPtr, pLen, val) => {
-                const target = OBJECT_MAP.get(objRef);
+                const target = HANDLE_MAP.get(objRef);
                 const prop = this.cStr(pPtr, pLen);
-                target[prop] = OBJECT_MAP.get(val);
+                target[prop] = HANDLE_MAP.get(val);
             },
             emlite_val_obj_has_prop: (objRef, pPtr, pLen) => {
-                const target = OBJECT_MAP.get(objRef);
+                const target = HANDLE_MAP.get(objRef);
                 const prop = this.cStr(pPtr, pLen);
                 return Reflect.has(target, prop);
             },
             emlite_val_obj_has_own_prop: (objRef, pPtr, pLen) => {
-                const target = OBJECT_MAP.get(objRef);
+                const target = HANDLE_MAP.get(objRef);
                 const prop = this.cStr(pPtr, pLen);
                 return Object.prototype.hasOwnProperty.call(target, prop);
             },
-            emlite_val_inc_ref: h => OBJECT_MAP.incRef(h),
-            emlite_val_dec_ref: h => { if (h > 4) OBJECT_MAP.decRef(h); },
-            emlite_val_throw: n => { throw OBJECT_MAP.get(n); },
+            emlite_val_inc_ref: h => HANDLE_MAP.incRef(h),
+            emlite_val_dec_ref: h => { if (h > 4) HANDLE_MAP.decRef(h); },
+            emlite_val_throw: n => { throw HANDLE_MAP.get(n); },
 
             emlite_val_make_callback: fidx => {
                 const id = nextCbId++;
                 CB_STORE.set(id, fidx);
 
                 const jsFn = (...args) => {
-                    const arrHandle = OBJECT_MAP.add(args.map(v => OBJECT_MAP.add(v)));
+                    const arrHandle = HANDLE_MAP.add(args.map(v => HANDLE_MAP.add(v)));
                     const ret = this.exports.__indirect_function_table.get(fidx)(arrHandle);
 
                     return ret;
                 };
-                return OBJECT_MAP.add(jsFn);
+                return HANDLE_MAP.add(jsFn);
             },
 
             emlite_val_obj_call: (objRef, mPtr, mLen, argvRef) => {
-                const target = OBJECT_MAP.get(objRef);
+                const target = HANDLE_MAP.get(objRef);
                 const method = this.cStr(mPtr, mLen);
-                const args = OBJECT_MAP.get(argvRef).map(h => OBJECT_MAP.get(h));
-                return OBJECT_MAP.add(Reflect.apply(target[method], target, args));
+                const args = HANDLE_MAP.get(argvRef).map(h => HANDLE_MAP.get(h));
+                return HANDLE_MAP.add(Reflect.apply(target[method], target, args));
             },
             emlite_val_construct_new: (objRef, argvRef) => {
-                const target = OBJECT_MAP.get(objRef);
-                const args = OBJECT_MAP.get(argvRef).map(h => OBJECT_MAP.get(h));
-                return OBJECT_MAP.add(Reflect.construct(target, args));
+                const target = HANDLE_MAP.get(objRef);
+                const args = HANDLE_MAP.get(argvRef).map(h => HANDLE_MAP.get(h));
+                return HANDLE_MAP.add(Reflect.construct(target, args));
             },
             emlite_val_func_call: (objRef, argvRef) => {
-                const target = OBJECT_MAP.get(objRef);
-                const args = OBJECT_MAP.get(argvRef).map(h => OBJECT_MAP.get(h));
-                return OBJECT_MAP.add(Reflect.apply(target, undefined, args));
+                const target = HANDLE_MAP.get(objRef);
+                const args = HANDLE_MAP.get(argvRef).map(h => HANDLE_MAP.get(h));
+                return HANDLE_MAP.add(Reflect.apply(target, undefined, args));
             },
             // eslint-disable-next-line no-unused-vars
             emscripten_notify_memory_growth: (i) => this._updateViews(),
             _msync_js: () => { },
-            emlite_print_object_map: () => console.log(OBJECT_MAP),
+            emlite_print_object_map: () => console.log(HANDLE_MAP),
             emlite_reset_object_map: () => {
-                for (const h of [...OBJECT_MAP._h2e.keys()]) {
+                for (const h of [...HANDLE_MAP._h2e.keys()]) {
                     if (h > 4) {
-                        const value = OBJECT_MAP._h2e.get(h).value;
+                        const value = HANDLE_MAP._h2e.get(h).value;
 
-                        OBJECT_MAP._h2e.delete(h);
-                        OBJECT_MAP._v2h.delete(value);
+                        HANDLE_MAP._h2e.delete(h);
+                        HANDLE_MAP._v2h.delete(value);
                     }
                 }
             },

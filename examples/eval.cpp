@@ -6,7 +6,7 @@ using namespace emlite;
 int main() {
     // clang-format off
     auto ret = EMLITE_EVAL({
-       let c = ValMap.toValue(%d);
+       let c = EMLITE_VALMAP.toValue(%d);
        c.log('Hello');
        5
     }, Console().as_handle());
