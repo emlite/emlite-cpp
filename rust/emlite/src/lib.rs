@@ -2,6 +2,7 @@ pub mod env;
 use crate::env::*;
 use std::ffi::CStr;
 
+/// Runs JS eval
 #[macro_export]
 macro_rules! eval {
     ($src: literal) => {{
@@ -14,6 +15,7 @@ macro_rules! eval {
     }};
 }
 
+/// A helper macro which packs values into a slice of Val
 #[macro_export]
 macro_rules! argv {
     ($($rest:expr),*) => {{
@@ -21,70 +23,89 @@ macro_rules! argv {
     }};
 }
 
+/// A wrapper around a javascript handle
 #[derive(Debug)]
 pub struct Val {
     inner: Handle,
 }
 
 impl Val {
+    /// Takes the ownership of a handle
     pub fn take_ownership(handle: Handle) -> Val {
         Val {
             inner: handle,
         }
     }
 
+    /// Creates a Val object from another
     pub fn from_val(v: Val) -> Self {
+        unsafe {
+            emlite_val_inc_ref(v.inner);
+        }
         Val {
-            inner: v.inner.clone(),
+            inner: v.inner,
         }
     }
 
+    /// Returns the globalThis object
     pub fn global_this() -> Val {
         Val::take_ownership(unsafe { emlite_val_global_this() })
     }
 
+    /// Gets the property `prop`
     pub fn get(&self, prop: &str) -> Val {
         let h = unsafe { emlite_val_obj_prop(self.as_handle(), prop.as_ptr() as _, prop.len()) };
         Val::take_ownership(h)
     }
 
+    /// Gets a global object by `name`
     pub fn global(name: &str) -> Val {
         Val::global_this().get(name)
     }
 
+    /// Gets a js null Val
     pub fn null() -> Val {
         Val::take_ownership(unsafe { emlite_val_null() })
     }
 
+    /// Gets a js undefined Val
     pub fn undefined() -> Val {
         Val::take_ownership(unsafe { emlite_val_undefined() })
     }
 
+    /// Gets a new js object
     pub fn object() -> Val {
         Val::take_ownership(unsafe { emlite_val_new_object() })
     }
 
+    /// Gets a new js array
     pub fn array() -> Val {
         Val::take_ownership(unsafe { emlite_val_new_array() })
     }
 
+    /// Creates a Val from an i32
     pub fn from_i32(i: i32) -> Val {
         Val::take_ownership(unsafe { emlite_val_make_int(i) })
     }
 
+    /// Creates a Val from an f64
     pub fn from_f64(f: f64) -> Val {
         Val::take_ownership(unsafe { emlite_val_make_double(f) })
     }
 
+    /// Creates a Val from str
     #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Val {
         Val::take_ownership(unsafe { emlite_val_make_str(s.as_ptr() as _, s.len()) })
     }
 
+    /// Returns the raw js handle
+    #[inline(always)]
     pub fn as_handle(&self) -> Handle {
         self.inner
     }
 
+    /// Set the underlying js object property `prop` to `val`
     pub fn set(&self, prop: &str, val: Val) {
         unsafe {
             emlite_val_obj_set_prop(
@@ -96,14 +117,17 @@ impl Val {
         };
     }
 
+    /// Checks whether a property `prop` exists
     pub fn has(&self, prop: &str) -> bool {
         unsafe { emlite_val_obj_has_prop(self.as_handle(), prop.as_ptr() as _, prop.len()) }
     }
 
+    /// Checks whether a non-inherited property `prop` exists
     pub fn has_own_property(&self, prop: &str) -> bool {
         unsafe { emlite_val_obj_has_own_prop(self.as_handle(), prop.as_ptr() as _, prop.len()) }
     }
 
+    /// Gets the typeof the underlying js object
     pub fn type_of(&self) -> String {
         unsafe {
             let ptr = emlite_val_typeof(self.as_handle());
@@ -111,22 +135,27 @@ impl Val {
         }
     }
 
+    /// Gets the element at index `idx`. Assumes the underlying js type is indexable
     pub fn at(&self, idx: usize) -> Val {
         Val::take_ownership(unsafe { emlite_val_get_elem(self.as_handle(), idx) })
     }
 
+    /// Gets the underlying i32 value of a js object
     pub fn as_i32(&self) -> i32 {
         unsafe { emlite_val_get_value_int(self.as_handle()) as i32 }
     }
 
+    /// Gets the underlying boolean value of a js object
     pub fn as_bool(&self) -> bool {
         self.as_handle() > 3
     }
 
+    /// Gets the underlying f64 value of a js object
     pub fn as_f64(&self) -> f64 {
         unsafe { emlite_val_get_value_double(self.as_handle()) as _ }
     }
 
+    /// Gets the underlying string value of a js object
     pub fn as_string(&self) -> String {
         unsafe {
             let ptr = emlite_val_get_value_string(self.as_handle());
@@ -134,6 +163,7 @@ impl Val {
         }
     }
 
+    /// Converts the underlying js array to an Vec of i32
     pub fn to_vec_i32(&self) -> Vec<i32> {
         let len = self.get("length").as_i32();
         let mut v: Vec<i32> = vec![];
@@ -143,6 +173,7 @@ impl Val {
         v
     }
 
+    /// Converts the underlying js array to an Vec of f64
     pub fn to_vec_f64(&self) -> Vec<f64> {
         let len = self.get("length").as_i32();
         let mut v: Vec<f64> = vec![];
@@ -152,6 +183,7 @@ impl Val {
         v
     }
 
+    /// Calls the method `f` with `args`, can return an undefined js value
     pub fn call(&self, f: &str, args: &[Val]) -> Val {
         unsafe {
             let arr = Val::take_ownership(emlite_val_new_array());
@@ -167,6 +199,7 @@ impl Val {
         }
     }
 
+    /// Calls the object's constructor with `args` constructing a new object
     pub fn new(&self, args: &[Val]) -> Val {
         unsafe {
             let arr = Val::take_ownership(emlite_val_new_array());
@@ -177,6 +210,7 @@ impl Val {
         }
     }
 
+    /// Invokes the function object with `args`, can return an undefined js value
     pub fn invoke(&self, args: &[Val]) -> Val {
         unsafe {
             let arr = Val::take_ownership(emlite_val_new_array());
@@ -187,11 +221,13 @@ impl Val {
         }
     }
 
+    /// Creates js function from a function pointer and returns its handle wrapped in a Val object
     pub fn make_fn(f: fn(Handle) -> Handle) -> Val {
         let idx: u32 = f as usize as u32;
         unsafe { Val::take_ownership(emlite_val_make_callback(idx)) }
     }
 
+    /// Awaits the invoked function object
     pub fn await_(&self) -> Val {
         eval!(
             r#"
@@ -205,18 +241,21 @@ impl Val {
         )
     }
 
+    /// Decrements the refcount of the underlying handle
     pub fn delete(v: Val) {
         unsafe {
             emlite_val_dec_ref(v.as_handle());
         }
     }
 
+    /// Throws a js object represented by Val
     pub fn throw(v: Val) {
         unsafe {
             emlite_val_throw(v.as_handle());
         }
     }
 
+    /// Checks whether this Val is an instanceof `v`
     pub fn instanceof(&self, v: Val) -> bool {
         unsafe { emlite_val_instanceof(self.as_handle(), v.as_handle()) }
     }
@@ -267,22 +306,36 @@ impl Clone for Val {
 
 use std::ops::{Deref, DerefMut};
 
+/// A console wrapper
 #[derive(Clone, Debug)]
 pub struct Console {
     val: Val,
 }
 
 impl Console {
+    /// Gets the console
     pub fn get() -> Console {
         Console {
             val: Val::global("console"),
         }
     }
 
+    /// Logs into the console
     pub fn log(&self, args: &[Val]) {
         self.val.call("log", args);
     }
 
+    /// console.warn
+    pub fn warn(&self, args: &[Val]) {
+        self.val.call("warn", args);
+    }
+
+    /// console.info
+    pub fn info(&self, args: &[Val]) {
+        self.val.call("info", args);
+    }
+
+    /// Returns the underlying handle of the console
     pub fn as_handle(&self) -> Handle {
         self.val.as_handle()
     }
