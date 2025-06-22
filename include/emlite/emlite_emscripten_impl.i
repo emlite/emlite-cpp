@@ -1,3 +1,6 @@
+// EM_JS and _EM_JS macros copied from https://github.com/emscripten-core/emscripten/blob/main/system/include/emscripten/em_js.h
+// Copyright 2018 The Emscripten Authors.
+// Licensed under MIT and the University of Illinois/NCSA Open Source License
 #define _EM_JS(ret, c_name, js_name, params, code)         \
         ret c_name params EMLITE_IMPORT(js_name);          \
         __attribute__((visibility("hidden"))               \

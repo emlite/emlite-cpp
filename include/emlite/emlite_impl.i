@@ -1,4 +1,3 @@
-
 // present in freestanding environments
 #include <stdarg.h>
 
@@ -45,7 +44,7 @@ static uintptr_t heap_top = (uintptr_t)&__heap_base;
 static inline uintptr_t align_up(uintptr_t p, uintptr_t n) {
     return (p + n - 1u) & ~(n - 1u);
 }
-// Code copied from wasi-libc implementation:
+// sbrk code copied from wasi-libc implementation:
 // https://github.com/WebAssembly/wasi-libc/blob/main/libc-bottom-half/sources/sbrk.c
 // Licensed by wasi-libc under MIT, Apache and Apache-LLVM
 void *sbrk(intptr_t increment) {

@@ -6,12 +6,7 @@
 namespace emlite {
 
 namespace detail {
-#if __has_include(<type_traits>)
-#include <type_traits>
-using namespace std;
-#else
 #include "tiny_traits.hpp"
-#endif
 } // namespace detail
 
 /// A smart pointer class with unique ownershipt
