@@ -349,7 +349,7 @@ class Val {
 
         for (int i = 0; i < sz; ++i) {
             auto val = v[i].as<Handle>();
-            ret[i] = Val::dup(val);
+            ret[i] = Val::take_ownership(val);
         }
         return Uniq<Val[]>(ret);
     }
