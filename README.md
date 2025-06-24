@@ -32,16 +32,16 @@ C++ example:
 using namespace emlite;
 
 EMLITE_USED extern "C" void some_func() {
-    Console().log(Val("Hello from Emlite"));
+    Console().log("Hello from Emlite");
 
     auto doc = Val::global("document");
     auto body =
-        doc.call("getElementsByTagName", Val("body"))[0];
-    auto btn = doc.call("createElement", Val("BUTTON"));
-    btn.set("textContent", Val("Click Me!"));
+        doc.call("getElementsByTagName", "body")[0];
+    auto btn = doc.call("createElement", "BUTTON");
+    btn.set("textContent", "Click Me!");
     btn.call(
         "addEventListener",
-        Val("click"),
+        "click",
         Val::make_fn([](auto h) -> Handle {
             size_t len     = 0;
             auto param_vec = Val::vec_from_js_array<Handle>(

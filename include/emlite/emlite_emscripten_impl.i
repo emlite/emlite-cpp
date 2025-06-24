@@ -1,17 +1,18 @@
-// EM_JS and _EM_JS macros copied from https://github.com/emscripten-core/emscripten/blob/main/system/include/emscripten/em_js.h
+// EM_JS and _EM_JS macros copied from
+// https://github.com/emscripten-core/emscripten/blob/main/system/include/emscripten/em_js.h
 // Copyright 2018 The Emscripten Authors.
-// Licensed under MIT and the University of Illinois/NCSA Open Source License
+// Licensed under MIT and the University of Illinois/NCSA
+// Open Source License
 #define _EM_JS(ret, c_name, js_name, params, code)         \
-        ret c_name params EMLITE_IMPORT(js_name);          \
-        __attribute__((visibility("hidden"))               \
-        ) void *__em_js_ref_##c_name = (void *)&c_name;    \
-        EMLITE_USED                                        \
-        __attribute__((section("em_js"), aligned(1))       \
-        ) char __em_js__##js_name[] = #params "<::>" code; 
+    ret c_name params EMLITE_IMPORT(js_name);              \
+    __attribute__((visibility("hidden"))                   \
+    ) void *__em_js_ref_##c_name = (void *)&c_name;        \
+    EMLITE_USED                                            \
+    __attribute__((section("em_js"), aligned(1))           \
+    ) char __em_js__##js_name[] = #params "<::>" code;
 
 #define EM_JS(ret, name, params, ...)                      \
-    _EM_JS(ret, name, name, params, #__VA_ARGS__)          \
-
+    _EM_JS(ret, name, name, params, #__VA_ARGS__)
 
 // clang-format off
 EM_JS(Handle, emlite_val_null, (), { return 0; });

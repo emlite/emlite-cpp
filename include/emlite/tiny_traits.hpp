@@ -1,6 +1,5 @@
 #pragma once
 
-
 template <typename T>
 struct remove_reference {
     using type = T;
@@ -32,23 +31,27 @@ constexpr T &&forward(typename remove_reference<T>::type &&t
     return static_cast<T &&>(t);
 }
 
-template<class T, T V>
+template <class T, T V>
 struct integral_constant {
     static constexpr T value = V;
-    using  value_type  = T;
-    using  type        = integral_constant;
-    constexpr operator value_type() const noexcept { return value; }
+    using value_type         = T;
+    using type               = integral_constant;
+    constexpr operator value_type() const noexcept {
+        return value;
+    }
 };
 
 using true_type  = integral_constant<bool, true>;
 using false_type = integral_constant<bool, false>;
 
-template<class B, class D>
-using convert_test = decltype( static_cast<const volatile B*>( static_cast<D*>(nullptr) ) );
+template <class B, class D>
+using convert_test =
+    decltype(static_cast<const volatile B *>(
+        static_cast<D *>(nullptr)
+    ));
 
 template <bool B, class T = void>
-struct enable_if {
-};
+struct enable_if {};
 
 template <class T>
 struct enable_if<true, T> {
@@ -120,20 +123,20 @@ IS_FLOATING(float)
 IS_FLOATING(double)
 IS_FLOATING(long double)
 
-template<class Base, class Derived, class = void>
-struct is_base_of : false_type { };
+template <class Base, class Derived, class = void>
+struct is_base_of : false_type {};
 
-template<class...> using void_t = void;
+template <class...>
+using void_t = void;
 
-template<class Base, class Derived>
+template <class Base, class Derived>
 struct is_base_of<
-        Base, Derived,
-        void_t< decltype(
-            static_cast<const volatile Base*>(
-                static_cast<Derived*>(nullptr)
-            )
-        )>
-    > : true_type { };
+    Base,
+    Derived,
+    void_t<decltype(static_cast<const volatile Base *>(
+        static_cast<Derived *>(nullptr)
+    ))>> : true_type {};
 
-template<class Base, class Derived>
-inline constexpr bool is_base_of_v = is_base_of<Base,Derived>::value;
+template <class Base, class Derived>
+inline constexpr bool is_base_of_v =
+    is_base_of<Base, Derived>::value;

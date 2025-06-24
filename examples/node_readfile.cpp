@@ -9,14 +9,14 @@ int main() {
     // `require` was exposed to Emlite in tests/node_test.js
     auto require = Val::global("require");
 
-    auto process = require(Val("process"));
+    auto process = require("process");
     Console().log(process.call("cwd"));
 
     // `fs` was exposed to Emlite in tests/node_test.js
     Val::global("fs").call(
         "readFile",
-        Val("LICENSE"),
-        Val("utf8"),
+        "LICENSE",
+        "utf8",
         Val::make_fn([](Handle h) -> Handle {
             size_t len     = 0;
             auto param_vec = Val::vec_from_js_array<Handle>(

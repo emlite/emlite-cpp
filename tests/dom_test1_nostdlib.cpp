@@ -3,14 +3,13 @@
 // clang++ --target=wasm32 -o dom_test1_nostdlib.wasm -Iinclude tests/dom_test1_nostdlib.cpp -nostdlib -Os -Wl,--allow-undefined,--no-entry,--import-memory,--export-memory,--export-all,--strip-all
 // clang-format on
 
-
 #define EMLITE_IMPL
 #include <emlite/emlite.hpp>
 
 using namespace emlite;
 
 EMLITE_USED extern "C" int add(int a, int b) {
-    Console().log(Val("Hello from Emlite"));
+    Console().log("Hello from Emlite");
 
     auto arr = Uniq<int[]>(new int[200]);
     for (int i = 0; i < 200; i++)
@@ -18,30 +17,27 @@ EMLITE_USED extern "C" int add(int a, int b) {
 
     auto doc = Val::global("document");
     // operator[]
-    auto body =
-        doc.call("getElementsByTagName", Val("body"))[0];
-    auto btn = doc.call("createElement", Val("BUTTON"));
-    btn.set("textContent", Val("Click Me!"));
-    
+    auto body = doc.call("getElementsByTagName", "body")[0];
+    auto btn  = doc.call("createElement", "BUTTON");
+    btn.set("textContent", "Click Me!");
+
     // emlite_val_make_callback
     btn.call(
         "addEventListener",
-        Val("click"),
+        "click",
         Val::make_fn([](auto) -> Handle {
-            Console().call("log", Val("Clicked"));
+            Console().call("log", "Clicked");
             return Val::undefined().as_handle();
         })
     );
-    
+
     body.call("appendChild", btn);
     // check Val::new_
     auto String = Val::global("String");
     auto str1 =
-        String.new_(Val("created a string object number 1")
-        );
+        String.new_("created a string object number 1");
     auto str2 =
-        String.new_(Val("created a string object number 2")
-        );
+        String.new_("created a string object number 2");
 
     // check uniqueness of objects of the same type!
     Console().log(str1);
@@ -49,13 +45,13 @@ EMLITE_USED extern "C" int add(int a, int b) {
     Console().log(str1);
 
     // check copyStringToWasm
-    Console().log(Val(str1.as<Uniq<char[]>>().get()));
-    Console().log(Val(str2.as<Uniq<char[]>>().get()));
-    Console().log(Val(str1.as<Uniq<char[]>>().get()));
+    Console().log(str1.as<Uniq<char[]>>().get());
+    Console().log(str2.as<Uniq<char[]>>().get());
+    Console().log(str1.as<Uniq<char[]>>().get());
 
     // operator()
     auto floor = Val::global("Math").get("floor");
-    auto ret   = floor(Val(2.5));
+    auto ret   = floor(2.5);
     Console().log(ret);
 
     // test EMLITE_EVAL and also operator()

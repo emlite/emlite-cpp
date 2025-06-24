@@ -23,8 +23,7 @@ class MyJsClass : public Val {
         return MyJsClass(h);
     }
     MyJsClass(int x, int y)
-        : Val(Val::global("MyJsClass").new_(Val(x), Val(y))
-          ) {}
+        : Val(Val::global("MyJsClass").new_(x, y)) {}
     void print() { call("print"); }
 };
 

@@ -70,7 +70,8 @@ class Uniq {
     T *operator->() const noexcept { return ptr_; }
 };
 
-/// A specialization of Uniq, the smart pointer with unique ownership, for array types
+/// A specialization of Uniq, the smart pointer with unique
+/// ownership, for array types
 template <class T>
 class Uniq<T[]> {
     T *ptr_ = nullptr;
@@ -147,13 +148,17 @@ class Val {
     Val();
 
   public:
-    /// The copy constructor. This increments the refcount of the javascript object
+    /// The copy constructor. This increments the refcount
+    /// of the javascript object
     Val(const Val &other);
-    /// The copy assignment operator. This increments the refcount of the javascript object
+    /// The copy assignment operator. This increments the
+    /// refcount of the javascript object
     Val &operator=(const Val &other);
-    /// The default move constructor. This changes ownership without incrementing the ref count.
+    /// The default move constructor. This changes ownership
+    /// without incrementing the ref count.
     Val(Val &&other) noexcept;
-    /// The move assignment operator. This doesn't increment the ref count
+    /// The move assignment operator. This doesn't increment
+    /// the ref count
     Val &operator=(Val &&other) noexcept;
     /// The destructor, this decrements the ref count.
     ~Val();
@@ -162,7 +167,7 @@ class Val {
     /// @param v is a raw javascript handle
     /// @returns a Val object
     static Val take_ownership(Handle v);
-    /// Gets a global object by its name. 
+    /// Gets a global object by its name.
     /// @param name the name of the object
     static Val global(const char *name);
     /// Gets the globalThis object.
@@ -176,7 +181,8 @@ class Val {
     /// Returns an empty javascript array
     static Val array();
     /// Creates a javascript function
-    /// @param f is function pointer of type Handle (*)(Handle)
+    /// @param f is function pointer of type Handle
+    /// (*)(Handle)
     static Val make_fn(Callback f);
     /// Deletes a Val object
     /// @param v has its refcount decremented
@@ -184,27 +190,31 @@ class Val {
     /// Throws a Val on the js side
     /// @param v the object thrown
     static void throw_(Val v);
-    /// Creates a new Val from a Handle, while also incrementing its refcount
+    /// Creates a new Val from a Handle, while also
+    /// incrementing its refcount
     /// @param h the Handle to duplicate
     static Val dup(Handle h);
 
     /// A Val constructor from numeric types
-    /// @tparam T any numeric value which conforms to is_integral or is_floating_point
-    template <
-        typename T,
-        typename = typename detail::enable_if_t<
-            detail::is_integral_v<T> ||
-            detail::is_floating_point_v<T>>>
+    /// @tparam T any numeric value which conforms to
+    /// is_integral or is_floating_point or a string or has
+    /// a `T::as_handle()` method
+    template <typename T>
     explicit Val(T v) : v_(0) {
         if constexpr (detail::is_integral_v<T>) {
             v_ = emlite_val_make_int(v);
-        } else {
+        } else if constexpr (detail::is_floating_point_v<
+                                 T>) {
             v_ = emlite_val_make_double(v);
+        } else if constexpr (detail::is_same_v<
+                                 T,
+                                 const char *> ||
+                             detail::is_same_v<T, char *>) {
+            v_ = emlite_val_make_str(v, strlen(v));
+        } else {
+            v_ = v.as_handle();
         }
     }
-    
-    /// A Val constructor from a C string
-    explicit Val(const char *v);
 
     /// @returns the raw javascript handle from this Val
     [[nodiscard]] Handle as_handle() const
@@ -215,16 +225,23 @@ class Val {
     /// Set the Val object's property
     /// @param prop the property name
     /// @param val the property's value
-    void set(const char *prop, const Val &val) const;
+    template <typename T>
+    void set(const char *prop, T &&v) const {
+        emlite_val_obj_set_prop(
+            v_, prop, strlen(prop), Val(v).as_handle()
+        );
+    }
     /// Checks whether a property exists
     /// @param prop the property to check
     bool has(const char *prop) const;
-    /// Determine whether an object possesses a direct, 
-    /// own property with a specified name, 
-    /// as opposed to an inherited property from its prototype chain
+    /// Determine whether an object possesses a direct,
+    /// own property with a specified name,
+    /// as opposed to an inherited property from its
+    /// prototype chain
     /// @param prop the property name
     bool has_own_property(const char *prop) const;
-    /// @returns a string indicating the type of the javascript object
+    /// @returns a string indicating the type of the
+    /// javascript object
     [[nodiscard]] Uniq<char[]> type_of() const;
     /// @returns an element in the array
     /// @param idx at the specified index
@@ -235,7 +252,7 @@ class Val {
     [[nodiscard]] bool is_number() const;
     /// @returns bool if Val is a string
     [[nodiscard]] bool is_string() const;
-    /// @returns bool if Val is an instanceof 
+    /// @returns bool if Val is an instanceof
     /// @param v the other Val
     [[nodiscard]] bool instanceof (const Val &v) const;
     /// Not applied to Val
@@ -261,9 +278,11 @@ class Val {
 
     /// Calls the specified method of the Val object
     /// @param method the method name
-    /// @tparam the arguments to the method should be of type Val or derived from it
+    /// @tparam the arguments to the method should be of
+    /// type Val or derived from it
     /// @param vals the arguments to the method
-    /// @returns a Val object which also could be undefined in js terms
+    /// @returns a Val object which also could be undefined
+    /// in js terms
     template <
         class... Args,
         typename detail::enable_if_t<
@@ -271,7 +290,8 @@ class Val {
     Val call(const char *method, Args &&...vals) const;
 
     /// Calls the specified constructor of the Val object
-    /// @tparam the arguments to the method should be of type Val or derived from it
+    /// @tparam the arguments to the method should be of
+    /// type Val or derived from it
     /// @param vals the arguments to the constructor
     /// @returns a Val object
     template <
@@ -281,9 +301,11 @@ class Val {
     Val new_(Args &&...vals) const;
 
     /// Invokes the function object represented by Val
-    /// @tparam the arguments to the method should be of type Val or derived from it
+    /// @tparam the arguments to the method should be of
+    /// type Val or derived from it
     /// @param vals the arguments the invocation
-    /// @returns a Val object which also could be undefined in js terms
+    /// @returns a Val object which also could be undefined
+    /// in js terms
     template <
         class... Args,
         typename detail::enable_if_t<
@@ -291,22 +313,21 @@ class Val {
     Val operator()(Args &&...vals) const;
 
     /// @tparam the type of the returned  object
-    /// @returns the underlying value of the Val object if possible.
-    /// requires that the underlying type is a numeric or string, 
-    /// or a type which has a `take_ownership` static method which returns Val
+    /// @returns the underlying value of the Val object if
+    /// possible. requires that the underlying type is a
+    /// numeric or string, or a type which has a
+    /// `take_ownership` static method which returns Val
     template <typename T>
     [[nodiscard]] T as() const;
 
     /// Converts a javascript array to a Uniq C++ array
     /// @tparam any numeric type
     /// @param v The Val representing the javascript array
-    /// @param[in,out] len the length of the C++ array that was returned
+    /// @param[in,out] len the length of the C++ array that
+    /// was returned
     /// @returns a Uniq C++ array
     template <
-        typename T,
-        typename = typename detail::enable_if_t<
-            detail::is_integral_v<T> ||
-            detail::is_floating_point_v<T>>>
+        typename T>
     static Uniq<T[]> vec_from_js_array(
         const Val &v, size_t &len
     ) {
@@ -325,7 +346,8 @@ class Console : public Val {
   public:
     Console();
     /// Logs to the console
-    /// @tparam the arguments to `log` should be of type Val or derived from it
+    /// @tparam the arguments to `log` should be of type Val
+    /// or derived from it
     /// @param args the arguments passed to `log`
     template <
         class... Args,
@@ -334,7 +356,8 @@ class Console : public Val {
     void log(Args &&...args) const;
 
     /// console.warn
-    /// @tparam the arguments to `warn` should be of type Val or derived from it
+    /// @tparam the arguments to `warn` should be of type
+    /// Val or derived from it
     /// @param args the arguments passed to `warn`
     template <
         class... Args,
@@ -343,7 +366,8 @@ class Console : public Val {
     void warn(Args &&...args) const;
 
     /// console.info
-    /// @tparam the arguments to `info` should be of type Val or derived from it
+    /// @tparam the arguments to `info` should be of type
+    /// Val or derived from it
     /// @param args the arguments passed to `info`
     template <
         class... Args,
@@ -358,11 +382,11 @@ template <
         detail::is_base_of_v<Val, Args>>...>
 Val Val::call(const char *method, Args &&...vals) const {
     auto arr = Val::take_ownership(emlite_val_new_array());
-    (emlite_val_push(
-         arr.as_handle(),
-         detail::forward<Args>(vals).as_handle()
-     ),
-     ...);
+    Val keep_alive[sizeof...(Args)] = {
+        Val(detail::forward<Args>(vals))...
+    };
+    for (auto &v : keep_alive)
+        emlite_val_push(arr.as_handle(), v.as_handle());
     return Val::take_ownership(emlite_val_obj_call(
         v_, method, strlen(method), arr.as_handle()
     ));
@@ -374,11 +398,11 @@ template <
         detail::is_base_of_v<Val, Args>>...>
 Val Val::new_(Args &&...vals) const {
     auto arr = Val::take_ownership(emlite_val_new_array());
-    (emlite_val_push(
-         arr.as_handle(),
-         detail::forward<Args>(vals).as_handle()
-     ),
-     ...);
+    Val keep_alive[sizeof...(Args)] = {
+        Val(detail::forward<Args>(vals))...
+    };
+    for (auto &v : keep_alive)
+        emlite_val_push(arr.as_handle(), v.as_handle());
     return Val::take_ownership(
         emlite_val_construct_new(v_, arr.as_handle())
     );
@@ -390,11 +414,11 @@ template <
         detail::is_base_of_v<Val, Args>>...>
 Val Val::operator()(Args &&...vals) const {
     auto arr = Val::take_ownership(emlite_val_new_array());
-    (emlite_val_push(
-         arr.as_handle(),
-         detail::forward<Args>(vals).as_handle()
-     ),
-     ...);
+    Val keep_alive[sizeof...(Args)] = {
+        Val(detail::forward<Args>(vals))...
+    };
+    for (auto &v : keep_alive)
+        emlite_val_push(arr.as_handle(), v.as_handle());
     return Val::take_ownership(
         emlite_val_func_call(v_, arr.as_handle())
     );
@@ -428,7 +452,8 @@ void Console::log(Args &&...args) const {
     call("log", detail::forward<Args>(args)...);
 }
 
-/// A helper function to run javascript eval using a string literal and printf style arguments
+/// A helper function to run javascript eval using a string
+/// literal and printf style arguments
 template <typename... Args>
 Val emlite_eval_cpp(const char *fmt, Args &&...args) {
 #pragma clang diagnostic push

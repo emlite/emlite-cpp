@@ -19,20 +19,19 @@ int main() {
     auto oscillator = context.call("createOscillator");
 
     printf("Configuring oscillator\n");
-    oscillator.set("type", Val("triangle"));
-    oscillator.get("frequency").set("Value", Val(261.63));
+    oscillator.set("type", "triangle");
+    oscillator.get("frequency").set("Value", 261.63);
 
     Val::global().set("oscillator", oscillator);
     Val::global().set("context", context);
 
-    auto doc = Val::global("document");
-    auto body =
-        doc.call("getElementsByTagName", Val("body"))[0];
-    auto btn = doc.call("createElement", Val("BUTTON"));
-    btn.set("textContent", Val("Play!"));
+    auto doc  = Val::global("document");
+    auto body = doc.call("getElementsByTagName", "body")[0];
+    auto btn  = doc.call("createElement", "BUTTON");
+    btn.set("textContent", "Play!");
     btn.call(
         "addEventListener",
-        Val("click"),
+        "click",
         Val::make_fn([](auto) -> Handle {
             auto oscillator = Val::global("oscillator");
             auto context    = Val::global("context");
@@ -40,8 +39,8 @@ int main() {
             oscillator.call(
                 "connect", context.get("destination")
             );
-            oscillator.call("start", Val(0));
-            
+            oscillator.call("start", 0);
+
             printf("All done!\n");
             return Val::undefined().as_handle();
         })

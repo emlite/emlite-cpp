@@ -343,7 +343,8 @@ em_Val em_Val_at(em_Val self, size_t idx) {
 
 em_Val em_Val_await(em_Val self) {
     return emlite_eval_v(
-        "(async() => { let obj = EMLITE_VALMAP.toValue(%d); let "
+        "(async() => { let obj = "
+        "EMLITE_VALMAP.toValue(%d); let "
         "ret = await obj; "
         "return EMLITE_VALMAP.toHandle(ret); })()",
         self.h
@@ -423,7 +424,7 @@ em_Val em_Val_call(
         self.h, method, strlen(method), arr
     ));
     emlite_val_dec_ref(arr);
-    return ret; 
+    return ret;
 }
 
 em_Val em_Val_new(em_Val self, int n, ...) {
@@ -451,17 +452,17 @@ em_Val em_Val_invoke(em_Val self, int n, ...) {
         emlite_val_push(arr, em_Val_as_handle(c));
     }
     va_end(args);
-    em_Val ret = em_Val_from_handle(
-        emlite_val_func_call(self.h, arr)
-    );
+    em_Val ret =
+        em_Val_from_handle(emlite_val_func_call(self.h, arr)
+        );
     emlite_val_dec_ref(arr);
     return ret;
 }
 
 em_Val emlite_eval(const char *src) {
-    em_Val eval = em_Val_global("eval");
+    em_Val eval   = em_Val_global("eval");
     em_Val js_src = em_Val_from_string(src);
-    em_Val ret = em_Val_invoke(eval, 1, js_src);
+    em_Val ret    = em_Val_invoke(eval, 1, js_src);
     em_Val_delete(js_src);
     em_Val_delete(eval);
     return ret;

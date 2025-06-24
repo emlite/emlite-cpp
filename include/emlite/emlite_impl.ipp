@@ -85,9 +85,6 @@ void Val::delete_(Val v) { emlite_val_dec_ref(v.v_); }
 
 void Val::throw_(Val v) { return emlite_val_throw(v.v_); }
 
-Val::Val(const char *v)
-    : v_(emlite_val_make_str(v, strlen(v))) {}
-
 Handle Val::as_handle() const { return v_; }
 
 Uniq<char[]> Val::type_of() const {
@@ -97,12 +94,6 @@ Uniq<char[]> Val::type_of() const {
 Val Val::get(const char *prop) const {
     return Val::take_ownership(
         emlite_val_obj_prop(v_, prop, strlen(prop))
-    );
-}
-
-void Val::set(const char *prop, const Val &val) const {
-    emlite_val_obj_set_prop(
-        v_, prop, strlen(prop), val.as_handle()
     );
 }
 

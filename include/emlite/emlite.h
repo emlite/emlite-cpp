@@ -33,7 +33,10 @@ size_t strlen(const char *);
 #endif
 
 #ifndef EMLITE_IMPORT
-#define EMLITE_IMPORT(NAME) __attribute__((import_module("env"), import_name(#NAME)))
+#define EMLITE_IMPORT(NAME)                                \
+    __attribute__((                                        \
+        import_module("env"), import_name(#NAME)           \
+    ))
 #endif
 
 /// A javascript raw handle
@@ -58,7 +61,8 @@ extern Handle emlite_val_new_array(void);
 extern Handle emlite_val_new_object(void);
 /// @returns the typeof of the underlying js value
 extern char *emlite_val_typeof(Handle);
-/// Constructs a new js value calling its constructor and passing it @param argv then @returns its handle
+/// Constructs a new js value calling its constructor and
+/// passing it @param argv then @returns its handle
 extern Handle emlite_val_construct_new(Handle, Handle argv);
 /// Calls the specified func via its handle @param func
 /// Passes it @param argv
@@ -69,18 +73,24 @@ extern Handle emlite_val_func_call(
 /// Pushes a js object represented by @param v
 /// to array @param arr
 extern void emlite_val_push(Handle arr, Handle v);
-/// Creates an integer value on the js side and returns its handle
+/// Creates an integer value on the js side and returns its
+/// handle
 extern Handle emlite_val_make_int(int t);
-/// Creates a double value on the js side and returns its handle
+/// Creates a double value on the js side and returns its
+/// handle
 extern Handle emlite_val_make_double(double t);
 /// Creates a string on the js side and returns its handle.
-/// The created string requires deallocation on the caller side
+/// The created string requires deallocation on the caller
+/// side
 extern Handle emlite_val_make_str(const char *, size_t);
-/// @returns the underlying integer value of the js object represted by a Handle
+/// @returns the underlying integer value of the js object
+/// represted by a Handle
 extern int emlite_val_get_value_int(Handle);
-/// @returns the underlying double value of the js object represted by a Handle
+/// @returns the underlying double value of the js object
+/// represted by a Handle
 extern double emlite_val_get_value_double(Handle);
-/// @returns the underlying string value of the js object represted by a Handle
+/// @returns the underlying string value of the js object
+/// represted by a Handle
 extern char *emlite_val_get_value_string(Handle);
 /// @returns the element's Handle at the specified index
 extern Handle emlite_val_get_elem(Handle, size_t);
@@ -91,7 +101,8 @@ extern bool emlite_val_is_number(Handle);
 extern bool emlite_val_not(Handle);
 /// @returns whether a Handle is greater than another
 extern bool emlite_val_gt(Handle, Handle);
-/// @returns whether a Handle is greater than or equals another
+/// @returns whether a Handle is greater than or equals
+/// another
 extern bool emlite_val_gte(Handle, Handle);
 /// @returns whether a Handle is less than another
 extern bool emlite_val_lt(Handle, Handle);
@@ -132,9 +143,9 @@ extern void emlite_print_object_map(void);
 /// Reset the OBJECT_MAP
 extern void emlite_reset_object_map(void);
 /// Increment the refcount of a handle
-extern void   emlite_val_inc_ref(Handle);
+extern void emlite_val_inc_ref(Handle);
 /// Decrement the refcount of a handle
-extern void   emlite_val_dec_ref(Handle);
+extern void emlite_val_dec_ref(Handle);
 
 /// A higher level wrapper around a Handle
 typedef struct {
@@ -163,7 +174,8 @@ em_Val em_Val_object();
 em_Val em_Val_array();
 /// Creates a javascript function from a C function @param f
 em_Val em_Val_make_fn(Callback f);
-/// Decrements the refcount of the Handle represented by the em_Val
+/// Decrements the refcount of the Handle represented by the
+/// em_Val
 void em_Val_delete(em_Val);
 /// Throws an em_Val object
 void em_Val_throw(em_Val);
@@ -174,12 +186,15 @@ Handle em_Val_as_handle(em_Val self);
 em_Val em_Val_get(em_Val self, const char *prop);
 /// Sets the em_Val's property @param prop to @param val
 void em_Val_set(em_Val self, const char *prop, em_Val val);
-/// Checks whether an em_Val has a certain property @param prop
+/// Checks whether an em_Val has a certain property @param
+/// prop
 bool em_Val_has(em_Val self, const char *prop);
-/// Checks whether an em_Val has a certain property @param prop that's not inherited
+/// Checks whether an em_Val has a certain property @param
+/// prop that's not inherited
 bool em_Val_has_own_property(em_Val self, const char *prop);
 /// Returns the typeof the underlying javascript object.
-/// @returns an allocated string which needs deallocation on the caller side
+/// @returns an allocated string which needs deallocation on
+/// the caller side
 char *em_Val_typeof(em_Val self);
 /// Returns the element at index @param idx
 em_Val em_Val_at(em_Val self, size_t idx);
@@ -200,21 +215,28 @@ bool em_Val_eq(em_Val self, em_Val other);
 bool em_Val_neq(em_Val self, em_Val other);
 /// Checks whether @param self is greater than @param other
 bool em_Val_gt(em_Val self, em_Val other);
-/// Checks whether @param self is greater than or equals @param other
+/// Checks whether @param self is greater than or equals
+/// @param other
 bool em_Val_gte(em_Val self, em_Val other);
 /// Checks whether @param self is less than @param other
 bool em_Val_lt(em_Val self, em_Val other);
-/// Checks whether @param self is less than or equals @param other
+/// Checks whether @param self is less than or equals @param
+/// other
 bool em_Val_lte(em_Val self, em_Val other);
 
-/// Returns the underlying int representation of the js object
+/// Returns the underlying int representation of the js
+/// object
 int em_Val_as_int(em_Val self);
-/// Returns the underlying bool representation of the js object
+/// Returns the underlying bool representation of the js
+/// object
 bool em_Val_as_bool(em_Val self);
-/// Returns the underlying double representation of the js object
+/// Returns the underlying double representation of the js
+/// object
 double em_Val_as_double(em_Val self);
-/// Returns the underlying string representation of the js object.
-/// @returns an allocated string that will need deallocation on the caller side
+/// Returns the underlying string representation of the js
+/// object.
+/// @returns an allocated string that will need deallocation
+/// on the caller side
 char *em_Val_as_string(em_Val self);
 
 /// Calls a javascript method @param method
@@ -238,7 +260,8 @@ em_Val em_Val_invoke(em_Val self, int n, ...);
 /// Evaluates the string @param src in the js side
 em_Val emlite_eval(const char *src);
 
-/// Evaluates using printf-style arguments, with @param src being the fmt string.
+/// Evaluates using printf-style arguments, with @param src
+/// being the fmt string.
 em_Val emlite_eval_v(const char *src, ...);
 
 #define EMLITE_EVAL(x, ...)                                \
