@@ -19,12 +19,10 @@ int main() {
         "utf8",
         Val::make_fn([](Handle h) -> Handle {
             size_t len     = 0;
-            auto param_vec = Val::vec_from_js_array<Handle>(
+            auto param_vec = Val::vec_from_js_array<Val>(
                 Val::take_ownership(h), len
             );
-            puts(Val::take_ownership(param_vec[1])
-                     .as<Uniq<char[]>>()
-                     .get());
+            puts(param_vec[1].as<Uniq<char[]>>().get());
             return Val::undefined().as_handle();
         })
     );

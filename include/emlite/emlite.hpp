@@ -339,6 +339,20 @@ class Val {
         }
         return Uniq<T[]>(ret);
     }
+    
+    template<>
+    Uniq<Val[]> vec_from_js_array<Val>(const Val& v, size_t& len)
+    {
+        auto sz = v.get("length").as<int>();
+        len     = sz;
+        Val* ret = new Val[sz];
+
+        for (int i = 0; i < sz; ++i) {
+            auto val = v[i].as<Handle>();
+            ret[i] = Val::dup(val);
+        }
+        return Uniq<Val[]>(ret);
+    }
 };
 
 /// A wrapper around a console js object

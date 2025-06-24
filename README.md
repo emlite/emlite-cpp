@@ -44,10 +44,10 @@ EMLITE_USED extern "C" void some_func() {
         "click",
         Val::make_fn([](auto h) -> Handle {
             size_t len     = 0;
-            auto param_vec = Val::vec_from_js_array<Handle>(
+            auto param_vec = Val::vec_from_js_array<Val>(
                 Val::take_ownership(h), len
             );
-            Console().log(Val::take_ownership(param_vec[0]));
+            Console().log(param_vec[0]);
             return Val::undefined().as_handle();
         })
     );
