@@ -46,6 +46,25 @@ This can then be imported in your browser for example using:
 </html>
 ```
 
+If you don't emscripten the -sMODULARIZE and -sEXPORT_ES6=1 flags, and rely on automatic loading of the js glue code, you can add a script tag which just imports and initializes Emlite:
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script type="module">
+        import { Emlite } from "./src/emlite.js";
+        const emlite = new Emlite();
+    </script>
+    <script async src="./bin/mywasms.js"></script>
+</body>
+</html>
+```
+
 If you generate html files using Emscripten. You just need to change the SUFFIX property to .html and supply a shell html file in your link args:
 ```
 set(${DEFAULT_LINK_FLAGS} "-sERROR_ON_UNDEFINED_SYMBOLS=0 -sALLOW_MEMORY_GROWTH=1 -sLINKABLE=1 -sMODULARIZE -sEXPORT_ES6=1 -Wl,--no-entry,--allow-undefined,--export-all,--export-memory,--strip-all --shell-file ${CMAKE_CURRENT_LIST_DIR}/my_shell.html")
