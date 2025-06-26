@@ -81,7 +81,7 @@ Val Val::dup(Handle h) {
     return Val::take_ownership(h);
 }
 
-Handle release(Val &&v) {
+Handle Val::release(Val &&v) {
     auto temp = v.v_;
     v.v_ = 0;
     return temp;
