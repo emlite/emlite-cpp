@@ -194,6 +194,8 @@ class Val {
     /// incrementing its refcount
     /// @param h the Handle to duplicate
     static Val dup(Handle h);
+    /// Releases the underlying handle from the passed Val paramater
+    static Handle release(Val &&v);
 
     /// A Val constructor from numeric types
     /// @tparam T any numeric value which conforms to

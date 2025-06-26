@@ -81,6 +81,12 @@ Val Val::dup(Handle h) {
     return Val::take_ownership(h);
 }
 
+Handle release(Val &&v) {
+    auto temp = v.v_;
+    v.v_ = 0;
+    return temp;
+}
+
 void Val::delete_(Val v) { emlite_val_dec_ref(v.v_); }
 
 void Val::throw_(Val v) { return emlite_val_throw(v.v_); }
