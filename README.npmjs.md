@@ -9,7 +9,6 @@ Assuming you already have a node project, with the following index.js file:
 ```javascript
 import { Emlite } from "emlite";
 import { WASI } from "node:wasi";
-import { readFile } from "node:fs/promises";
 import { argv, env } from "node:process";
 
 async function main() {
@@ -20,9 +19,8 @@ async function main() {
     });
     
     const emlite = new Emlite();
-    const wasm = await WebAssembly.compile(
-        await readFile("./bin/console.wasm"),
-    );
+    const bytes = await emlite.readFile(new URL("./bin/console.wasm", import.meta.url));
+    const wasm = await WebAssembly.compile(bytes);
     const instance = await WebAssembly.instantiate(wasm, {
         wasi_snapshot_preview1: wasi.wasiImport,
         env: emlite.env,
@@ -45,22 +43,18 @@ import { Emlite } from "emlite";
 let WASI;                
 let exportsPromise;       
 
-export function envIsBrowser() {
-  return typeof window !== "undefined" && "document" in window;
-}
-
 async function init() {
   if (!exportsPromise) {
     exportsPromise = (async () => {
-
+      const emlite = new Emlite();
+      
       if (!WASI) {
-        ({ WASI } = envIsBrowser()
-          ? await import("@bjorn3/browser_wasi_shim")
-          : await import("node:wasi"));
+        ({ WASI } = emlite.envIsBrowser()
+          ? await emlite.dynamicImport("@bjorn3/browser_wasi_shim")
+          : await emlite.dynamicImport("node:wasi"));
       }
 
-      const emlite = new Emlite();
-      const wasi = envIsBrowser()
+      const wasi = emlite.envIsBrowser()
         ? new WASI([], [], [
             null,
             WASI.ConsoleStdout.lineBuffered(console.log),
@@ -69,21 +63,12 @@ async function init() {
         : new WASI({ version: "preview1", args: process.argv, env: process.env });
 
       const url = new URL("./bin/console.wasm", import.meta.url);
-      let instance;
-      try {
-        ({ instance } = await WebAssembly.instantiateStreaming(fetch(url), {
+      const bytes = await emlite.readFile(url);
+      let wasm = await WebAssembly.compile(bytes);
+      let instance = await WebAssembly.instantiate(wasm, {
           wasi_snapshot_preview1: wasi.wasiImport,
           env: emlite.env,
-        }));
-      } catch {
-        const { readFile } = await import("node:fs/promises");
-        const bytes = await readFile(url);
-        ({ instance } = await WebAssembly.instantiate(bytes, {
-          wasi_snapshot_preview1: wasi.wasiImport,
-          env: emlite.env,
-        }));
-      }
-
+      });
       wasi.start(instance);
       emlite.setExports(instance.exports);
       return instance.exports;
@@ -124,18 +109,11 @@ async function init() {
       const emlite = new Emlite();
 
       const url = new URL("./bin/console.wasm", import.meta.url);
-      let instance;
-      try {
-        ({ instance } = await WebAssembly.instantiateStreaming(fetch(url), {
+      const bytes = await emlite.readFile(url);
+      let wasm = await WebAssembly.compile(bytes);
+      let instance = await WebAssembly.instantiate(wasm, {
           env: emlite.env,
-        }));
-      } catch {
-        const { readFile } = await import("node:fs/promises");
-        const bytes = await readFile(url);
-        ({ instance } = await WebAssembly.instantiate(bytes, {
-          env: emlite.env,
-        }));
-      }
+      });
       emlite.setExports(instance.exports);
       return instance.exports;
     })();

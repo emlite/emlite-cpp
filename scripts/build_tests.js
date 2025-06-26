@@ -23,7 +23,7 @@ function buildSet(label, binDir, toolchain) {
         "-DCMAKE_BUILD_TYPE=MinSizeRel",
         `-DCMAKE_TOOLCHAIN_FILE=${toolchain}`,
     ];
-    if (label === "FREESTANDING_WITH_DLMALLOC") cmd.push("-DEMLITE_TEST_DLMALLOC=ON");
+    if (label === "FREESTANDING_WITH_DLMALLOC") cmd.push("-DEMLITE_USE_DLMALLOC=ON");
     run(
         cmd.join(" "),
     );

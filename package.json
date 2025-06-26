@@ -1,6 +1,6 @@
 {
   "name": "emlite",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "description": "A tiny JS bridge for C/C++ via wasm",
   "main": "src/emlite.js",
   "type": "module",
@@ -9,13 +9,14 @@
     "test": "tests"
   },
   "scripts": {
-    "build_tests": "node scripts/build_tests.js",
-    "test_node": "node --trace-warnings tests/node_test.js",
-    "gen_html_tests": "node scripts/gen_html_tests.js",
-    "test_all": "npm run build_tests && npm run test_node && npm run gen_html_tests",
+    "build:tests": "node scripts/build_tests.js",
+    "test:node_wasi": "node --trace-warnings tests/node_test_wasi.js",
+    "test:node_nowasi": "node --trace-warnings tests/node_test_nowasi.js",
+    "gen:html_tests": "node scripts/gen_html_tests.js",
+    "test:all": "npm run build:tests && npm run test:node_wasi && npm run test:node_nowasi && npm run gen:html_tests",
     "serve": "http-server ./bin",
     "clean": "rm -rf bin",
-    "gen_docs": "doxygen"
+    "gen:docs": "doxygen"
   },
   "repository": {
     "type": "git",

@@ -28,8 +28,9 @@ function bundleWasm(wasmPath) {
             import { Emlite } from "../../src/emlite.js";
 
             async function main() {
-                let emlite = new Emlite();
-                let wasm = await WebAssembly.compileStreaming(fetch("${path.basename(wasmPath)}"));
+                const emlite = new Emlite();
+                const bytes = await emlite.readFile(new URL("${path.basename(wasmPath)}", import.meta.url));
+                let wasm = await WebAssembly.compile(bytes);
                 let inst = await WebAssembly.instantiate(wasm, {
                     env: emlite.env,
                 });
@@ -53,8 +54,8 @@ function bundleWasm(wasmPath) {
                 ];
                 const wasi = new WASI([], [], fds);
                 const emlite = new Emlite();
-
-                const wasm = await WebAssembly.compileStreaming(fetch("${path.basename(wasmPath)}"));
+                const bytes = await emlite.readFile(new URL("${path.basename(wasmPath)}", import.meta.url));
+                let wasm = await WebAssembly.compile(bytes);
                 const inst = await WebAssembly.instantiate(wasm, {
                     wasi_snapshot_preview1: wasi.wasiImport,
                     env: emlite.env,

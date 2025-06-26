@@ -139,8 +139,9 @@ async function main() {
         ConsoleStdout.lineBuffered(msg => console.warn(`[WASI stderr] ${msg}`)), // 2, stderr
     ];
     let wasi = new WASI([], [], fds);
-    let emlite = new Emlite();
-    let wasm = await WebAssembly.compileStreaming(fetch("./bin/dom_test1.wasm"));
+    const emlite = new Emlite();
+    const bytes = await emlite.readFile(new URL("./bin/dom_test1.wasm", import.meta.url));
+    let wasm = await WebAssembly.compile(bytes);
     let inst = await WebAssembly.instantiate(wasm, {
         "wasi_snapshot_preview1": wasi.wasiImport,
         "env": emlite.env,
@@ -161,7 +162,6 @@ If you're vendoring the emlite.js file:
 ```javascript
 import { Emlite } from "emlite";
 import { WASI } from "node:wasi";
-import { readFile } from "node:fs/promises";
 import { argv, env } from "node:process";
 
 async function main() {
@@ -172,9 +172,8 @@ async function main() {
     });
     
     const emlite = new Emlite();
-    const wasm = await WebAssembly.compile(
-        await readFile("./bin/console.wasm"),
-    );
+    const bytes = await emlite.readFile(new URL("./bin/console.wasm", import.meta.url));
+    const wasm = await WebAssembly.compile(bytes);
     const instance = await WebAssembly.instantiate(wasm, {
         wasi_snapshot_preview1: wasi.wasiImport,
         env: emlite.env,
@@ -199,8 +198,9 @@ Emlite-rs can be used with Rust's wasm32-unknown-unknown target:
 import { Emlite } from "./src/emlite.js";
 
 async function main() => {
-    let emlite = new Emlite();
-    let wasm = await WebAssembly.compileStreaming(fetch("./target/wasm32-unknown-unknown/release/examples/audio.wasm"));
+    const emlite = new Emlite();
+    const bytes = await emlite.readFile(new URL("./target/wasm32-unknown-unknown/release/examples/audio.wasm", import.meta.url));
+    let wasm = await WebAssembly.compile(bytes);
     let inst = await WebAssembly.instantiate(wasm, {
         env: emlite.env,
     });
@@ -215,13 +215,11 @@ await main();
 
 ```javascript
 import { Emlite } from "../src/emlite.js";
-import { readFile } from "node:fs/promises";
 
 async function main() {
     const emlite = new Emlite();
-    const wasm = await WebAssembly.compile(
-        await readFile("./bin/eval.wasm"),
-    );
+    const bytes = await emlite.readFile(new URL("./bin/console.wasm", import.meta.url));
+    const wasm = await WebAssembly.compile(bytes);
     const instance = await WebAssembly.instantiate(wasm, {
         env: emlite.env,
     });

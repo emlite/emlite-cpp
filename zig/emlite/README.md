@@ -55,8 +55,9 @@ async function main() => {
     ];
     let wasi = new WASI([], [], fds);
     // the zig wasm32-wasi target expects an initial memory of 257
-    let emlite = new Emlite({ memory: new WebAssembly.Memory({ initial: 257 }) });
-    let wasm = await WebAssembly.compileStreaming(fetch("./zig-out/bin/zigwasm.wasm"));
+    const emlite = new Emlite({ memory: new WebAssembly.Memory({ initial: 257 }) });
+    const bytes = await emlite.readFile(new URL("./zig-out/bin/zigwasm.wasm", import.meta.url));
+    let wasm = await WebAssembly.compile(bytes);
     let inst = await WebAssembly.instantiate(wasm, {
         wasi_snapshot_preview1: wasi.wasiImport,
         env: emlite.env,

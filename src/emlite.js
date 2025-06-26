@@ -58,7 +58,7 @@ const dec = new TextDecoder("utf-8");
 
 const CB_STORE = new Map();
 let nextCbId = 0;
-globalThis.EMLITE_CB_STORE= CB_STORE;
+globalThis.EMLITE_CB_STORE = CB_STORE;
 globalThis.emliteNextCbId = nextCbId;
 
 export class Emlite {
@@ -87,6 +87,31 @@ export class Emlite {
             globalThis[name] = value;
         }
         this._updateViews();
+    }
+
+    envIsBrowser() {
+        return typeof window !== "undefined" && "document" in window;
+    }
+
+    async dynamicImport(id) {
+        const hidden = new Function('id', 'return import(id)');
+        return hidden(id);
+    }
+
+    /**
+     * read a file from a URL
+     * @param {URL} url
+     * @return {ArrayBuffer}
+     */
+    async readFile(url) {
+        if (this.envIsBrowser()) {
+            let buf = await window.fetch(url);
+            return await buf.arrayBuffer();
+        } else {
+            const { readFile } = await this.dynamicImport('node:fs/promises');
+            const buf = await readFile(url);
+            return buf.buffer.slice();
+        }
     }
 
     _ensureViewsFresh() {
@@ -151,7 +176,7 @@ export class Emlite {
             // new Uint8Array(this._memory.buffer).set(utf8, ptr);
             this._u8.set(utf8, ptr);
             return ptr;
-        } else {   
+        } else {
             return 0;
         }
     }
