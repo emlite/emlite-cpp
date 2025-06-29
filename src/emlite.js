@@ -193,6 +193,7 @@ export class Emlite {
             __cxa_allocate_exception: () => { },
             __cxa_free_exception: () => { },
             __cxa_throw: () => { },
+            __cxa_atexit:() => { },
 
             emlite_val_new_array: () => HANDLE_MAP.add([]),
             emlite_val_new_object: () => HANDLE_MAP.add({}),
