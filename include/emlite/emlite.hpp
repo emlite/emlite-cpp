@@ -456,8 +456,10 @@ T Val::as() const {
     else if constexpr (detail::is_same_v<T, Uniq<char[]>>)
         return Uniq<char[]>(emlite_val_get_value_string(v_)
         );
-    else
+    else {
+        emlite_val_inc_ref(v_);
         return T::take_ownership(v_);
+    }
 }
 
 template <
