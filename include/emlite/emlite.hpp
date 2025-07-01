@@ -491,11 +491,10 @@ Val emlite_eval_cpp(const char *fmt, Args &&...args) {
     free(ptr);
     return ret;
 }
+} // namespace emlite
 
 #define EMLITE_EVAL(x, ...)                                \
-    emlite_eval_cpp(#x __VA_OPT__(, __VA_ARGS__))
-
-} // namespace emlite
+    emlite::emlite_eval_cpp(#x __VA_OPT__(, __VA_ARGS__))
 
 #ifdef EMLITE_IMPL
 #include "emlite_impl.ipp"

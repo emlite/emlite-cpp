@@ -5,9 +5,15 @@ extern "C" {
 #endif
 
 // these are freestanding headers
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+
+int snprintf(char *out, size_t n, const char *fmt, ...);
+int vsnprintf(
+    char *out, size_t n, const char *fmt, va_list ap
+);
 
 #if __has_include(<stdlib.h>)
 #include <stdlib.h>

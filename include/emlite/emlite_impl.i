@@ -1,6 +1,3 @@
-// present in freestanding environments
-#include <stdarg.h>
-
 #if __has_include(<errno.h>)
 #include <errno.h>
 #else
@@ -111,7 +108,7 @@ void *realloc(void *ptr, size_t s) {
 #if __has_include(<stdio.h>)
 #include <stdio.h>
 #else
-static size_t emlite_utoa(
+size_t emlite_utoa(
     char *buf, unsigned long long value, int base, int upper
 ) {
     static const char digits_low[] = "0123456789abcdef";
@@ -136,8 +133,7 @@ static size_t emlite_utoa(
     return i;
 }
 
-static inline __attribute__((__always_inline__)) int
-vsnprintf(
+int vsnprintf(
     char *out, size_t n, const char *fmt, va_list ap
 ) {
     size_t pos = 0;
@@ -245,8 +241,7 @@ vsnprintf(
     return (int)pos;
 }
 
-static inline __attribute__((__always_inline__)) int
-snprintf(char *out, size_t n, const char *fmt, ...) {
+int snprintf(char *out, size_t n, const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
     int r = vsnprintf(out, n, fmt, ap);
