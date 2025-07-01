@@ -56,7 +56,7 @@ install(EXPORT emliteTargets
 
 if (EMLITE_BUILD_EXAMPLES OR EMLITE_BUILD_TESTS)
     set(DEFAULT_LINK_FLAGS)
-    set(DEFAULT_LINK_FLAGS "-Wl,--no-entry,--allow-undefined,--export-all,--import-memory,--export-memory,--strip-all")
+    set(DEFAULT_LINK_FLAGS "-Wl,--no-entry,--allow-undefined,--export=main,--export=malloc,--export-if-defined=add,--export-table,--import-memory,--export-memory,--strip-all")
     if (EMSCRIPTEN)
         set(DEFAULT_LINK_FLAGS "${DEFAULT_LINK_FLAGS} -sERROR_ON_UNDEFINED_SYMBOLS=0 -sALLOW_MEMORY_GROWTH=1")
     endif()

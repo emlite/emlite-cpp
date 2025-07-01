@@ -40,6 +40,7 @@ pub fn build(b: *std.Build) void {
             });
             exe.import_memory = true;
             exe.export_memory = true;
+            exe.export_table = true;
             exe.root_module.addImport("emlite", emlite);
             examples_step.dependOn(&exe.step);
             b.installArtifact(exe);

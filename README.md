@@ -294,14 +294,14 @@ The contents of your toolchain file should be adjust according to your needs. Pl
 
 Note that there are certain flags which must be passed to wasm-ld in your CMakeLists.txt file:
 ```cmake
-set_target_properties(mytarget PROPERTIES LINKER_LANGUAGE CXX SUFFIX .wasm LINK_FLAGS "-Wl,--no-entry,--allow-undefined,--export-all,--import-memory,--export-memory,--strip-all")
+set_target_properties(mytarget PROPERTIES LINKER_LANGUAGE CXX SUFFIX .wasm LINK_FLAGS "-Wl,--no-entry,--allow-undefined,--export=main,--export=malloc,--export-if-defined=add,--export-table,,--import-memory,--export-memory,--strip-all")
 ```
 Also check the CMakeLists.txt file in the repo to see how the examples and tests are built.
 
 ### Using clang bundled with wasi-sdk
 - No need to pass a sysroot, nor a target:
 ```bash
-clang++ -Iinclude -o my.wasm main.cpp -Wl,--no-entry,--allow-undefined,--export-all,--import-memory,--export-memory,--strip-all
+clang++ -Iinclude -o my.wasm main.cpp -Wl,--no-entry,--allow-undefined,--export=main,--export=malloc,--export-if-defined=add,--export-table,,--import-memory,--export-memory,--strip-all
 ```
 
 ### Using stock clang
@@ -315,14 +315,14 @@ Additionally you might require lld to get wasm-ld. Similarly, it should match yo
 
 To compile, you'll need to tell clang to target wasm32-wasi (or wasm32-wasip1), and point it to the sysroot you require:
 ```bash
-clang++ --target=wasm32-wasi -Iinclude -o my.wasm main.cpp --sysroot /path/to/wasi-sysroot -Wl,--no-entry,--allow-undefined,--export-all,--import-memory,--export-memory,--strip-all
+clang++ --target=wasm32-wasi -Iinclude -o my.wasm main.cpp --sysroot /path/to/wasi-sysroot -Wl,--no-entry,--allow-undefined,--export=main,--export=malloc,--export-if-defined=add,--export-table,,--import-memory,--export-memory,--strip-all
 ```
 
 #### Building for a wasm32-unknown-unknown
 You don't need a sysroot in that case.
 You can invoke clang with the `-nostdlib` flag:
 ```bash
-clang++ --target=wasm32-unknown-unknown -Iinclude -o my.wasm examples/eval.cpp -nostdlib -Wl,--no-entry,--allow-undefined,--export-all,--import-memory,--export-memory,--strip-all
+clang++ --target=wasm32-unknown-unknown -Iinclude -o my.wasm examples/eval.cpp -nostdlib -Wl,--no-entry,--allow-undefined,--export=main,--export=malloc,--export-if-defined=add,--export-table,,--import-memory,--export-memory,--strip-all
 ```
 You can also pass wasm32 as the target, which clang will understand as wasm32-unknown-unknown.
 As mentioned previously, emlite only includes a simple bump allocator. It's advisable to utilise something like dlmalloc (vendored in the source directory).

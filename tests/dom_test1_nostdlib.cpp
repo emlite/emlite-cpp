@@ -1,6 +1,6 @@
 // clang-format off
 // example build command:
-// clang++ --target=wasm32 -o dom_test1_nostdlib.wasm -Iinclude tests/dom_test1_nostdlib.cpp -nostdlib -Os -Wl,--allow-undefined,--no-entry,--import-memory,--export-memory,--export-all,--strip-all
+// clang++ --target=wasm32 -o dom_test1_nostdlib.wasm -Iinclude tests/dom_test1_nostdlib.cpp -nostdlib -Os -Wl,--allow-undefined,--no-entry,--import-memory,--export-memory,--export=main,--export=malloc,--export-if-defined=add,--export-table,,--strip-all
 // clang-format on
 
 #define EMLITE_IMPL

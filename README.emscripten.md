@@ -6,7 +6,7 @@ For use with standalone_wasm mode, you will require a wasi shim/polyfill as desc
 
 For use with the default mode, you will require passing an extra defintion to emlite: EMLITE_USE_EMSCRIPTEN_JS_GLUE, and a tweak in the link flags:
 ```
--sERROR_ON_UNDEFINED_SYMBOLS=0 -sALLOW_MEMORY_GROWTH=1 -sLINKABLE=1 -Wl,--no-entry,--allow-undefined,--export-all,--export-memory,--strip-all
+-sERROR_ON_UNDEFINED_SYMBOLS=0 -sALLOW_MEMORY_GROWTH=1 -sLINKABLE=1 -Wl,--no-entry,--allow-undefined,--export=main,--export=malloc,--export-if-defined=add,--export-table,,--export-memory,--strip-all
 ```
 Notice how we remove the `--import-memory` link flag. To load in the browser where you depend on automatic loading of the js glue code, you can add a script tag which just imports and initializes Emlite before the `<script>` tag which loads the emscripten-generated js glue code:
 ```html
@@ -29,7 +29,7 @@ Notice how we remove the `--import-memory` link flag. To load in the browser whe
 
 If you rely on emscripten to generate an ES6 module, you can pass emscripten the `-sMODULARIZE` and `-sEXPORT_ES6=1` flags. Or you can instruct emscripten to generate an `.mjs` file in which case it will automatically generate an ES6 module. This can be done in the command-line by specifying the name of the output file, or using CMake:
 ```cmake
-set(${DEFAULT_LINK_FLAGS} "-sERROR_ON_UNDEFINED_SYMBOLS=0 -sALLOW_MEMORY_GROWTH=1 -sLINKABLE=1 -Wl,--no-entry,--allow-undefined,--export-all,--export-memory,--strip-all")
+set(${DEFAULT_LINK_FLAGS} "-sERROR_ON_UNDEFINED_SYMBOLS=0 -sALLOW_MEMORY_GROWTH=1 -sLINKABLE=1 -Wl,--no-entry,--allow-undefined,--export=main,--export=malloc,--export-if-defined=add,--export-table,,--export-memory,--strip-all")
 
 add_executable(main src/main.cpp)
 target_compile_definitions(main PRIVATE EMLITE_USE_EMSCRIPTEN_JS_GLUE)
@@ -63,7 +63,7 @@ This can then be imported in your browser for example using:
 
 If you generate html files using Emscripten. You just need to change the SUFFIX property to .html and supply a shell html file in your link args:
 ```
-set(${DEFAULT_LINK_FLAGS} "-sERROR_ON_UNDEFINED_SYMBOLS=0 -sALLOW_MEMORY_GROWTH=1 -sLINKABLE=1 -Wl,--no-entry,--allow-undefined,--export-all,--export-memory,--strip-all --shell-file ${CMAKE_CURRENT_LIST_DIR}/my_shell.html")
+set(${DEFAULT_LINK_FLAGS} "-sERROR_ON_UNDEFINED_SYMBOLS=0 -sALLOW_MEMORY_GROWTH=1 -sLINKABLE=1 -Wl,--no-entry,--allow-undefined,--export=main,--export=malloc,--export-if-defined=add,--export-table,,--export-memory,--strip-all --shell-file ${CMAKE_CURRENT_LIST_DIR}/my_shell.html")
 ```
 
 You can create a shell my_shell.html file:
