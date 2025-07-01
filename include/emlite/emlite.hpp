@@ -161,7 +161,7 @@ class Val {
     /// the ref count
     Val &operator=(Val &&other) noexcept;
     /// The destructor, this decrements the ref count.
-    ~Val();
+    virtual ~Val();
 
     /// Creates a new Val object from a raw handle.
     /// @param v is a raw javascript handle
