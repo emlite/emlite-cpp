@@ -163,8 +163,8 @@ class Val {
     /// The destructor, this decrements the ref count.
     virtual ~Val();
 
-    /// Clone Val
-    Val clone();
+    /// Clone Val into a new val, this increments the refcount
+    Val clone() const;
 
     /// Creates a new Val object from a raw handle.
     /// @param v is a raw javascript handle
@@ -217,6 +217,7 @@ class Val {
                              detail::is_same_v<T, char *>) {
             v_ = emlite_val_make_str(v, strlen(v));
         } else {
+            emlite_val_inc_ref(v.as_handle());
             v_ = v.as_handle();
         }
     }
@@ -233,7 +234,7 @@ class Val {
     template <typename T>
     void set(const char *prop, T &&v) const {
         emlite_val_obj_set_prop(
-            v_, prop, strlen(prop), Val(v).as_handle()
+            v_, prop, strlen(prop), Val(detail::forward<T>(v)).as_handle()
         );
     }
     /// Checks whether a property exists
