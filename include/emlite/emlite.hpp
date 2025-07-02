@@ -145,15 +145,15 @@ inline void swap(Uniq<T[]> &a, Uniq<T[]> &b) noexcept {
 /// A high-level RAII wrapper around javascript Handle's
 class Val {
     Handle v_;
-    Val();
+    Val() noexcept;
 
   public:
     /// The copy constructor. This increments the refcount
     /// of the javascript object
-    Val(const Val &other);
+    Val(const Val &other) noexcept;
     /// The copy assignment operator. This increments the
     /// refcount of the javascript object
-    Val &operator=(const Val &other);
+    Val &operator=(const Val &other) noexcept;
     /// The default move constructor. This changes ownership
     /// without incrementing the ref count.
     Val(Val &&other) noexcept;
@@ -164,48 +164,48 @@ class Val {
     virtual ~Val();
 
     /// Clone Val into a new val, this increments the refcount
-    Val clone() const;
+    Val clone() const noexcept;
 
     /// Creates a new Val object from a raw handle.
     /// @param v is a raw javascript handle
     /// @returns a Val object
-    static Val take_ownership(Handle v);
+    static Val take_ownership(Handle v) noexcept;
     /// Gets a global object by its name.
     /// @param name the name of the object
-    static Val global(const char *name);
+    static Val global(const char *name) noexcept;
     /// Gets the globalThis object.
-    static Val global();
+    static Val global() noexcept;
     /// Returns a javascript null
-    static Val null();
+    static Val null() noexcept;
     /// Returns a javascript undefined
-    static Val undefined();
+    static Val undefined() noexcept;
     /// Returns a javascript empty object
-    static Val object();
+    static Val object() noexcept;
     /// Returns an empty javascript array
-    static Val array();
+    static Val array() noexcept;
     /// Creates a javascript function
     /// @param f is function pointer of type Handle
     /// (*)(Handle)
-    static Val make_fn(Callback f);
+    static Val make_fn(Callback f) noexcept;
     /// Deletes a Val object
     /// @param v has its refcount decremented
-    static void delete_(Val v);
+    static void delete_(Val &&v) noexcept;
     /// Throws a Val on the js side
     /// @param v the object thrown
-    static void throw_(Val v);
+    static void throw_(const Val &v);
     /// Creates a new Val from a Handle, while also
     /// incrementing its refcount
     /// @param h the Handle to duplicate
-    static Val dup(Handle h);
+    static Val dup(Handle h) noexcept;
     /// Releases the underlying handle from the passed Val paramater
-    static Handle release(Val &&v);
+    static Handle release(Val &&v) noexcept;
 
     /// A Val constructor from numeric types
     /// @tparam T any numeric value which conforms to
     /// is_integral or is_floating_point or a string or has
     /// a `T::as_handle()` method
     template <typename T>
-    explicit Val(T v) : v_(0) {
+    explicit Val(T v) noexcept : v_(0) {
         if constexpr (detail::is_integral_v<T>) {
             v_ = emlite_val_make_int(v);
         } else if constexpr (detail::is_floating_point_v<
@@ -223,44 +223,44 @@ class Val {
     }
 
     /// @returns the raw javascript handle from this Val
-    [[nodiscard]] Handle as_handle() const
+    [[nodiscard]] Handle as_handle() const noexcept
         __attribute__((always_inline));
     /// Get the Val object's property
     /// @param prop the property name
-    Val get(const char *prop) const;
+    Val get(const char *prop) const noexcept;
     /// Set the Val object's property
     /// @param prop the property name
     /// @param val the property's value
     template <typename T>
-    void set(const char *prop, T &&v) const {
+    void set(const char *prop, T &&v) const noexcept {
         emlite_val_obj_set_prop(
             v_, prop, strlen(prop), Val(detail::forward<T>(v)).as_handle()
         );
     }
     /// Checks whether a property exists
     /// @param prop the property to check
-    bool has(const char *prop) const;
+    bool has(const char *prop) const noexcept;
     /// Determine whether an object possesses a direct,
     /// own property with a specified name,
     /// as opposed to an inherited property from its
     /// prototype chain
     /// @param prop the property name
-    bool has_own_property(const char *prop) const;
+    bool has_own_property(const char *prop) const noexcept;
     /// @returns a string indicating the type of the
     /// javascript object
-    [[nodiscard]] Uniq<char[]> type_of() const;
+    [[nodiscard]] Uniq<char[]> type_of() const noexcept;
     /// @returns an element in the array
     /// @param idx at the specified index
     Val operator[](size_t idx) const;
     /// Awaits the function object
     [[nodiscard]] Val await() const;
     /// @returns bool if Val is a number
-    [[nodiscard]] bool is_number() const;
+    [[nodiscard]] bool is_number() const noexcept;
     /// @returns bool if Val is a string
-    [[nodiscard]] bool is_string() const;
+    [[nodiscard]] bool is_string() const noexcept;
     /// @returns bool if Val is an instanceof
     /// @param v the other Val
-    [[nodiscard]] bool instanceof (const Val &v) const;
+    [[nodiscard]] bool instanceof (const Val &v) const noexcept;
     /// Not applied to Val
     bool operator!() const;
     /// @returns whether this Val strictly equals
@@ -293,7 +293,7 @@ class Val {
         class... Args,
         typename detail::enable_if_t<
             detail::is_base_of_v<Val, Args>>...>
-    Val call(const char *method, Args &&...vals) const;
+    Val call(const char *method, Args &&...vals) const noexcept;
 
     /// Calls the specified constructor of the Val object
     /// @tparam the arguments to the method should be of
@@ -324,7 +324,7 @@ class Val {
     /// numeric or string, or a type which has a
     /// `take_ownership` static method which returns Val
     template <typename T>
-    [[nodiscard]] T as() const;
+    [[nodiscard]] T as() const noexcept;
 
     /// Converts a javascript array to a Uniq C++ array
     /// @tparam any numeric type
@@ -400,7 +400,7 @@ template <
     class... Args,
     typename detail::enable_if_t<
         detail::is_base_of_v<Val, Args>>...>
-Val Val::call(const char *method, Args &&...vals) const {
+Val Val::call(const char *method, Args &&...vals) const noexcept {
     auto arr = Val::take_ownership(emlite_val_new_array());
     Val keep_alive[sizeof...(Args)] = {
         Val(detail::forward<Args>(vals))...
@@ -445,7 +445,7 @@ Val Val::operator()(Args &&...vals) const {
 }
 
 template <typename T>
-T Val::as() const {
+T Val::as() const noexcept {
     if constexpr (detail::is_integral_v<T>) {
         if constexpr (detail::is_same_v<T, bool>) {
             if (v_ > 3)
