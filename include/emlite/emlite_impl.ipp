@@ -49,6 +49,13 @@ Val::~Val() {
         emlite_val_dec_ref(v_);
 }
 
+Val Val::clone() {
+    emlite_val_inc_ref(v_);
+    Val v;
+    v.v_ = v_;
+    return v;
+}
+
 Val Val::take_ownership(Handle h) {
     Val v;
     v.v_ = h;

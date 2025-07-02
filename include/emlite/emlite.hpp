@@ -163,6 +163,9 @@ class Val {
     /// The destructor, this decrements the ref count.
     virtual ~Val();
 
+    /// Clone Val
+    Val clone();
+
     /// Creates a new Val object from a raw handle.
     /// @param v is a raw javascript handle
     /// @returns a Val object
