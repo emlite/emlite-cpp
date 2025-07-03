@@ -24,6 +24,8 @@ class MyJsClass : public Val {
     }
     MyJsClass(int x, int y)
         : Val(Val::global("MyJsClass").new_(x, y)) {}
+    MyJsClass(const Val &val)
+        : Val(val) {}
     void print() { call("print"); }
 };
 
