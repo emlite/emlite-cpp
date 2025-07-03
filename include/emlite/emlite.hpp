@@ -472,8 +472,7 @@ T Val::as() const noexcept {
         return Uniq<char[]>(emlite_val_get_value_string(v_)
         );
     else {
-        emlite_val_inc_ref(v_);
-        return T::take_ownership(v_);
+        return T(*this);
     }
 }
 
