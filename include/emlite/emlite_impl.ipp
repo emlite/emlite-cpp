@@ -107,7 +107,7 @@ bool Val::has_own_property(const char *prop) const noexcept {
     );
 }
 
-Val Val::make_fn(Callback f) {
+Val Val::make_fn(Callback f) noexcept {
     uint32_t fidx =
         static_cast<uint32_t>(reinterpret_cast<uintptr_t>(f)
         );
