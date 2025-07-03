@@ -7,22 +7,9 @@
 </head>
 <body>
     <script type="module">
-        // import { Emlite } from "https://unpkg.com/emlite";
-        // or (if you decide to vendor emlite.js)
         import { Emlite } from "./src/emlite.js";
-
-        window.onload = async () => {
-            const emlite = new Emlite();
-            const bytes = await emlite.readFile(new URL("./bin/freestanding/eval.wasm", import.meta.url));
-            let wasm = await WebAssembly.compile(bytes);
-            let instance = await WebAssembly.instantiate(wasm, {
-                env: emlite.env,
-            });
-            emlite.setExports(instance.exports);
-            // test our exported function `add` in tests/dom_test1.cpp works
-            // window.alert(instance.exports.add(1, 2));
-            instance.exports.main();
-        };
+        const emlite = new Emlite();
     </script>
+    <script async src="./rust/emlite/target/wasm32-unknown-emscripten/debug/examples/audio.js"></script>
 </body>
 </html>

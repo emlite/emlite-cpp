@@ -229,3 +229,24 @@ async function main() {
 
 await main();
 ```
+
+#### Targeting emscripten
+emlite-rs supports emscripten's default mode when it outputs js glue code. This will require building for the wasm32-unknown-emscripten target.
+You just need to load the emscripten code after emlite:
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script type="module">
+        import { Emlite } from "./src/emlite.js";
+        const emlite = new Emlite();
+    </script>
+    <script async src="./bin/mywasms.js"></script>
+</body>
+</html>
+```

@@ -2,7 +2,10 @@
 
 Emlite can be used with emscripten whether in [standalone_wasm mode](https://github.com/emscripten-core/emscripten/wiki/WebAssembly-Standalone) or the emscripten default mode (js glue code with or without an html shell).
 
-For use with standalone_wasm mode, you will require a wasi shim/polyfill as described in the main [README.md](../README.md).
+For use with standalone_wasm mode, you will require a wasi shim/polyfill as described in the main [README.md](../README.md). You will also need to export the _start symbol in your link flags:
+```cmake
+set(${DEFAULT_LINK_FLAGS} "-sERROR_ON_UNDEFINED_SYMBOLS=0 -sALLOW_MEMORY_GROWTH=1 -sLINKABLE=1 -Wl,--no-entry,--allow-undefined,--export=main,--export=_start,--export=malloc,--export-if-defined=add,--export-table,,--export-memory,--strip-all")
+```
 
 For use with the default mode, you will require passing an extra defintion to emlite: EMLITE_USE_EMSCRIPTEN_JS_GLUE, and a tweak in the link flags:
 ```
@@ -29,7 +32,7 @@ Notice how we remove the `--import-memory` link flag. To load in the browser whe
 
 If you rely on emscripten to generate an ES6 module, you can pass emscripten the `-sMODULARIZE` and `-sEXPORT_ES6=1` flags. Or you can instruct emscripten to generate an `.mjs` file in which case it will automatically generate an ES6 module. This can be done in the command-line by specifying the name of the output file, or using CMake:
 ```cmake
-set(${DEFAULT_LINK_FLAGS} "-sERROR_ON_UNDEFINED_SYMBOLS=0 -sALLOW_MEMORY_GROWTH=1 -sLINKABLE=1 -Wl,--no-entry,--allow-undefined,--export=main,--export=malloc,--export-if-defined=add,--export-table,,--export-memory,--strip-all")
+set(${DEFAULT_LINK_FLAGS} "-sERROR_ON_UNDEFINED_SYMBOLS=0 -sALLOW_MEMORY_GROWTH=1 -sLINKABLE=1 -Wl,--no-entry,--allow-undefined,--export=main,--export=_start,--export=malloc,--export-if-defined=add,--export-table,,--export-memory,--strip-all")
 
 add_executable(main src/main.cpp)
 target_compile_definitions(main PRIVATE EMLITE_USE_EMSCRIPTEN_JS_GLUE)

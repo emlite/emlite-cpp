@@ -125,7 +125,7 @@ EM_JS(char *, emlite_val_get_value_string_impl, (Handle n), {
 });
 
 EM_JS(Handle, emlite_val_get_impl, (Handle n, Handle idx), {
-    return EMLITE_VALMAP.add(EMLITE_VALMAP.get(n)[EMLITE_VALMAP(idx)]);
+    return EMLITE_VALMAP.add(EMLITE_VALMAP.get(n)[EMLITE_VALMAP.get(idx)]);
 });
 
 EM_JS(void, emlite_val_set_impl, (Handle n, Handle idx, Handle val), {
