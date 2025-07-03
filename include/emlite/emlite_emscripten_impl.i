@@ -106,8 +106,16 @@ EM_JS(char *, emlite_val_get_value_string, (Handle n), {
     return buf;
 });
 
-EM_JS(Handle, emlite_val_get_elem, (Handle n, size_t idx), {
-    return EMLITE_VALMAP.add(EMLITE_VALMAP.get(n)[idx]);
+EM_JS(Handle, emlite_val_get, (Handle n, Handle idx), {
+    return EMLITE_VALMAP.add(EMLITE_VALMAP.get(n)[EMLITE_VALMAP(idx)]);
+});
+
+EM_JS(void, emlite_val_set, (Handle n, Handle idx, Handle val), {
+    EMLITE_VALMAP.get(n)[EMLITE_VALMAP.get(idx)] = EMLITE_VALMAP.get(val);
+});
+
+EM_JS(bool, emlite_val_has, (Handle n, Handle idx), {
+    return Reflect.has(EMLITE_VALMAP.get(n), EMLITE_VALMAP.get(idx));
 });
 
 EM_JS(bool, emlite_val_is_string, (Handle h), {
@@ -169,39 +177,6 @@ EM_JS(
         return EMLITE_VALMAP.add(
             Reflect.apply(target[method], target, args)
         );
-    }
-);
-
-EM_JS(
-    Handle,
-    emlite_val_obj_prop,
-    (Handle obj, const char *prop, size_t len),
-    {
-        const target = EMLITE_VALMAP.get(obj);
-        const p      = UTF8ToString(prop, len);
-        return EMLITE_VALMAP.add(target[p]);
-    }
-);
-
-EM_JS(
-    void,
-    emlite_val_obj_set_prop,
-    (Handle obj, const char *prop, size_t len, Handle val),
-    {
-        const target = EMLITE_VALMAP.get(obj);
-        const p      = UTF8ToString(prop, len);
-        target[p]    = EMLITE_VALMAP.get(val);
-    }
-);
-
-EM_JS(
-    bool,
-    emlite_val_obj_has_prop,
-    (Handle obj, const char *prop, size_t len),
-    {
-        const target = EMLITE_VALMAP.get(obj);
-        const p      = UTF8ToString(prop, len);
-        return Reflect.has(target, p);
     }
 );
 

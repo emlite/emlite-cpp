@@ -25,13 +25,13 @@ EMLITE_USED int add(int a, int b) {
     em_Val bodies    = em_Val_call(
         doc, "getElementsByTagName", 1, body_elem
     );
-    em_Val body = em_Val_at(bodies, 0);
+    em_Val body = em_Val_at(bodies, em_Val_from_int(0));
     em_Val elem = em_Val_from_string("BUTTON");
     em_Val btn = em_Val_call(doc, "createElement", 1, elem);
     em_Val btn_label = em_Val_from_string("Click Me!");
-    em_Val_set(btn, "textContent", btn_label);
+    em_Val_set(btn, em_Val_from_string("textContent"), btn_label);
 
-    em_Val textContent = em_Val_get(btn, "textContent");
+    em_Val textContent = em_Val_get(btn, em_Val_from_string("textContent"));
     printf("%s\n", em_Val_as_string(textContent));
     (void)fflush(stdout);
     char *typeofbtn = em_Val_typeof(btn);
@@ -60,7 +60,7 @@ EMLITE_USED int add(int a, int b) {
     console_log(em_Val_as_string(str1));
 
     em_Val Math       = em_Val_global("Math");
-    em_Val floor      = em_Val_get(Math, "floor");
+    em_Val floor      = em_Val_get(Math, em_Val_from_string("floor"));
     em_Val double_inp = em_Val_from_double(2.5);
     em_Val ret        = em_Val_invoke(floor, 1, double_inp);
     console_log(em_Val_as_string(ret));

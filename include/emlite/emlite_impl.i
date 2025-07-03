@@ -273,7 +273,7 @@ em_Val em_Val_from_handle(Handle v) {
 em_Val em_Val_global(const char *name) {
     Handle global = emlite_val_global_this();
     return em_Val_from_handle(
-        emlite_val_obj_prop(global, name, strlen(name))
+        emlite_val_get(global, em_Val_from_string(name).h)
     );
 }
 
@@ -305,21 +305,21 @@ void em_Val_throw(em_Val v) { emlite_val_throw(v.h); }
 
 Handle em_Val_as_handle(em_Val self) { return self.h; }
 
-em_Val em_Val_get(em_Val self, const char *prop) {
+em_Val em_Val_get(em_Val self, em_Val prop) {
     return em_Val_from_handle(
-        emlite_val_obj_prop(self.h, prop, strlen(prop))
+        emlite_val_get(self.h, prop.h)
     );
 }
 
-void em_Val_set(em_Val self, const char *prop, em_Val val) {
-    emlite_val_obj_set_prop(
-        self.h, prop, strlen(prop), val.h
+void em_Val_set(em_Val self, em_Val idx, em_Val val) {
+    emlite_val_set(
+        self.h, idx.h, val.h
     );
 }
 
-bool em_Val_has(em_Val self, const char *prop) {
-    return emlite_val_obj_has_prop(
-        self.h, prop, strlen(prop)
+bool em_Val_has(em_Val self, em_Val val) {
+    return emlite_val_has(
+        self.h, val.h
     );
 }
 
@@ -335,9 +335,9 @@ char *em_Val_typeof(em_Val self) {
     return emlite_val_typeof(self.h);
 }
 
-em_Val em_Val_at(em_Val self, size_t idx) {
+em_Val em_Val_at(em_Val self, em_Val elem) {
     return em_Val_from_handle(
-        emlite_val_get_elem(self.h, idx)
+        emlite_val_get(self.h, elem.h)
     );
 }
 

@@ -207,8 +207,11 @@ export class Emlite {
             emlite_val_typeof: n => this.copyStringToWasm(typeof HANDLE_MAP.get(n)),
 
             emlite_val_push: (arrRef, valRef) => HANDLE_MAP.get(arrRef).push(valRef),
-            emlite_val_get_elem: (n, idx) => HANDLE_MAP.add(HANDLE_MAP.get(n)[idx]),
-
+            emlite_val_get: (n, idx) => HANDLE_MAP.add(HANDLE_MAP.get(n)[HANDLE_MAP.get(idx)]),
+            emlite_val_set: (n, idx, valRef) => HANDLE_MAP.get(n)[HANDLE_MAP.get(idx)] = HANDLE_MAP.get(valRef),
+            emlite_val_has: (objRef, valRef) => {
+                return Reflect.has(HANDLE_MAP.get(objRef), HANDLE_MAP.get(valRef));
+            },
             emlite_val_not: arg => !HANDLE_MAP.get(arg),
             emlite_val_is_string: arg => {
                 const obj = HANDLE_MAP.get(arg);
@@ -222,22 +225,6 @@ export class Emlite {
             emlite_val_equals: (a, b) => HANDLE_MAP.get(a) == HANDLE_MAP.get(b),
             emlite_val_strictly_equals: (a, b) => HANDLE_MAP.get(a) === HANDLE_MAP.get(b),
             emlite_val_instanceof: (a, b) => HANDLE_MAP.get(a) instanceof HANDLE_MAP.get(b),
-
-            emlite_val_obj_prop: (objRef, pPtr, pLen) => {
-                const target = HANDLE_MAP.get(objRef);
-                const prop = this.cStr(pPtr, pLen);
-                return HANDLE_MAP.add(target[prop]);
-            },
-            emlite_val_obj_set_prop: (objRef, pPtr, pLen, val) => {
-                const target = HANDLE_MAP.get(objRef);
-                const prop = this.cStr(pPtr, pLen);
-                target[prop] = HANDLE_MAP.get(val);
-            },
-            emlite_val_obj_has_prop: (objRef, pPtr, pLen) => {
-                const target = HANDLE_MAP.get(objRef);
-                const prop = this.cStr(pPtr, pLen);
-                return Reflect.has(target, prop);
-            },
             emlite_val_obj_has_own_prop: (objRef, pPtr, pLen) => {
                 const target = HANDLE_MAP.get(objRef);
                 const prop = this.cStr(pPtr, pLen);

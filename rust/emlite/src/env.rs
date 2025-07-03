@@ -28,7 +28,9 @@ unsafe extern "C" {
     pub fn emlite_val_get_value_double(val: Handle) -> c_double;
     pub fn emlite_val_get_value_string(val: Handle) -> *mut c_char;
 
-    pub fn emlite_val_get_elem(val: Handle, idx: usize) -> Handle;
+    pub fn emlite_val_get(val: Handle, idx: Handle) -> Handle;
+    pub fn emlite_val_set(val: Handle, idx: Handle, val: Handle);
+    pub fn emlite_val_has(val: Handle, idx: Handle) -> bool;
 
     pub fn emlite_val_is_string(val: Handle) -> bool;
     pub fn emlite_val_is_number(val: Handle) -> bool;
@@ -50,12 +52,6 @@ unsafe extern "C" {
         len: usize,
         argv: Handle,
     ) -> Handle;
-
-    pub fn emlite_val_obj_prop(obj: Handle, prop: *const c_char, len: usize) -> Handle;
-
-    pub fn emlite_val_obj_set_prop(obj: Handle, prop: *const c_char, len: usize, val: Handle);
-
-    pub fn emlite_val_obj_has_prop(obj: Handle, prop: *const c_char, len: usize) -> bool;
 
     pub fn emlite_val_obj_has_own_prop(obj: Handle, prop: *const c_char, len: usize) -> bool;
 

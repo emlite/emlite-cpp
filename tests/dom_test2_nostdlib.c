@@ -26,7 +26,7 @@ EMLITE_USED int add(int a, int b) {
             1,
             em_Val_from_string("body")
         ),
-        0
+        em_Val_from_int(0)
     );
     em_Val btn = em_Val_call(
         doc,
@@ -35,7 +35,7 @@ EMLITE_USED int add(int a, int b) {
         em_Val_from_string("BUTTON")
     );
     em_Val_set(
-        btn, "textContent", em_Val_from_string("Click Me!")
+        btn, em_Val_from_string("textContent"), em_Val_from_string("Click Me!")
     );
 
     em_Val_call(body, "appendChild", 1, btn);
@@ -73,7 +73,7 @@ EMLITE_USED int add(int a, int b) {
     console_log(em_Val_from_string(em_Val_as_string(str1)));
 
     em_Val floor =
-        em_Val_get(em_Val_global("Math"), "floor");
+        em_Val_get(em_Val_global("Math"), em_Val_from_string("floor"));
     em_Val ret =
         em_Val_invoke(floor, 1, em_Val_from_double(2.5));
     console_log(ret);

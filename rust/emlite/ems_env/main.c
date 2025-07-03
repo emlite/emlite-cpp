@@ -124,8 +124,16 @@ EM_JS(char *, emlite_val_get_value_string_impl, (Handle n), {
     return buf;
 });
 
-EM_JS(Handle, emlite_val_get_elem_impl, (Handle n, size_t idx), {
-    return EMLITE_VALMAP.add(EMLITE_VALMAP.get(n)[idx]);
+EM_JS(Handle, emlite_val_get_impl, (Handle n, Handle idx), {
+    return EMLITE_VALMAP.add(EMLITE_VALMAP.get(n)[EMLITE_VALMAP(idx)]);
+});
+
+EM_JS(void, emlite_val_set_impl, (Handle n, Handle idx, Handle val), {
+    EMLITE_VALMAP.get(n)[EMLITE_VALMAP.get(idx)] = EMLITE_VALMAP.get(val);
+});
+
+EM_JS(Handle, emlite_val_has_impl, (Handle n, Handle idx), {
+    return Reflect.has(EMLITE_VALMAP.get(n), EMLITE_VALMAP.get(idx));
 });
 
 EM_JS(bool, emlite_val_is_string_impl, (Handle h), {
@@ -188,39 +196,6 @@ EM_JS(
         return EMLITE_VALMAP.add(
             Reflect.apply(target[method], target, args)
         );
-    }
-);
-
-EM_JS(
-    Handle,
-    emlite_val_obj_prop_impl,
-    (Handle obj, const char *prop, size_t len),
-    {
-        const target = EMLITE_VALMAP.get(obj);
-        const p      = UTF8ToString(prop, len);
-        return EMLITE_VALMAP.add(target[p]);
-    }
-);
-
-EM_JS(
-    void,
-    emlite_val_obj_set_prop_impl,
-    (Handle obj, const char *prop, size_t len, Handle val),
-    {
-        const target = EMLITE_VALMAP.get(obj);
-        const p      = UTF8ToString(prop, len);
-        target[p]    = EMLITE_VALMAP.get(val);
-    }
-);
-
-EM_JS(
-    bool,
-    emlite_val_obj_has_prop_impl,
-    (Handle obj, const char *prop, size_t len),
-    {
-        const target = EMLITE_VALMAP.get(obj);
-        const p      = UTF8ToString(prop, len);
-        return Reflect.has(target, p);
     }
 );
 
@@ -354,8 +329,18 @@ char *emlite_val_get_value_string(Handle n) {
 }
 
 EMLITE_USED
-Handle emlite_val_get_elem(Handle n, size_t idx) {
-    return emlite_val_get_elem_impl(n, idx);
+Handle emlite_val_get(Handle n, Handle idx) {
+    return emlite_val_get_impl(n, idx);
+}
+
+EMLITE_USED
+void emlite_val_set(Handle n, Handle idx, Handle val) {
+    return emlite_val_set_impl(n, idx, val);
+}
+
+EMLITE_USED
+Handle emlite_val_has(Handle n, Handle idx) {
+    return emlite_val_has_impl(n, idx);
 }
 
 EMLITE_USED
@@ -418,27 +403,6 @@ Handle emlite_val_obj_call(
     Handle obj, const char *name, size_t len, Handle argv
 ) {
     return emlite_val_obj_call_impl(obj, name, len, argv);
-}
-
-EMLITE_USED
-Handle emlite_val_obj_prop(
-    Handle obj, const char *prop, size_t len
-) {
-    return emlite_val_obj_prop_impl(obj, prop, len);
-}
-
-EMLITE_USED
-void emlite_val_obj_set_prop(
-    Handle obj, const char *prop, size_t len, Handle val
-) {
-    emlite_val_obj_set_prop_impl(obj, prop, len, val);
-}
-
-EMLITE_USED
-Handle emlite_val_obj_has_prop(
-    Handle obj, const char *prop, size_t len
-) {
-    return emlite_val_obj_has_prop_impl(obj, prop, len);
 }
 
 EMLITE_USED

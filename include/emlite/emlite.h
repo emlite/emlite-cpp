@@ -93,7 +93,11 @@ extern double emlite_val_get_value_double(Handle);
 /// represted by a Handle
 extern char *emlite_val_get_value_string(Handle);
 /// @returns the element's Handle at the specified index
-extern Handle emlite_val_get_elem(Handle, size_t);
+extern Handle emlite_val_get(Handle, Handle);
+/// @returns the element's Handle at the specified index
+extern void emlite_val_set(Handle, Handle, Handle);
+/// Checks whether an object has a property
+extern bool emlite_val_has(Handle, Handle);
 /// @returns whether the Handle is a string
 extern bool emlite_val_is_string(Handle);
 /// @returns whether the Handle is a number
@@ -119,18 +123,6 @@ extern void emlite_val_throw(Handle);
 /// Calls an object's method by name
 extern Handle emlite_val_obj_call(
     Handle obj, const char *name, size_t len, Handle argv
-);
-/// Gets an object's property
-extern Handle emlite_val_obj_prop(
-    Handle obj, const char *prop, size_t len
-);
-/// Set an object's property
-extern void emlite_val_obj_set_prop(
-    Handle obj, const char *prop, size_t len, Handle val
-);
-/// Checks whether an object has a property
-extern bool emlite_val_obj_has_prop(
-    Handle, const char *prop, size_t len
 );
 /// Checks whether an object has a non-inherited property
 extern bool emlite_val_obj_has_own_prop(
@@ -183,12 +175,12 @@ void em_Val_throw(em_Val);
 /// @returns the underlying handle of @param self
 Handle em_Val_as_handle(em_Val self);
 /// Gets the em_Val's property @param prop
-em_Val em_Val_get(em_Val self, const char *prop);
+em_Val em_Val_get(em_Val self, em_Val prop);
 /// Sets the em_Val's property @param prop to @param val
-void em_Val_set(em_Val self, const char *prop, em_Val val);
+void em_Val_set(em_Val self, em_Val prop, em_Val val);
 /// Checks whether an em_Val has a certain property @param
 /// prop
-bool em_Val_has(em_Val self, const char *prop);
+bool em_Val_has(em_Val self, em_Val prop);
 /// Checks whether an em_Val has a certain property @param
 /// prop that's not inherited
 bool em_Val_has_own_property(em_Val self, const char *prop);
@@ -197,7 +189,7 @@ bool em_Val_has_own_property(em_Val self, const char *prop);
 /// the caller side
 char *em_Val_typeof(em_Val self);
 /// Returns the element at index @param idx
-em_Val em_Val_at(em_Val self, size_t idx);
+em_Val em_Val_at(em_Val self, em_Val idx);
 /// Awaits the em_Val function object
 em_Val em_Val_await(em_Val self);
 /// Checks whether the underlying type is a number

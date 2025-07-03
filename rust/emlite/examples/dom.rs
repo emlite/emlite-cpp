@@ -3,7 +3,7 @@ use emlite::*;
 fn main() {
     let document = Val::global("document");
     let elem = document.call("createElement", &argv!["BUTTON"]);
-    elem.set(&"textContent", Val::from("Click"));
+    elem.set("textContent", Val::from("Click"));
     let body = document.call("getElementsByTagName", &argv!["body"]).at(0);
     elem.call(
         "addEventListener",

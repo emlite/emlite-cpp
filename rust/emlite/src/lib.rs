@@ -53,8 +53,8 @@ impl Val {
     }
 
     /// Gets the property `prop`
-    pub fn get(&self, prop: &str) -> Val {
-        let h = unsafe { emlite_val_obj_prop(self.as_handle(), prop.as_ptr() as _, prop.len()) };
+    pub fn get<T: Into<Val>>(&self, prop: T) -> Val {
+        let h = unsafe { emlite_val_get(self.as_handle(), prop.into().as_handle()) };
         Val::take_ownership(h)
     }
 
@@ -106,20 +106,19 @@ impl Val {
     }
 
     /// Set the underlying js object property `prop` to `val`
-    pub fn set(&self, prop: &str, val: Val) {
+    pub fn set<K: Into<Val>, V: Into<Val>>(&self, prop: K, val: V) {
         unsafe {
-            emlite_val_obj_set_prop(
+            emlite_val_set(
                 self.as_handle(),
-                prop.as_ptr() as _,
-                prop.len(),
-                val.as_handle(),
+                prop.into().as_handle(),
+                val.into().as_handle(),
             )
         };
     }
 
     /// Checks whether a property `prop` exists
-    pub fn has(&self, prop: &str) -> bool {
-        unsafe { emlite_val_obj_has_prop(self.as_handle(), prop.as_ptr() as _, prop.len()) }
+    pub fn has<T: Into<Val>>(&self, prop: T) -> bool {
+        unsafe { emlite_val_has(self.as_handle(), prop.into().as_handle()) }
     }
 
     /// Checks whether a non-inherited property `prop` exists
@@ -136,8 +135,8 @@ impl Val {
     }
 
     /// Gets the element at index `idx`. Assumes the underlying js type is indexable
-    pub fn at(&self, idx: usize) -> Val {
-        Val::take_ownership(unsafe { emlite_val_get_elem(self.as_handle(), idx) })
+    pub fn at<T: Into<Val>>(&self, idx: T) -> Val {
+        Val::take_ownership(unsafe { emlite_val_get(self.as_handle(), idx.into().as_handle()) })
     }
 
     /// Gets the underlying i32 value of a js object
@@ -168,7 +167,7 @@ impl Val {
         let len = self.get("length").as_i32();
         let mut v: Vec<i32> = vec![];
         for i in 0..len {
-            v.push(self.at(i as _).as_i32());
+            v.push(self.at::<i32>(i as _).as_i32());
         }
         v
     }
@@ -178,7 +177,7 @@ impl Val {
         let len = self.get("length").as_i32();
         let mut v: Vec<f64> = vec![];
         for i in 0..len {
-            v.push(self.at(i as _).as_f64());
+            v.push(self.at::<f64>(i as _).as_f64());
         }
         v
     }

@@ -13,7 +13,7 @@ fn main() {
     let oscillator = context.call("createOscillator", &[]);
 
     println!("Configuring oscillator");
-    oscillator.set("type", Val::from("triangle"));
+    oscillator.set("type", "triangle");
     oscillator.get("frequency").set("value", Val::from(261.63)); // Middle C
 
     Val::global_this().set("oscillator", oscillator);
@@ -21,7 +21,7 @@ fn main() {
 
     let document = Val::global("document");
     let elem = document.call("createElement", &argv!["BUTTON"]);
-    elem.set(&"textContent", Val::from("Click"));
+    elem.set("textContent", "Click");
     let body = document.call("getElementsByTagName", &argv!["body"]).at(0);
     elem.call(
         "addEventListener",

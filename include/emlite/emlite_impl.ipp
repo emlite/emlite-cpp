@@ -97,24 +97,9 @@ Uniq<char[]> Val::type_of() const {
     return Uniq<char[]>(emlite_val_typeof(v_));
 }
 
-Val Val::get(const char *prop) const {
-    return Val::take_ownership(
-        emlite_val_obj_prop(v_, prop, strlen(prop))
-    );
-}
-
-bool Val::has(const char *prop) const {
-    return emlite_val_obj_has_prop(v_, prop, strlen(prop));
-}
-
 bool Val::has_own_property(const char *prop) const {
     return emlite_val_obj_has_own_prop(
         v_, prop, strlen(prop)
-    );
-}
-
-Val Val::operator[](size_t idx) const {
-    return Val::take_ownership(emlite_val_get_elem(v_, idx)
     );
 }
 

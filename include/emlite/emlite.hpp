@@ -223,19 +223,27 @@ class Val {
         __attribute__((always_inline));
     /// Get the Val object's property
     /// @param prop the property name
-    Val get(const char *prop) const;
+    template <typename T>
+    Val get(T &&prop) const {
+        return Val::take_ownership(
+            emlite_val_get(v_, Val(detail::forward<T>(prop)).as_handle())
+        );
+    }
     /// Set the Val object's property
     /// @param prop the property name
     /// @param val the property's value
-    template <typename T>
-    void set(const char *prop, T &&v) const {
-        emlite_val_obj_set_prop(
-            v_, prop, strlen(prop), Val(v).as_handle()
+    template <typename T, typename U>
+    void set(T &&prop, U &&v) const {
+        emlite_val_set(
+            v_, Val(detail::forward<T>(prop)).as_handle(), Val(detail::forward<U>(v)).as_handle()
         );
     }
     /// Checks whether a property exists
     /// @param prop the property to check
-    bool has(const char *prop) const;
+    template <typename T>
+    bool has(T &&prop) const {
+        return emlite_val_has(v_, Val(detail::forward<T>(prop)).as_handle());
+    }
     /// Determine whether an object possesses a direct,
     /// own property with a specified name,
     /// as opposed to an inherited property from its
@@ -247,7 +255,10 @@ class Val {
     [[nodiscard]] Uniq<char[]> type_of() const;
     /// @returns an element in the array
     /// @param idx at the specified index
-    Val operator[](size_t idx) const;
+    template<typename T>
+    Val operator[](T &&idx) const {
+        return get(idx);
+    }
     /// Awaits the function object
     [[nodiscard]] Val await() const;
     /// @returns bool if Val is a number
