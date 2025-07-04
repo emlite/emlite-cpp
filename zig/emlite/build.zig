@@ -14,6 +14,7 @@ const Example = struct {
     }
 };
 
+
 pub const examples = &[_]Example{
     Example.init("array", "examples/array.zig", "A simple emlite array example"),
 };
