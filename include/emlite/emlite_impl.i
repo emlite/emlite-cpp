@@ -288,9 +288,10 @@ em_Val em_Val_array() {
     return em_Val_from_handle(emlite_val_new_array());
 }
 
-em_Val em_Val_make_fn(Callback f) {
+em_Val em_Val_make_fn(Callback f, Handle data) {
     uint32_t fidx = (uint32_t)f;
-    return em_Val_from_handle(emlite_val_make_callback(fidx)
+    return em_Val_from_handle(
+        emlite_val_make_callback(fidx, data)
     );
 }
 
@@ -301,21 +302,16 @@ void em_Val_throw(em_Val v) { emlite_val_throw(v.h); }
 Handle em_Val_as_handle(em_Val self) { return self.h; }
 
 em_Val em_Val_get(em_Val self, em_Val prop) {
-    return em_Val_from_handle(
-        emlite_val_get(self.h, prop.h)
+    return em_Val_from_handle(emlite_val_get(self.h, prop.h)
     );
 }
 
 void em_Val_set(em_Val self, em_Val idx, em_Val val) {
-    emlite_val_set(
-        self.h, idx.h, val.h
-    );
+    emlite_val_set(self.h, idx.h, val.h);
 }
 
 bool em_Val_has(em_Val self, em_Val val) {
-    return emlite_val_has(
-        self.h, val.h
-    );
+    return emlite_val_has(self.h, val.h);
 }
 
 bool em_Val_has_own_property(
@@ -331,8 +327,7 @@ char *em_Val_typeof(em_Val self) {
 }
 
 em_Val em_Val_at(em_Val self, em_Val elem) {
-    return em_Val_from_handle(
-        emlite_val_get(self.h, elem.h)
+    return em_Val_from_handle(emlite_val_get(self.h, elem.h)
     );
 }
 

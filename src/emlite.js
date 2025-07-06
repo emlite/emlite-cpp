@@ -234,13 +234,13 @@ export class Emlite {
             emlite_val_dec_ref: h => { if (h > 4) HANDLE_MAP.decRef(h); },
             emlite_val_throw: n => { throw HANDLE_MAP.get(n); },
 
-            emlite_val_make_callback: fidx => {
+            emlite_val_make_callback: (fidx, data) => {
                 const id = nextCbId++;
                 CB_STORE.set(id, fidx);
-
+                const handle = HANDLE_MAP.add(data);
                 const jsFn = (...args) => {
-                    const arrHandle = HANDLE_MAP.add(args.map(v => HANDLE_MAP.add(v)));
-                    const ret = this.exports.__indirect_function_table.get(fidx)(arrHandle);
+                    const arrHandle = HANDLE_MAP.add(args.map(v => v));
+                    const ret = this.exports.__indirect_function_table.get(fidx)(arrHandle, HANDLE_MAP.get(handle));
 
                     return ret;
                 };

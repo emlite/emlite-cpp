@@ -12,7 +12,7 @@ em_Val console_log(char *s) {
     return ret;
 }
 
-Handle btn_click_cb(Handle h) {
+Handle btn_click_cb(Handle h, Handle data) {
     console_log("Clicked");
     return emlite_val_undefined();
 }
@@ -41,7 +41,7 @@ EMLITE_USED int add(int a, int b) {
     em_Val appended = em_Val_call(body, "appendChild", 1, btn);
 
     em_Val event  = em_Val_from_string("click");
-    em_Val btn_cb = em_Val_make_fn(btn_click_cb);
+    em_Val btn_cb = em_Val_make_fn(btn_click_cb, 0);
     em_Val_call(btn, "addEventListener", 2, event, btn_cb);
 
     // check em_Val_new

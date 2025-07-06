@@ -32,7 +32,7 @@ extern "env" fn emlite_val_obj_prop(obj: Handle, prop: [*]const u8, len: usize) 
 extern "env" fn emlite_val_set(obj: Handle, prop: Handle, val: Handle) void;
 extern "env" fn emlite_val_has(obj: Handle, prop: Handle) bool;
 extern "env" fn emlite_val_obj_has_own_prop(obj: Handle, prop: [*]const u8, len: usize) bool;
-extern "env" fn emlite_val_make_callback(id: Handle) Handle;
+extern "env" fn emlite_val_make_callback(id: Handle, data: Handle) Handle;
 extern "env" fn emlite_val_instanceof(a: Handle, b: Handle) bool;
 extern "env" fn emlite_val_dec_ref(val: Handle) void;
 extern "env" fn emlite_val_inc_ref(val: Handle) void;
@@ -195,8 +195,8 @@ pub const Val = struct {
     pub fn delete(self: Val) void { emlite_val_dec_ref(self.handle); }
     pub fn throw(self: Val) void  { emlite_val_throw(self.handle); }
 
-    pub fn makeFn(fn_ptr: fn (Handle) Handle) Val {
-        return fromHandle(emlite_val_make_callback(@intCast(@intFromPtr(fn_ptr))));
+    pub fn makeFn(fn_ptr: fn (Handle) Handle, data: Handle) Val {
+        return fromHandle(emlite_val_make_callback(@intCast(@intFromPtr(fn_ptr))), data);
     }
 };
 

@@ -193,14 +193,14 @@ EM_JS(
     }
 );
 
-EM_JS(Handle, emlite_val_make_callback, (Handle fidx), {
+EM_JS(Handle, emlite_val_make_callback, (Handle fidx, Handle data), {
     const id = emliteNextCbId++;
     EMLITE_CB_STORE.set(id, fidx);
-
+    const handle = EMLITE_VALMAP.add(data);
     const jsFn = (... args) => {
         const arrHandle =
-            EMLITE_VALMAP.add(args.map(v => EMLITE_VALMAP.add(v)));
-        const ret = wasmTable.get(fidx)(arrHandle);
+            EMLITE_VALMAP.add(args.map(v => v));
+        const ret = wasmTable.get(fidx)(arrHandle, HANDLE_MAP.get(handle));
 
         return ret;
     };

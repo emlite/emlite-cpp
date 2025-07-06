@@ -49,7 +49,7 @@ size_t strlen(const char *);
 typedef uint32_t Handle;
 
 /// Represents a javascript object
-typedef Handle (*Callback)(Handle);
+typedef Handle (*Callback)(Handle, Handle data);
 
 /// @returns a null handle
 extern Handle emlite_val_null(void);
@@ -135,7 +135,9 @@ extern bool emlite_val_obj_has_own_prop(
     Handle, const char *prop, size_t len
 );
 /// Creates a callback handle
-extern Handle emlite_val_make_callback(Handle id);
+extern Handle emlite_val_make_callback(
+    Handle id, Handle data
+);
 /// Print the js OBJECT_MAP
 extern void emlite_print_object_map(void);
 /// Reset the OBJECT_MAP
@@ -171,7 +173,7 @@ em_Val em_Val_object();
 /// Gets a new javascript array
 em_Val em_Val_array();
 /// Creates a javascript function from a C function @param f
-em_Val em_Val_make_fn(Callback f);
+em_Val em_Val_make_fn(Callback f, Handle data);
 /// Decrements the refcount of the Handle represented by the
 /// em_Val
 void em_Val_delete(em_Val);

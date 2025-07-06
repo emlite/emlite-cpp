@@ -22,27 +22,23 @@ int main() {
     oscillator.set("type", "triangle");
     oscillator.get("frequency").set("Value", 261.63);
 
-    Val::global().set("oscillator", oscillator);
-    Val::global().set("context", context);
 
     auto doc  = Val::global("document");
     auto body = doc.call("getElementsByTagName", "body")[0];
     auto btn  = doc.call("createElement", "BUTTON");
     btn.set("textContent", "Play!");
+    emlite_val_inc_ref(oscillator.as_handle());
     btn.call(
         "addEventListener",
         "click",
-        Val::make_fn([](auto) -> Handle {
-            auto oscillator = Val::global("oscillator");
-            auto context    = Val::global("context");
+        Val::make_fn([=](auto params) -> Val {
             printf("Playing\n");
             oscillator.call(
                 "connect", context.get("destination")
             );
             oscillator.call("start", 0);
-
             printf("All done!\n");
-            return Val::undefined().as_handle();
+            return Val::undefined();
         })
     );
     body.call("appendChild", btn);

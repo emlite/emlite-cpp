@@ -10,14 +10,15 @@ fn main() {
         &argv![
             "click",
             Val::make_fn(|ev| {
-                let console = Val::global("console");
+                let console = Console::get();
                 console.call("clear", &[]);
+                console.log(&[ev[0].get("clientX")]);
                 println!(
                     "client x: {}",
-                    Val::take_ownership(ev).get("clientX").as_i32()
+                    ev[0].get("clientX").as_i32()
                 );
                 println!("hello from Rust");
-                Val::undefined().as_handle()
+                Val::undefined()
             })
         ],
     );

@@ -15,6 +15,10 @@ struct remove_reference<T &&> {
     using type = T;
 };
 
+template <class T>
+using remove_reference_t =
+    typename remove_reference<T>::type;
+
 template <typename T>
 constexpr T &&forward(typename remove_reference<T>::type &t
 ) noexcept {
@@ -141,3 +145,18 @@ template <class Base, class Derived>
 inline constexpr bool is_base_of_v =
     is_base_of<Base, Derived>::value;
 
+template <class T>
+typename remove_reference<T>::type &&declval() noexcept;
+
+template <class T, class U>
+struct is_convertible {
+  private:
+    static char test(U);
+    static long test(...);
+
+  public:
+    enum { value = sizeof(test(*(T *)0)) == 1 };
+};
+template <class T, class U>
+constexpr bool is_convertible_v =
+    is_convertible<T, U>::value;

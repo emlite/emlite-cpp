@@ -221,9 +221,32 @@ impl Val {
     }
 
     /// Creates js function from a function pointer and returns its handle wrapped in a Val object
-    pub fn make_fn(f: fn(Handle) -> Handle) -> Val {
+    pub fn make_fn_raw(f: fn(Handle, Handle) -> Handle, data: Handle) -> Val {
         let idx: u32 = f as usize as u32;
-        unsafe { Val::take_ownership(emlite_val_make_callback(idx)) }
+        unsafe { Val::take_ownership(emlite_val_make_callback(idx, data)) }
+    }
+
+    /// Creates a js function from a Rust closure and returns a Val
+    pub fn make_fn<F: FnMut(&[Val]) -> Val>(cb: F) -> Val {
+        fn shim(args: Handle, data: Handle) -> Handle {
+            let v = Val::take_ownership(args);
+            let sz = v.get("length").as_i32() as usize;
+            let mut vals: Vec<Val> = Vec::with_capacity(sz);
+            for i in 0..sz {
+                vals.push(v.at(i as i32));
+            }
+            let func0 = Val::take_ownership(data);
+            let a = func0.as_i32() as usize as *mut Box<dyn FnMut(&[Val]) -> Val>;
+            let f: &mut (dyn FnMut(&[Val]) -> Val) = unsafe { &mut **a };
+            std::mem::forget(func0);
+            f(&vals).as_handle()
+        }
+        let a: *mut Box<dyn FnMut(&[Val]) -> Val> = Box::into_raw(Box::new(Box::new(cb)));
+        let data = Val::from_i32(a as Handle as _);
+        unsafe {
+            emlite_val_inc_ref(data.as_handle());
+        }
+        Self::make_fn_raw(shim, data.as_handle())
     }
 
     /// Awaits the invoked function object

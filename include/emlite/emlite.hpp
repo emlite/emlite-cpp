@@ -3,144 +3,25 @@
 #include "emlite.h"
 #undef EMLITE_EVAL
 
+extern void *operator new(size_t, void *place) noexcept;
+
 namespace emlite {
 
 namespace detail {
+#include "func.hpp"
+#include "mem.hpp"
 #include "tiny_traits.hpp"
 } // namespace detail
 
-/// A smart pointer class with unique ownershipt
-template <
-    class T,
-    typename = typename detail::enable_if_t<
-        !detail::is_same_v<T, void>>>
-class Uniq {
-    T *ptr_ = nullptr;
+using detail::Closure;
+using detail::Uniq;
 
-  public:
-    using element_type = T;
+class Val;
 
-    constexpr Uniq() noexcept = default;
-    constexpr Uniq(decltype(nullptr)) noexcept
-        : ptr_(nullptr) {}
-    explicit Uniq(T *p) noexcept : ptr_(p) {}
-
-    Uniq(const Uniq &)            = delete;
-    Uniq &operator=(const Uniq &) = delete;
-
-    Uniq(Uniq &&other) noexcept : ptr_(other.ptr_) {
-        other.ptr_ = nullptr;
-    }
-
-    Uniq &operator=(Uniq &&other) noexcept {
-        if (this != &other) {
-            reset();
-            ptr_       = other.ptr_;
-            other.ptr_ = nullptr;
-        }
-        return *this;
-    }
-
-    ~Uniq() { reset(); }
-
-    void swap(Uniq &other) noexcept {
-        auto tmp   = ptr_;
-        ptr_       = other.ptr_;
-        other.ptr_ = tmp;
-    }
-
-    void reset(T *p = nullptr) noexcept {
-        if (ptr_)
-            delete ptr_;
-        ptr_ = p;
-    }
-
-    [[nodiscard]] T *release() noexcept {
-        T *tmp = ptr_;
-        ptr_   = nullptr;
-        return tmp;
-    }
-
-    [[nodiscard]] T *get() const noexcept { return ptr_; }
-    [[nodiscard]] explicit operator bool() const noexcept {
-        return ptr_ != nullptr;
-    }
-
-    T &operator*() const noexcept { return *ptr_; }
-    T *operator->() const noexcept { return ptr_; }
+struct Params {
+    Val *vals;
+    size_t len;
 };
-
-/// A specialization of Uniq, the smart pointer with unique
-/// ownership, for array types
-template <class T>
-class Uniq<T[]> {
-    T *ptr_ = nullptr;
-
-  public:
-    using element_type = T;
-
-    constexpr Uniq() noexcept = default;
-    constexpr Uniq(decltype(nullptr)) noexcept
-        : ptr_(nullptr) {}
-    explicit Uniq(T *p) noexcept : ptr_(p) {}
-
-    Uniq(const Uniq &)            = delete;
-    Uniq &operator=(const Uniq &) = delete;
-
-    Uniq(Uniq &&other) noexcept : ptr_(other.ptr_) {
-        other.ptr_ = nullptr;
-    }
-
-    Uniq &operator=(Uniq &&other) noexcept {
-        if (this != &other) {
-            reset();
-            ptr_       = other.ptr_;
-            other.ptr_ = nullptr;
-        }
-        return *this;
-    }
-
-    ~Uniq() { reset(); }
-
-    void swap(Uniq &other) noexcept {
-        auto tmp   = ptr_;
-        ptr_       = other.ptr_;
-        other.ptr_ = tmp;
-    }
-
-    void reset(T *p = nullptr) noexcept {
-        if (ptr_)
-            delete[] ptr_;
-        ptr_ = p;
-    }
-
-    [[nodiscard]] T *release() noexcept {
-        T *tmp = ptr_;
-        ptr_   = nullptr;
-        return tmp;
-    }
-
-    [[nodiscard]] T *get() const noexcept { return ptr_; }
-    [[nodiscard]] explicit operator bool() const noexcept {
-        return ptr_ != nullptr;
-    }
-
-    T &operator[](size_t i) const noexcept {
-        return ptr_[i];
-    }
-};
-
-/// A helper swap function for Uniq objects
-template <class T>
-inline void swap(Uniq<T> &a, Uniq<T> &b) noexcept {
-    a.swap(b);
-}
-
-/// A helper swap function for Uniq objects
-template <class T>
-inline void swap(Uniq<T[]> &a, Uniq<T[]> &b) noexcept {
-    a.swap(b);
-}
 
 /// A high-level RAII wrapper around javascript Handle's
 class Val {
@@ -163,7 +44,8 @@ class Val {
     /// The destructor, this decrements the ref count.
     virtual ~Val();
 
-    /// Clone Val into a new val, this increments the refcount
+    /// Clone Val into a new val, this increments the
+    /// refcount
     Val clone() const noexcept;
 
     /// Creates a new Val object from a raw handle.
@@ -186,7 +68,10 @@ class Val {
     /// Creates a javascript function
     /// @param f is function pointer of type Handle
     /// (*)(Handle)
-    static Val make_fn(Callback f) noexcept;
+    static Val make_fn(
+        Callback f, const Val &data = Val::null()
+    ) noexcept;
+    static Val make_fn(Closure<Val(Params)> &&f) noexcept;
     /// Deletes a Val object
     /// @param v has its refcount decremented
     static void delete_(Val &&v) noexcept;
@@ -197,7 +82,8 @@ class Val {
     /// incrementing its refcount
     /// @param h the Handle to duplicate
     static Val dup(Handle h) noexcept;
-    /// Releases the underlying handle from the passed Val paramater
+    /// Releases the underlying handle from the passed Val
+    /// paramater
     static Handle release(Val &&v) noexcept;
 
     /// A Val constructor from numeric types
@@ -229,9 +115,9 @@ class Val {
     /// @param prop the property name
     template <typename T>
     Val get(T &&prop) const {
-        return Val::take_ownership(
-            emlite_val_get(v_, Val(detail::forward<T>(prop)).as_handle())
-        );
+        return Val::take_ownership(emlite_val_get(
+            v_, Val(detail::forward<T>(prop)).as_handle()
+        ));
     }
     /// Set the Val object's property
     /// @param prop the property name
@@ -239,14 +125,18 @@ class Val {
     template <typename T, typename U>
     void set(T &&prop, U &&v) const {
         emlite_val_set(
-            v_, Val(detail::forward<T>(prop)).as_handle(), Val(detail::forward<U>(v)).as_handle()
+            v_,
+            Val(detail::forward<T>(prop)).as_handle(),
+            Val(detail::forward<U>(v)).as_handle()
         );
     }
     /// Checks whether a property exists
     /// @param prop the property to check
     template <typename T>
     bool has(T &&prop) const {
-        return emlite_val_has(v_, Val(detail::forward<T>(prop)).as_handle());
+        return emlite_val_has(
+            v_, Val(detail::forward<T>(prop)).as_handle()
+        );
     }
     /// Determine whether an object possesses a direct,
     /// own property with a specified name,
@@ -259,7 +149,7 @@ class Val {
     [[nodiscard]] Uniq<char[]> type_of() const noexcept;
     /// @returns an element in the array
     /// @param idx at the specified index
-    template<typename T>
+    template <typename T>
     Val operator[](T &&idx) const {
         return get(idx);
     }
@@ -271,7 +161,8 @@ class Val {
     [[nodiscard]] bool is_string() const noexcept;
     /// @returns bool if Val is an instanceof
     /// @param v the other Val
-    [[nodiscard]] bool instanceof (const Val &v) const noexcept;
+    [[nodiscard]] bool instanceof
+        (const Val &v) const noexcept;
     /// Not applied to Val
     bool operator!() const;
     /// @returns whether this Val strictly equals
@@ -304,7 +195,8 @@ class Val {
         class... Args,
         typename detail::enable_if_t<
             detail::is_base_of_v<Val, Args>>...>
-    Val call(const char *method, Args &&...vals) const noexcept;
+    Val call(const char *method, Args &&...vals)
+        const noexcept;
 
     /// Calls the specified constructor of the Val object
     /// @tparam the arguments to the method should be of
@@ -343,8 +235,7 @@ class Val {
     /// @param[in,out] len the length of the C++ array that
     /// was returned
     /// @returns a Uniq C++ array
-    template <
-        typename T>
+    template <typename T>
     static Uniq<T[]> vec_from_js_array(
         const Val &v, size_t &len
     ) {
@@ -355,20 +246,6 @@ class Val {
             ret[i] = v[i].as<T>();
         }
         return Uniq<T[]>(ret);
-    }
-    
-    template<>
-    Uniq<Val[]> vec_from_js_array<Val>(const Val& v, size_t& len)
-    {
-        auto sz = v.get("length").as<int>();
-        len     = sz;
-        Val* ret = new Val[sz];
-
-        for (int i = 0; i < sz; ++i) {
-            auto val = v[i].as<Handle>();
-            ret[i] = Val::take_ownership(val);
-        }
-        return Uniq<Val[]>(ret);
     }
 };
 
@@ -411,7 +288,8 @@ template <
     class... Args,
     typename detail::enable_if_t<
         detail::is_base_of_v<Val, Args>>...>
-Val Val::call(const char *method, Args &&...vals) const noexcept {
+Val Val::call(const char *method, Args &&...vals)
+    const noexcept {
     auto arr = Val::take_ownership(emlite_val_new_array());
     Val keep_alive[sizeof...(Args)] = {
         Val(detail::forward<Args>(vals))...

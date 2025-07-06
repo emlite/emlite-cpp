@@ -17,13 +17,10 @@ int main() {
         "readFile",
         "LICENSE",
         "utf8",
-        Val::make_fn([](Handle h) -> Handle {
-            size_t len     = 0;
-            auto param_vec = Val::vec_from_js_array<Val>(
-                Val::take_ownership(h), len
-            );
-            puts(param_vec[1].as<Uniq<char[]>>().get());
-            return Val::undefined().as_handle();
+        Val::make_fn([](auto p) -> Val {
+            auto [params, len] = p;
+            puts(params[1].template as<Uniq<char[]>>().get());
+            return Val::undefined();
         })
     );
 }

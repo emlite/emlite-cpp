@@ -49,9 +49,7 @@ Val::~Val() {
         emlite_val_dec_ref(v_);
 }
 
-Val Val::clone() const noexcept {
-    return Val(*this);
-}
+Val Val::clone() const noexcept { return Val(*this); }
 
 Val Val::take_ownership(Handle h) noexcept {
     Val v;
@@ -70,7 +68,9 @@ Val Val::global() noexcept {
 
 Val Val::null() noexcept { return Val::take_ownership(0); }
 
-Val Val::undefined() noexcept { return Val::take_ownership(1); }
+Val Val::undefined() noexcept {
+    return Val::take_ownership(1);
+}
 
 Val Val::object() noexcept {
     return Val::take_ownership(emlite_val_new_object());
@@ -87,13 +87,17 @@ Val Val::dup(Handle h) noexcept {
 
 Handle Val::release(Val &&v) noexcept {
     auto temp = v.v_;
-    v.v_ = 0;
+    v.v_      = 0;
     return temp;
 }
 
-void Val::delete_(Val &&v) noexcept { emlite_val_dec_ref(v.v_); }
+void Val::delete_(Val &&v) noexcept {
+    emlite_val_dec_ref(v.v_);
+}
 
-void Val::throw_(const Val &v) { return emlite_val_throw(v.v_); }
+void Val::throw_(const Val &v) {
+    return emlite_val_throw(v.v_);
+}
 
 Handle Val::as_handle() const noexcept { return v_; }
 
@@ -101,18 +105,39 @@ Uniq<char[]> Val::type_of() const noexcept {
     return Uniq<char[]>(emlite_val_typeof(v_));
 }
 
-bool Val::has_own_property(const char *prop) const noexcept {
+bool Val::has_own_property(const char *prop
+) const noexcept {
     return emlite_val_obj_has_own_prop(
         v_, prop, strlen(prop)
     );
 }
 
-Val Val::make_fn(Callback f) noexcept {
+Val Val::make_fn(Callback f, const Val &data) noexcept {
     uint32_t fidx =
         static_cast<uint32_t>(reinterpret_cast<uintptr_t>(f)
         );
-    return Val::take_ownership(emlite_val_make_callback(fidx
+    return Val::take_ownership(emlite_val_make_callback(
+        fidx, Val::release((Val &&)data)
     ));
+}
+
+Val Val::make_fn(Closure<Val(Params)> &&f) noexcept {
+    return Val::make_fn(
+        [](auto h, auto data) -> Handle {
+            Val func0 = Val::take_ownership(data);
+            auto func = (Closure<Val(Params)> *)
+                            func0.template as<uintptr_t>();
+            size_t len = 0;
+            auto v     = Val::vec_from_js_array<Val>(
+                Val::take_ownership(h), len
+            );
+            Params params{v.get(), len};
+            auto ret = (*func)(params);
+            Val::release((Val &&)func0);
+            return ret.as_handle();
+        },
+        Val((uintptr_t) new Closure<Val(Params)>(f))
+    );
 }
 
 // clang-format off
