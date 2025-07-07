@@ -281,6 +281,14 @@ impl Val {
     pub fn instanceof(&self, v: Val) -> bool {
         unsafe { emlite_val_instanceof(self.as_handle(), v.as_handle()) }
     }
+
+    #[inline(always)]
+    pub fn as_<T>(&self) -> T
+    where
+        T: FromVal,
+    {
+        T::from_val(self)
+    }
 }
 
 impl From<i32> for Val {
@@ -413,5 +421,50 @@ impl Not for Val {
 
     fn not(self) -> Self::Output {
         unsafe { emlite_val_not(self.as_handle()) }
+    }
+}
+
+pub trait FromVal: Sized {
+    fn from_val(v: &Val) -> Self;
+}
+
+impl FromVal for bool {
+    fn from_val(v: &Val) -> Self {
+        v.as_handle() > 3
+    }
+}
+
+macro_rules! impl_int {
+    ($($t:ty),*) => {$(
+        impl FromVal for $t {
+            fn from_val(v: &Val) -> Self {
+                unsafe {
+                    emlite_val_get_value_int(v.as_handle()) as Self
+                }
+            }
+        }
+    )*}
+}
+
+impl_int!(i8, i16, i32, i64, isize, u8, u16, u32, u64, usize);
+
+macro_rules! impl_float {
+    ($($t:ty),*) => {$(
+        impl FromVal for $t {
+            fn from_val(v: &Val) -> Self {
+                unsafe { emlite_val_get_value_double(v.as_handle()) as Self }
+            }
+        }
+    )*}
+}
+
+impl_float!(f32, f64);
+
+impl FromVal for String {
+    fn from_val(v: &Val) -> Self {
+        unsafe { 
+            let ptr = emlite_val_get_value_string(v.as_handle());
+            CStr::from_ptr(ptr).to_string_lossy().into_owned()
+        }
     }
 }

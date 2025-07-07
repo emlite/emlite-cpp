@@ -3,7 +3,7 @@ use emlite::*;
 fn main() {
     #[allow(non_snake_case)]
     let mut AudioContext = Val::global("AudioContext");
-    if !AudioContext.as_bool() {
+    if !AudioContext.as_::<bool>() {
         println!("No global AudioContext, trying webkitAudioContext");
         AudioContext = Val::global("webkitAudioContext");
     }
@@ -14,7 +14,7 @@ fn main() {
 
     println!("Configuring oscillator");
     oscillator.set("type", "triangle");
-    oscillator.get("frequency").set("value", Val::from(261.63)); // Middle C
+    oscillator.get("frequency").set::<_, f64>("value", 261.63); // Middle C
 
     let document = Val::global("document");
     let elem = document.call("createElement", &argv!["BUTTON"]);
