@@ -1,6 +1,6 @@
-use emlite::{Console, Val};
+use emlite::{argv, Console};
 
 fn main() {
     let con = Console::get();
-    con.log(&[Val::from("Hello from Emlite!")]);
+    con.log(&argv!["Hello from Emlite!"]);
 }

@@ -6,11 +6,11 @@ use std::ffi::CStr;
 #[macro_export]
 macro_rules! eval {
     ($src: literal) => {{
-        $crate::Val::global("eval").invoke(&[$crate::Val::from_str($src)])
+        $crate::Val::global("eval").invoke(&[$crate::Val::from($src)])
     }};
     ($src: literal $(, $arg:expr)* $(,)?) => {{
         $crate::Val::global("eval").invoke(
-            &[$crate::Val::from_str(&format!($src, $( $arg ),*)) ]
+            &[$crate::Val::from(&format!($src, $( $arg ),*)) ]
         )
     }};
 }
@@ -30,23 +30,6 @@ pub struct Val {
 }
 
 impl Val {
-    /// Takes the ownership of a handle
-    pub fn take_ownership(handle: Handle) -> Val {
-        Val {
-            inner: handle,
-        }
-    }
-
-    /// Creates a Val object from another
-    pub fn from_val(v: Val) -> Self {
-        unsafe {
-            emlite_val_inc_ref(v.inner);
-        }
-        Val {
-            inner: v.inner,
-        }
-    }
-
     /// Returns the globalThis object
     pub fn global_this() -> Val {
         Val::take_ownership(unsafe { emlite_val_global_this() })
@@ -83,28 +66,6 @@ impl Val {
         Val::take_ownership(unsafe { emlite_val_new_array() })
     }
 
-    /// Creates a Val from an i32
-    pub fn from_i32(i: i32) -> Val {
-        Val::take_ownership(unsafe { emlite_val_make_int(i) })
-    }
-
-    /// Creates a Val from an f64
-    pub fn from_f64(f: f64) -> Val {
-        Val::take_ownership(unsafe { emlite_val_make_double(f) })
-    }
-
-    /// Creates a Val from str
-    #[allow(clippy::should_implement_trait)]
-    pub fn from_str(s: &str) -> Val {
-        Val::take_ownership(unsafe { emlite_val_make_str(s.as_ptr() as _, s.len()) })
-    }
-
-    /// Returns the raw js handle
-    #[inline(always)]
-    pub fn as_handle(&self) -> Handle {
-        self.inner
-    }
-
     /// Set the underlying js object property `prop` to `val`
     pub fn set<K: Into<Val>, V: Into<Val>>(&self, prop: K, val: V) {
         unsafe {
@@ -139,45 +100,12 @@ impl Val {
         Val::take_ownership(unsafe { emlite_val_get(self.as_handle(), idx.into().as_handle()) })
     }
 
-    /// Gets the underlying i32 value of a js object
-    pub fn as_i32(&self) -> i32 {
-        unsafe { emlite_val_get_value_int(self.as_handle()) as i32 }
-    }
-
-    /// Gets the underlying boolean value of a js object
-    pub fn as_bool(&self) -> bool {
-        self.as_handle() > 3
-    }
-
-    /// Gets the underlying f64 value of a js object
-    pub fn as_f64(&self) -> f64 {
-        unsafe { emlite_val_get_value_double(self.as_handle()) as _ }
-    }
-
-    /// Gets the underlying string value of a js object
-    pub fn as_string(&self) -> String {
-        unsafe {
-            let ptr = emlite_val_get_value_string(self.as_handle());
-            String::from_utf8_lossy(CStr::from_ptr(ptr).to_bytes()).to_string()
-        }
-    }
-
-    /// Converts the underlying js array to an Vec of i32
-    pub fn to_vec_i32(&self) -> Vec<i32> {
-        let len = self.get("length").as_i32();
-        let mut v: Vec<i32> = vec![];
+    /// Converts the underlying js array to a Vec of V
+    pub fn to_vec<V: FromVal>(&self) -> Vec<V> {
+        let len = self.get("length").as_::<usize>();
+        let mut v: Vec<V> = Vec::with_capacity(len);
         for i in 0..len {
-            v.push(self.at::<i32>(i as _).as_i32());
-        }
-        v
-    }
-
-    /// Converts the underlying js array to an Vec of f64
-    pub fn to_vec_f64(&self) -> Vec<f64> {
-        let len = self.get("length").as_i32();
-        let mut v: Vec<f64> = vec![];
-        for i in 0..len {
-            v.push(self.at::<f64>(i as _).as_f64());
+            v.push(self.at::<i32>(i as _).as_::<V>());
         }
         v
     }
@@ -230,19 +158,15 @@ impl Val {
     pub fn make_fn<F: FnMut(&[Val]) -> Val>(cb: F) -> Val {
         fn shim(args: Handle, data: Handle) -> Handle {
             let v = Val::take_ownership(args);
-            let sz = v.get("length").as_i32() as usize;
-            let mut vals: Vec<Val> = Vec::with_capacity(sz);
-            for i in 0..sz {
-                vals.push(v.at(i as i32));
-            }
+            let vals: Vec<Val> = v.to_vec();
             let func0 = Val::take_ownership(data);
-            let a = func0.as_i32() as usize as *mut Box<dyn FnMut(&[Val]) -> Val>;
+            let a = func0.as_::<i32>() as usize as *mut Box<dyn FnMut(&[Val]) -> Val>;
             let f: &mut (dyn FnMut(&[Val]) -> Val) = unsafe { &mut **a };
             std::mem::forget(func0);
             f(&vals).as_handle()
         }
         let a: *mut Box<dyn FnMut(&[Val]) -> Val> = Box::into_raw(Box::new(Box::new(cb)));
-        let data = Val::from_i32(a as Handle as _);
+        let data = Val::from(a as Handle as i32);
         unsafe {
             emlite_val_inc_ref(data.as_handle());
         }
@@ -293,13 +217,13 @@ impl Val {
 
 impl From<i32> for Val {
     fn from(v: i32) -> Self {
-        Val::from_i32(v)
+        Val::take_ownership(unsafe { emlite_val_make_int(v) })
     }
 }
 
 impl From<f64> for Val {
     fn from(v: f64) -> Self {
-        Val::from_f64(v)
+        Val::take_ownership(unsafe { emlite_val_make_double(v) })
     }
 }
 
@@ -310,14 +234,20 @@ impl From<()> for Val {
 }
 
 impl From<&str> for Val {
-    fn from(item: &str) -> Self {
-        Val::from_str(item)
+    fn from(s: &str) -> Self {
+        Val::take_ownership(unsafe { emlite_val_make_str(s.as_ptr() as _, s.len()) })
     }
 }
 
 impl From<String> for Val {
-    fn from(item: String) -> Self {
-        Val::from_str(&item)
+    fn from(s: String) -> Self {
+        Val::take_ownership(unsafe { emlite_val_make_str(s.as_ptr() as _, s.len()) })
+    }
+}
+
+impl From<&String> for Val {
+    fn from(s: &String) -> Self {
+        Val::take_ownership(unsafe { emlite_val_make_str(s.as_ptr() as _, s.len()) })
     }
 }
 
@@ -425,12 +355,43 @@ impl Not for Val {
 }
 
 pub trait FromVal: Sized {
+    /// Creates a Val object from another
     fn from_val(v: &Val) -> Self;
+    /// Takes the ownership of a handle
+    fn take_ownership(v: Handle) -> Self;
+    /// Returns the raw js handle
+    fn as_handle(&self) -> Handle;
+}
+
+impl FromVal for Val {
+    fn from_val(v: &Val) -> Self {
+        unsafe {
+            emlite_val_inc_ref(v.inner);
+        }
+        Val {
+            inner: v.as_handle(),
+        }
+    }
+    fn take_ownership(v: Handle) -> Self {
+        Val {
+            inner: v,
+        }
+    }
+    #[inline(always)]
+    fn as_handle(&self) -> Handle {
+        self.inner
+    }
 }
 
 impl FromVal for bool {
     fn from_val(v: &Val) -> Self {
         v.as_handle() > 3
+    }
+    fn take_ownership(v: Handle) -> Self {
+        Self::from_val(&Val::take_ownership(v))
+    }
+    fn as_handle(&self) -> Handle {
+        3
     }
 }
 
@@ -441,6 +402,12 @@ macro_rules! impl_int {
                 unsafe {
                     emlite_val_get_value_int(v.as_handle()) as Self
                 }
+            }
+            fn take_ownership(v: Handle) -> Self {
+                unsafe { emlite_val_get_value_int(v) as Self }
+            }
+            fn as_handle(&self) -> Handle {
+                0
             }
         }
     )*}
@@ -454,6 +421,12 @@ macro_rules! impl_float {
             fn from_val(v: &Val) -> Self {
                 unsafe { emlite_val_get_value_double(v.as_handle()) as Self }
             }
+            fn take_ownership(v: Handle) -> Self {
+                unsafe { emlite_val_get_value_double(v) as Self }
+            }
+            fn as_handle(&self) -> Handle {
+                0
+            }
         }
     )*}
 }
@@ -466,5 +439,14 @@ impl FromVal for String {
             let ptr = emlite_val_get_value_string(v.as_handle());
             CStr::from_ptr(ptr).to_string_lossy().into_owned()
         }
+    }
+    fn take_ownership(v: Handle) -> Self {
+        unsafe { 
+            let ptr = emlite_val_get_value_string(v);
+            CStr::from_ptr(ptr).to_string_lossy().into_owned()
+        }
+    }
+    fn as_handle(&self) -> Handle {
+        0
     }
 }

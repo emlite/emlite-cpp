@@ -15,7 +15,7 @@ fn main() {
                 console.log(&[ev[0].get("clientX")]);
                 println!(
                     "client x: {}",
-                    ev[0].get("clientX").as_i32()
+                    ev[0].get("clientX").as_::<i32>()
                 );
                 println!("hello from Rust");
                 Val::undefined()

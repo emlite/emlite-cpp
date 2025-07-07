@@ -10,11 +10,11 @@ emlite = "0.1"
 
 Then you can import and use the Val wrapper and its associated methods:
 ```rust
-use emlite::{Console, Val};
+use emlite::{argv, Console};
 
 fn main() {
     let con = Console::get();
-    con.log(&[Val::from("Hello from Emlite!")]);
+    con.log(&argv!["Hello from Emlite!"]);
 }
 ```
 
@@ -31,11 +31,15 @@ fn main() {
         &argv![
             "click",
             Val::make_fn(|ev| {
-                let console = Val::global("console");
+                let console = Console::get();
                 console.call("clear", &[]);
-                println!("client x: {}", Val::take_ownership(ev).get("clientX").as_i32());
+                console.log(&[ev[0].get("clientX")]);
+                println!(
+                    "client x: {}",
+                    ev[0].get("clientX").as_::<i32>()
+                );
                 println!("hello from Rust");
-                Val::undefined().as_handle()
+                Val::undefined()
             })
         ],
     );
@@ -49,7 +53,7 @@ use emlite::*;
 fn main() {
     #[allow(non_snake_case)]
     let mut AudioContext = Val::global("AudioContext");
-    if !AudioContext.as_bool() {
+    if !AudioContext.as_::<bool>() {
         println!("No global AudioContext, trying webkitAudioContext");
         AudioContext = Val::global("webkitAudioContext");
     }
@@ -59,14 +63,27 @@ fn main() {
     let oscillator = context.call("createOscillator", &[]);
 
     println!("Configuring oscillator");
-    oscillator.set("type", Val::from("triangle"));
-    oscillator.get("frequency").set("value", Val::from(261.63)); // Middle C
+    oscillator.set("type", "triangle");
+    oscillator.get("frequency").set::<_, f64>("value", 261.63); // Middle C
 
-    println!("Playing");
-    oscillator.call("connect", &argv![context.get("destination")]);
-    oscillator.call("start", &argv![0]);
-
-    println!("All done!");
+    let document = Val::global("document");
+    let elem = document.call("createElement", &argv!["BUTTON"]);
+    elem.set("textContent", "Click");
+    let body = document.call("getElementsByTagName", &argv!["body"]).at(0);
+    elem.call(
+        "addEventListener",
+        &argv![
+            "click",
+            Val::make_fn(move |_| {
+                println!("Playing");
+                oscillator.call("connect", &argv![context.get("destination")]);
+                oscillator.call("start", &argv![0]);
+                println!("All done!");
+                Val::undefined()
+            })
+        ],
+    );
+    body.call("appendChild", &argv![elem]);
 }
 ```
 
@@ -92,7 +109,7 @@ cargo build --target=wasm32-wasip1
 The most convenient way to pass extra flags to the toolchain is via a .cargo/config.toml file:
 ```toml
 [target.wasm32-wasip1]
-rustflags = ["-Clink-args=--no-entry --allow-undefined --export=main,--export=malloc,--export-if-defined=add,--export-table, --import-memory --export-memory --strip-all"]
+rustflags = ["-Clink-args=--no-entry --allow-undefined --export=main --export=malloc --export-if-defined=add --export-table --import-memory --export-memory --strip-all"]
 
 [profile.release]
 lto = true # to get smaller builds
@@ -113,7 +130,7 @@ rustup target add wasm32-unknown-unknown
 The most convenient way to pass extra flags to the toolchain is via a .cargo/config.toml file:
 ```toml
 [target.wasm32-unknown-unknown]
-rustflags = ["-Clink-args=--no-entry --allow-undefined --export=main,--export=malloc,--export-if-defined=add,--export-table, --import-memory --export-memory --strip-all"]
+rustflags = ["-Clink-args=--no-entry --allow-undefined --export=main --export=malloc --export-if-defined=add --export-table --import-memory --export-memory --strip-all"]
 
 [profile.release]
 lto = true # to get smaller builds
