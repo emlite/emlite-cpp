@@ -56,11 +56,6 @@ globalThis.EMLITE_VALMAP = HANDLE_MAP;
 const enc = new TextEncoder("utf-8");
 const dec = new TextDecoder("utf-8");
 
-const CB_STORE = new Map();
-let nextCbId = 0;
-globalThis.EMLITE_CB_STORE = CB_STORE;
-globalThis.emliteNextCbId = nextCbId;
-
 export class Emlite {
     /**
      * @param {Object} opts
@@ -235,14 +230,9 @@ export class Emlite {
             emlite_val_throw: n => { throw HANDLE_MAP.get(n); },
 
             emlite_val_make_callback: (fidx, data) => {
-                const id = nextCbId++;
-                CB_STORE.set(id, fidx);
-                const handle = HANDLE_MAP.add(data);
                 const jsFn = (...args) => {
                     const arrHandle = HANDLE_MAP.add(args.map(v => v));
-                    const ret = this.exports.__indirect_function_table.get(fidx)(arrHandle, HANDLE_MAP.get(handle));
-
-                    return ret;
+                    return this.exports.__indirect_function_table.get(fidx)(arrHandle, data);
                 };
                 return HANDLE_MAP.add(jsFn);
             },
