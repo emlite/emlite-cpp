@@ -58,6 +58,7 @@ HANDLE_MAP.add(undefined);
 HANDLE_MAP.add(false);
 HANDLE_MAP.add(true);
 HANDLE_MAP.add(globalThis);
+HANDLE_MAP.add(Symbol("_EMLITE_RESERVED_"));
 globalThis.EMLITE_VALMAP = HANDLE_MAP;
 
 const enc = new TextEncoder("utf-8");
@@ -238,7 +239,7 @@ export class Emlite {
                 return Object.prototype.hasOwnProperty.call(target, prop);
             },
             emlite_val_inc_ref: h => HANDLE_MAP.incRef(h),
-            emlite_val_dec_ref: h => { if (h > 4) HANDLE_MAP.decRef(h); },
+            emlite_val_dec_ref: h => { if (h > 5) HANDLE_MAP.decRef(h); },
             emlite_val_throw: n => { throw HANDLE_MAP.get(n); },
 
             emlite_val_make_callback: (fidx, data) => {
