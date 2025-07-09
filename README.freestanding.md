@@ -26,7 +26,7 @@ FetchContent_MakeAvailable(emlite)
 
 add_executable(main src/main.cpp)
 target_link_libraries(main PRIVATE emlite::emlite)
-set_target_properties(main PROPERTIES LINKER_LANGUAGE CXX SUFFIX .wasm LINK_FLAGS "-nostdlib -Wl,--no-entry,--allow-undefined,--export=main,--export=malloc,--export-if-defined=add,--export-table,,--import-memory,--export-memory,--strip-all")
+set_target_properties(main PROPERTIES LINKER_LANGUAGE CXX SUFFIX .wasm LINK_FLAGS "-nostdlib -Wl,--no-entry,--allow-undefined,--export-dynamic,--export-if-defined=main,--export-table,,--import-memory,--export-memory,--strip-all")
 ```
 
 It's advisable to use a cmake toolchain file since you're technically cross-compiling. A simple one as the following should do the job:
@@ -63,7 +63,7 @@ cmake -Bbin -GNinja -DCMAKE_TOOLCHAIN_FILE=freestanding.cmake
 If you would like not to use CMake, you will have to also compile src/dlmalloc.c manually with the same flags you use for your executable:
 
 ```
-clang++ --target=wasm32-unknown-unknown -Iinclude -o my.wasm examples/eval.cpp src/dlmalloc.c -nostdlib -Wl,--no-entry,--allow-undefined,--export=main,--export=malloc,--export-if-defined=add,--export-table,,--import-memory,--export-memory,--strip-all
+clang++ --target=wasm32-unknown-unknown -Iinclude -o my.wasm examples/eval.cpp src/dlmalloc.c -nostdlib -Wl,--no-entry,--allow-undefined,--export-dynamic,--export-if-defined=main,--export-table,,--import-memory,--export-memory,--strip-all
 ```
 
 Loading the resulting wasm doesn't require node's WASI nor a wasi shim for the browser:

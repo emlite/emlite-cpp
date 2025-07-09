@@ -1,11 +1,11 @@
 [target.wasm32-wasip1]
-rustflags = ["-Clink-args=--no-entry --allow-undefined --export=main --export=malloc --export-table --import-memory --export-memory --strip-all"]
+rustflags = ["-Clink-args=--no-entry --allow-undefined --export-dynamic --export-if-defined=main --export-table --import-memory --export-memory --strip-all"]
 
 [target.wasm32-unknown-unknown]
-rustflags = ["-Clink-args=--no-entry --allow-undefined --export=main --export=_start --export=malloc --export-table --import-memory --export-memory --strip-all"]
+rustflags = ["-Clink-args=--no-entry --allow-undefined --export-dynamic --export-if-defined=main --export-if-defined=_start --export-table --import-memory --export-memory --strip-all"]
 
 [target.wasm32-unknown-emscripten]
-rustflags = ["-Clink-args=-sERROR_ON_UNDEFINED_SYMBOLS=0 -sALLOW_MEMORY_GROWTH=1 -Wl,--whole-archive"]
+rustflags = ["-Clink-args=-sERROR_ON_UNDEFINED_SYMBOLS=0 -sALLOW_MEMORY_GROWTH=1"]
 
 [profile.release]
 lto = true

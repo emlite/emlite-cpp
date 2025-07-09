@@ -1,3 +1,10 @@
+// base-1000 encoding of major.minor.patch of the semver string
+// 0.1.23 => 1023
+// 1.0.23 => 1000023
+// 11.0.23 => 11000023
+// version = (major × 1 000 000) + (minor × 1 000) + patch
+const EMLITE_VERSION = 1023;
+
 class HandleTable {
     constructor() {
         this._h2e = new Map();
@@ -142,6 +149,11 @@ export class Emlite {
      * @param {WebAssembly.Exports} exports
      */
     setExports(exports) {
+        if (typeof exports.emlite_target === "undefined") {
+            console.warn("emlite_target is not defined, it's advisable to use an emlite version above 0.1.23.");
+        } else if (EMLITE_VERSION !== exports.emlite_target()) {
+            console.warn("Probably using an incompatible version of emlite, plowing through!");
+        }
         this.exports = exports;
     }
 
@@ -164,9 +176,9 @@ export class Emlite {
      */
     copyStringToWasm(str) {
         this._ensureViewsFresh();
-        if (typeof this.exports.malloc !== "undefined") {
+        if (typeof this.exports.emlite_malloc !== "undefined") {
             const utf8 = enc.encode(str + "\0");
-            const ptr = this.exports.malloc(utf8.length);
+            const ptr = this.exports.emlite_malloc(utf8.length);
             if (ptr === 0) throw new Error("malloc failed in copyStringToWasm");
             // new Uint8Array(this._memory.buffer).set(utf8, ptr);
             this._u8.set(utf8, ptr);

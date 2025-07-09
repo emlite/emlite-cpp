@@ -109,7 +109,7 @@ cargo build --target=wasm32-wasip1
 The most convenient way to pass extra flags to the toolchain is via a .cargo/config.toml file:
 ```toml
 [target.wasm32-wasip1]
-rustflags = ["-Clink-args=--no-entry --allow-undefined --export=main --export=malloc --export-if-defined=add --export-table --import-memory --export-memory --strip-all"]
+rustflags = ["-Clink-args=--no-entry --allow-undefined --export-dynamic --export-if-defined=main --export-table --import-memory --export-memory --strip-all"]
 
 [profile.release]
 lto = true # to get smaller builds
@@ -130,7 +130,7 @@ rustup target add wasm32-unknown-unknown
 The most convenient way to pass extra flags to the toolchain is via a .cargo/config.toml file:
 ```toml
 [target.wasm32-unknown-unknown]
-rustflags = ["-Clink-args=--no-entry --allow-undefined --export=main --export=malloc --export-if-defined=add --export-table --import-memory --export-memory --strip-all"]
+rustflags = ["-Clink-args=--no-entry --allow-undefined --export-dynamic --export-if-defined=main --export-if-defined=add --export-table --import-memory --export-memory --strip-all"]
 
 [profile.release]
 lto = true # to get smaller builds

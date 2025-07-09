@@ -1,5 +1,11 @@
 #![allow(unused)]
 
+#[unsafe(no_mangle)]
+#[unsafe(export_name = "emlite_target")]
+pub extern "C" fn emlite_target() -> i32 {
+    1023
+}
+
 use core::ffi::{c_char, c_double, c_int, c_void};
 pub type Handle = u32;
 

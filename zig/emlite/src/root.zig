@@ -1,6 +1,10 @@
 const std = @import("std");
 const meta = std.meta;
 
+pub export fn emlite_target() i32 {
+    return 1023;
+}
+
 pub const Handle = u32;
 
 extern "env" fn emlite_val_null() Handle;

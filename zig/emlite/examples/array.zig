@@ -10,6 +10,7 @@ pub fn main() !void {
     \\ console.log('{d}');
     \\
     , .{ 5 });
+    
 
     const console = em.Val.global("console");
     const msg     = em.Val.from("Hello from Zig wrapper!");

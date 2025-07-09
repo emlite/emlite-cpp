@@ -1,3 +1,7 @@
+int emlite_target(void) {
+    return 1023;
+}
+
 #if __has_include(<errno.h>)
 #include <errno.h>
 #else
@@ -26,6 +30,15 @@ void *memcpy(void *dest, const void *src, size_t n) {
 
 #if __has_include(<stdlib.h>)
 #include <stdlib.h>
+EMLITE_USED void *emlite_malloc(size_t sz) {
+    return malloc(sz);
+}
+EMLITE_USED void *emlite_realloc(void *ptr, size_t sz) {
+    return realloc(ptr, sz);
+}
+EMLITE_USED void emlite_free(void *ptr) {
+    free(ptr);
+}
 #else
 void abort(void) { __builtin_unreachable(); }
 

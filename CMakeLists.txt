@@ -56,9 +56,9 @@ install(EXPORT emliteTargets
 
 if (EMLITE_BUILD_EXAMPLES OR EMLITE_BUILD_TESTS)
     set(DEFAULT_LINK_FLAGS)
-    set(DEFAULT_LINK_FLAGS "-Wl,--no-entry,--allow-undefined,--export=main,--export=malloc,--export-if-defined=add,--export-table,--import-memory,--export-memory,--strip-all")
+    set(DEFAULT_LINK_FLAGS "-Wl,--no-entry,--allow-undefined,--export-dynamic,--export-if-defined=main,--export-table,--import-memory,--export-memory,--strip-all")
     if (EMSCRIPTEN)
-        set(DEFAULT_LINK_FLAGS "${DEFAULT_LINK_FLAGS},--export=_start -sERROR_ON_UNDEFINED_SYMBOLS=0 -sALLOW_MEMORY_GROWTH=1")
+        set(DEFAULT_LINK_FLAGS "${DEFAULT_LINK_FLAGS},--export-if-defined=_start -sERROR_ON_UNDEFINED_SYMBOLS=0 -sALLOW_MEMORY_GROWTH=1")
     endif()
     if (EMLITE_BUILD_EXAMPLES)
         add_executable(console examples/console.c)

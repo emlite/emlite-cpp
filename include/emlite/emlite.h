@@ -4,6 +4,26 @@
 extern "C" {
 #endif
 
+#ifndef EMLITE_USED
+#define EMLITE_USED __attribute__((used, visibility("default")))
+#endif
+
+#ifndef EMLITE_IMPORT
+#define EMLITE_IMPORT(NAME)                                \
+    __attribute__((                                        \
+        import_module("env"), import_name(#NAME)           \
+    ))
+#endif
+
+#ifndef EMLITE_EXPORT
+#define EMLITE_EXPORT(NAME)                                \
+    __attribute__((                                        \
+        export_name(#NAME)                                 \
+    ))
+#endif
+
+EMLITE_USED int emlite_target(void);
+
 // these are freestanding headers
 #include <stdarg.h>
 #include <stdbool.h>
@@ -14,13 +34,13 @@ int snprintf(char *out, size_t n, const char *fmt, ...);
 int vsnprintf(
     char *out, size_t n, const char *fmt, va_list ap
 );
+EMLITE_USED void *emlite_malloc(size_t);
+EMLITE_USED void *emlite_realloc(void *, size_t);
+EMLITE_USED void emlite_free(void *);
 
 #if __has_include(<stdlib.h>)
 #include <stdlib.h>
 #else
-void *emlite_malloc(size_t);
-void *emlite_realloc(void *, size_t);
-void emlite_free(void *);
 extern void *malloc(size_t);
 extern void *realloc(void *, size_t);
 extern void free(void *);
@@ -32,17 +52,6 @@ extern void free(void *);
 void *memset(void *dest, int ch, size_t count);
 void *memcpy(void *dest, const void *src, size_t n);
 size_t strlen(const char *);
-#endif
-
-#ifndef EMLITE_USED
-#define EMLITE_USED __attribute__((used))
-#endif
-
-#ifndef EMLITE_IMPORT
-#define EMLITE_IMPORT(NAME)                                \
-    __attribute__((                                        \
-        import_module("env"), import_name(#NAME)           \
-    ))
 #endif
 
 /// A javascript raw handle
