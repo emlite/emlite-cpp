@@ -189,4 +189,8 @@ bool Val::operator<=(const Val &other) const {
 }
 
 Console::Console() : Val(Val::global("console")) {}
+
+void Console::clear() const {
+    call("clear");
+}
 } // namespace emlite

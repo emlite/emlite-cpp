@@ -320,6 +320,7 @@ class Console : public Val {
         typename detail::enable_if_t<
             detail::is_base_of_v<Val, Args>>...>
     void info(Args &&...args) const;
+    void clear() const;
 };
 
 template <
