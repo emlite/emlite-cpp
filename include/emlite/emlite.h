@@ -5,7 +5,8 @@ extern "C" {
 #endif
 
 #ifndef EMLITE_USED
-#define EMLITE_USED __attribute__((used, visibility("default")))
+#define EMLITE_USED                                        \
+    __attribute__((used, visibility("default")))
 #endif
 
 #ifndef EMLITE_IMPORT
@@ -17,9 +18,7 @@ extern "C" {
 
 #ifndef EMLITE_EXPORT
 #define EMLITE_EXPORT(NAME)                                \
-    __attribute__((                                        \
-        export_name(#NAME)                                 \
-    ))
+    __attribute__((export_name(#NAME)))
 #endif
 
 EMLITE_USED int emlite_target(void);

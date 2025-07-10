@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stddef.h>
+
 template <typename T>
 struct remove_reference {
     using type = T;
@@ -148,15 +150,51 @@ inline constexpr bool is_base_of_v =
 template <class T>
 typename remove_reference<T>::type &&declval() noexcept;
 
-template <class T, class U>
-struct is_convertible {
-  private:
-    static char test(U);
-    static long test(...);
+template <class, class>
+struct is_convertible; 
 
-  public:
-    enum { value = sizeof(test(*(T *)0)) == 1 };
+namespace detail {
+template <class F, class T>
+static auto test(int
+) -> decltype(static_cast<T>(*static_cast<F *>(nullptr)), char{});
+
+template <class, class>
+static auto test(...) -> long;
+} // namespace detail
+
+template <class F, class T>
+struct is_convertible {
+    enum { value = sizeof(detail::test<F, T>(0)) == 1 };
 };
-template <class T, class U>
+
+template <class F>
+struct is_convertible<F, void> {
+    enum { value = 1 };
+};
+
+template <class T>
+struct is_convertible<void, T> {
+    enum { value = 0 };
+};
+
+template <>
+struct is_convertible<void, void> {
+    enum { value = 1 };
+};
+
+template <class F, class T>
 constexpr bool is_convertible_v =
-    is_convertible<T, U>::value;
+    is_convertible<F, T>::value;
+
+template <size_t... I>
+struct index_sequence {};
+template <size_t N, size_t... I>
+struct make_index_sequence_impl
+    : make_index_sequence_impl<N - 1, N - 1, I...> {};
+template <size_t... I>
+struct make_index_sequence_impl<0, I...> {
+    using type = index_sequence<I...>;
+};
+template <size_t N>
+using make_index_sequence =
+    typename make_index_sequence_impl<N>::type;

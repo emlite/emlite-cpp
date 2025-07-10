@@ -11,6 +11,25 @@ namespace detail {
 #include "func.hpp"
 #include "mem.hpp"
 #include "tiny_traits.hpp"
+
+template <
+    typename... Args,
+    size_t... I,
+    typename F,
+    typename P>
+constexpr decltype(auto)
+call_with_params_impl(F &&f, P &&p, index_sequence<I...>) {
+    return forward<F>(f)(p.vals[I].template as<Args>()...);
+}
+
+template <typename... Args, typename F, typename P>
+constexpr decltype(auto) call_with_params(F &&f, P &&p) {
+    return call_with_params_impl<Args...>(
+        forward<F>(f),
+        forward<P>(p),
+        make_index_sequence<sizeof...(Args)>{}
+    );
+}
 } // namespace detail
 
 using detail::Closure;
@@ -72,6 +91,25 @@ class Val {
         Callback f, const Val &data = Val::null()
     ) noexcept;
     static Val make_fn(Closure<Val(Params)> &&f) noexcept;
+    template <typename Ret, typename... Args, typename F>
+    static Val make_fn(F &&f) noexcept {
+        return make_fn([=](Params p) -> Val {
+            // maybe check length of p.len against
+            // sizeof...(Args)
+            if constexpr (!detail::is_same_v<void, Ret>)
+                return Val(
+                    detail::call_with_params<Args...>(
+                        (Closure<Ret(Args...)> &&)f, p
+                    )
+                );
+            else {
+                detail::call_with_params<Args...>(
+                    (Closure<Ret(Args...)> &&)f, p
+                );
+                return Val::undefined();
+            }
+        });
+    }
     /// Deletes a Val object
     /// @param v has its refcount decremented
     static void delete_(Val &&v) noexcept;
