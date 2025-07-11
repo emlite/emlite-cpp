@@ -28,6 +28,7 @@ typedef Handle (*Callback)(Handle);
 #define EM_JS(ret, name, params, ...)                      \
     _EM_JS(ret, name, name, params, #__VA_ARGS__)
 
+
 // clang-format off
 EM_JS(Handle, emlite_val_null_impl, (), { return 0; });
 
@@ -128,7 +129,7 @@ EM_JS(void, emlite_val_set_impl, (Handle n, Handle idx, Handle val), {
     EMLITE_VALMAP.get(n)[EMLITE_VALMAP.get(idx)] = EMLITE_VALMAP.get(val);
 });
 
-EM_JS(Handle, emlite_val_has_impl, (Handle n, Handle idx), {
+EM_JS(bool, emlite_val_has_impl, (Handle n, Handle idx), {
     return Reflect.has(EMLITE_VALMAP.get(n), EMLITE_VALMAP.get(idx));
 });
 
@@ -212,7 +213,7 @@ EM_JS(Handle, emlite_val_make_callback_impl, (Handle fidx, Handle data), {
     const jsFn = (... args) => {
         const arrHandle =
             EMLITE_VALMAP.add(args.map(v => v));
-        return wasmTable.get(fidx)(arrHandle, data);
+        return Module.wasmTable.get(fidx)(arrHandle, data);
     };
     return EMLITE_VALMAP.add(jsFn);
 });
@@ -335,7 +336,7 @@ void emlite_val_set(Handle n, Handle idx, Handle val) {
 }
 
 EMLITE_USED
-Handle emlite_val_has(Handle n, Handle idx) {
+bool emlite_val_has(Handle n, Handle idx) {
     return emlite_val_has_impl(n, idx);
 }
 
@@ -402,7 +403,7 @@ Handle emlite_val_obj_call(
 }
 
 EMLITE_USED
-Handle emlite_val_obj_has_own_prop(
+bool emlite_val_obj_has_own_prop(
     Handle obj, const char *prop, size_t len
 ) {
     return emlite_val_obj_has_own_prop_impl(obj, prop, len);

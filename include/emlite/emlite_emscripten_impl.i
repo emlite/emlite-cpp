@@ -114,7 +114,7 @@ EM_JS(void, emlite_val_set_impl, (Handle n, Handle idx, Handle val), {
     EMLITE_VALMAP.get(n)[EMLITE_VALMAP.get(idx)] = EMLITE_VALMAP.get(val);
 });
 
-EM_JS(Handle, emlite_val_has_impl, (Handle n, Handle idx), {
+EM_JS(bool, emlite_val_has_impl, (Handle n, Handle idx), {
     return Reflect.has(EMLITE_VALMAP.get(n), EMLITE_VALMAP.get(idx));
 });
 
@@ -321,7 +321,7 @@ void emlite_val_set(Handle n, Handle idx, Handle val) {
 }
 
 EMLITE_USED
-Handle emlite_val_has(Handle n, Handle idx) {
+bool emlite_val_has(Handle n, Handle idx) {
     return emlite_val_has_impl(n, idx);
 }
 
@@ -388,7 +388,7 @@ Handle emlite_val_obj_call(
 }
 
 EMLITE_USED
-Handle emlite_val_obj_has_own_prop(
+bool emlite_val_obj_has_own_prop(
     Handle obj, const char *prop, size_t len
 ) {
     return emlite_val_obj_has_own_prop_impl(obj, prop, len);
