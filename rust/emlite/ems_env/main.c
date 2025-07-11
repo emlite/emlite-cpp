@@ -108,10 +108,6 @@ EM_JS(int, emlite_val_get_value_int_impl, (Handle n), {
     return EMLITE_VALMAP.get(n);
 });
 
-int emlite_val_get_value_int (Handle n) {
-    return emlite_val_get_value_int_impl(n);
-}
-
 EM_JS(double, emlite_val_get_value_double_impl, (Handle n), {
     return EMLITE_VALMAP.get(n);
 });
@@ -311,6 +307,11 @@ Handle emlite_val_make_double(double t) {
 EMLITE_USED
 Handle emlite_val_make_str(const char *str, size_t len) {
     return emlite_val_make_str_impl(str, len);
+}
+
+EMLITE_USED
+int emlite_val_get_value_int (Handle n) {
+    return emlite_val_get_value_int_impl(n);
 }
 
 EMLITE_USED

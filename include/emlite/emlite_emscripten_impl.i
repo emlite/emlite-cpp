@@ -15,25 +15,25 @@
     _EM_JS(ret, name, name, params, #__VA_ARGS__)
 
 // clang-format off
-EM_JS(Handle, emlite_val_null, (), { return 0; });
+EM_JS(Handle, emlite_val_null_impl, (), { return 0; });
 
-EM_JS(Handle, emlite_val_undefined, (), { return 1; });
+EM_JS(Handle, emlite_val_undefined_impl, (), { return 1; });
 
-EM_JS(Handle, emlite_val_false, (), { return 2; });
+EM_JS(Handle, emlite_val_false_impl, (), { return 2; });
 
-EM_JS(Handle, emlite_val_true, (), { return 3; });
+EM_JS(Handle, emlite_val_true_impl, (), { return 3; });
 
-EM_JS(Handle, emlite_val_global_this, (), { return 4; });
+EM_JS(Handle, emlite_val_global_this_impl, (), { return 4; });
 
-EM_JS(Handle, emlite_val_new_array, (), {
+EM_JS(Handle, emlite_val_new_array_impl, (), {
     return EMLITE_VALMAP.add([]);
 });
 
-EM_JS(Handle, emlite_val_new_object, (), {
+EM_JS(Handle, emlite_val_new_object_impl, (), {
     return EMLITE_VALMAP.add({});
 });
 
-EM_JS(char *, emlite_val_typeof, (Handle n), {
+EM_JS(char *, emlite_val_typeof_impl, (Handle n), {
     const str = (typeof EMLITE_VALMAP.get(n)) + "\0";
     const len = Module.lengthBytesUTF8(str);
     const buf = _malloc(len);
@@ -43,7 +43,7 @@ EM_JS(char *, emlite_val_typeof, (Handle n), {
 
 EM_JS(
     Handle,
-    emlite_val_construct_new,
+    emlite_val_construct_new_impl,
     (Handle objRef, Handle argv),
     {
         const target = EMLITE_VALMAP.get(objRef);
@@ -58,7 +58,7 @@ EM_JS(
 
 EM_JS(
     Handle,
-    emlite_val_func_call,
+    emlite_val_func_call_impl,
     (Handle func, Handle argv),
     {
         const target = EMLITE_VALMAP.get(func);
@@ -71,34 +71,34 @@ EM_JS(
     }
 );
 
-EM_JS(void, emlite_val_push, (Handle arr, Handle v), {
+EM_JS(void, emlite_val_push_impl, (Handle arr, Handle v), {
     EMLITE_VALMAP.get(arr).push(v);
 });
 
-EM_JS(Handle, emlite_val_make_int, (int t), {
+EM_JS(Handle, emlite_val_make_int_impl, (int t), {
     return EMLITE_VALMAP.add(t | 0);
 });
 
-EM_JS(Handle, emlite_val_make_double, (double t), {
+EM_JS(Handle, emlite_val_make_double_impl, (double t), {
     return EMLITE_VALMAP.add(t);
 });
 
 EM_JS(
     Handle,
-    emlite_val_make_str,
+    emlite_val_make_str_impl,
     (const char *str, size_t len),
     { return EMLITE_VALMAP.add(UTF8ToString(str, len)); }
 );
 
-EM_JS(int, emlite_val_get_value_int, (Handle n), {
+EM_JS(int, emlite_val_get_value_int_impl, (Handle n), {
     return EMLITE_VALMAP.get(n);
 });
 
-EM_JS(double, emlite_val_get_value_double, (Handle n), {
+EM_JS(double, emlite_val_get_value_double_impl, (Handle n), {
     return EMLITE_VALMAP.get(n);
 });
 
-EM_JS(char *, emlite_val_get_value_string, (Handle n), {
+EM_JS(char *, emlite_val_get_value_string_impl, (Handle n), {
     const str = EMLITE_VALMAP.get(n) + "\0";
     const len = Module.lengthBytesUTF8(str);
     const buf = _malloc(len);
@@ -106,67 +106,68 @@ EM_JS(char *, emlite_val_get_value_string, (Handle n), {
     return buf;
 });
 
-EM_JS(Handle, emlite_val_get, (Handle n, Handle idx), {
+EM_JS(Handle, emlite_val_get_impl, (Handle n, Handle idx), {
     return EMLITE_VALMAP.add(EMLITE_VALMAP.get(n)[EMLITE_VALMAP.get(idx)]);
 });
 
-EM_JS(void, emlite_val_set, (Handle n, Handle idx, Handle val), {
+EM_JS(void, emlite_val_set_impl, (Handle n, Handle idx, Handle val), {
     EMLITE_VALMAP.get(n)[EMLITE_VALMAP.get(idx)] = EMLITE_VALMAP.get(val);
 });
 
-EM_JS(bool, emlite_val_has, (Handle n, Handle idx), {
+EM_JS(Handle, emlite_val_has_impl, (Handle n, Handle idx), {
     return Reflect.has(EMLITE_VALMAP.get(n), EMLITE_VALMAP.get(idx));
 });
 
-EM_JS(bool, emlite_val_is_string, (Handle h), {
+EM_JS(bool, emlite_val_is_string_impl, (Handle h), {
     const obj            = EMLITE_VALMAP.get(h);
     return typeof obj === "string" || obj instanceof
         String;
 });
 
-EM_JS(bool, emlite_val_is_number, (Handle arg), {
+EM_JS(bool, emlite_val_is_number_impl, (Handle arg), {
     return typeof EMLITE_VALMAP.get(arg) === "number";
 });
-EM_JS(bool, emlite_val_not, (Handle h), {
+
+EM_JS(bool, emlite_val_not_impl, (Handle h), {
     return !EMLITE_VALMAP.get(h);
 });
 
-EM_JS(bool, emlite_val_gt, (Handle a, Handle b), {
+EM_JS(bool, emlite_val_gt_impl, (Handle a, Handle b), {
     return EMLITE_VALMAP.get(a) > EMLITE_VALMAP.get(b);
 });
 
-EM_JS(bool, emlite_val_gte, (Handle a, Handle b), {
+EM_JS(bool, emlite_val_gte_impl, (Handle a, Handle b), {
     return EMLITE_VALMAP.get(a) >= EMLITE_VALMAP.get(b);
 });
 
-EM_JS(bool, emlite_val_lt, (Handle a, Handle b), {
+EM_JS(bool, emlite_val_lt_impl, (Handle a, Handle b), {
     return EMLITE_VALMAP.get(a) < EMLITE_VALMAP.get(b);
 });
 
-EM_JS(bool, emlite_val_lte, (Handle a, Handle b), {
+EM_JS(bool, emlite_val_lte_impl, (Handle a, Handle b), {
     return EMLITE_VALMAP.get(a) <= EMLITE_VALMAP.get(b);
 });
 
-EM_JS(bool, emlite_val_equals, (Handle a, Handle b), {
+EM_JS(bool, emlite_val_equals_impl, (Handle a, Handle b), {
     return EMLITE_VALMAP.get(a) == EMLITE_VALMAP.get(b);
 });
 
 EM_JS(
     bool,
-    emlite_val_strictly_equals,
+    emlite_val_strictly_equals_impl,
     (Handle a, Handle b),
     { return EMLITE_VALMAP.get(a) === EMLITE_VALMAP.get(b); }
 );
 
-EM_JS(bool, emlite_val_instanceof, (Handle a, Handle b), {
+EM_JS(bool, emlite_val_instanceof_impl, (Handle a, Handle b), {
     return EMLITE_VALMAP.get(a) instanceof EMLITE_VALMAP.get(b);
 });
 
-EM_JS(void, emlite_val_throw, (Handle arg), { throw arg; });
+EM_JS(void, emlite_val_throw_impl, (Handle arg), { throw arg; });
 
 EM_JS(
     Handle,
-    emlite_val_obj_call,
+    emlite_val_obj_call_impl,
     (Handle obj, const char *name, size_t len, Handle argv),
     {
         const target = EMLITE_VALMAP.get(obj);
@@ -182,7 +183,7 @@ EM_JS(
 
 EM_JS(
     bool,
-    emlite_val_obj_has_own_prop,
+    emlite_val_obj_has_own_prop_impl,
     (Handle obj, const char *prop, size_t len),
     {
         const target = EMLITE_VALMAP.get(obj);
@@ -193,7 +194,7 @@ EM_JS(
     }
 );
 
-EM_JS(Handle, emlite_val_make_callback, (Handle fidx, Handle data), {
+EM_JS(Handle, emlite_val_make_callback_impl, (Handle fidx, Handle data), {
     const jsFn = (... args) => {
         const arrHandle =
             EMLITE_VALMAP.add(args.map(v => v));
@@ -202,11 +203,11 @@ EM_JS(Handle, emlite_val_make_callback, (Handle fidx, Handle data), {
     return EMLITE_VALMAP.add(jsFn);
 });
 
-EM_JS(void, emlite_print_object_map, (), {
+EM_JS(void, emlite_print_object_map_impl, (), {
     console.log(EMLITE_VALMAP);
 });
 
-EM_JS(void, emlite_reset_object_map, (), {
+EM_JS(void, emlite_reset_object_map_impl, (), {
     for (const h of[... EMLITE_VALMAP._h2e.keys()]) {
         if (h > 4) {
             const value = EMLITE_VALMAP._h2e.get(h).value;
@@ -217,11 +218,203 @@ EM_JS(void, emlite_reset_object_map, (), {
     }
 });
 
-EM_JS(void, emlite_val_inc_ref, (Handle h), {
+EM_JS(void, emlite_val_inc_ref_impl, (Handle h), {
     EMLITE_VALMAP.incRef(h);
 });
 
-EM_JS(void, emlite_val_dec_ref, (Handle h), {
+EM_JS(void, emlite_val_dec_ref_impl, (Handle h), {
     if (h > 4) EMLITE_VALMAP.decRef(h);
 });
 // clang-format on
+
+EMLITE_USED
+Handle emlite_val_null() { return emlite_val_null_impl(); }
+
+EMLITE_USED
+Handle emlite_val_undefined() {
+    return emlite_val_undefined_impl();
+}
+
+EMLITE_USED
+Handle emlite_val_false() {
+    return emlite_val_false_impl();
+}
+
+EMLITE_USED
+Handle emlite_val_true() { return emlite_val_true_impl(); }
+
+EMLITE_USED
+Handle emlite_val_global_this() {
+    return emlite_val_global_this_impl();
+}
+
+EMLITE_USED
+Handle emlite_val_new_array() {
+    return emlite_val_new_array_impl();
+}
+
+EMLITE_USED
+Handle emlite_val_new_object() {
+    return emlite_val_new_object_impl();
+}
+
+EMLITE_USED
+char *emlite_val_typeof(Handle n) {
+    return emlite_val_typeof_impl(n);
+}
+
+EMLITE_USED
+Handle emlite_val_construct_new(
+    Handle objRef, Handle argv
+) {
+    return emlite_val_construct_new_impl(objRef, argv);
+}
+
+EMLITE_USED
+Handle emlite_val_func_call(Handle func, Handle argv) {
+    return emlite_val_func_call_impl(func, argv);
+}
+
+EMLITE_USED
+void emlite_val_push(Handle arr, Handle v) {
+    emlite_val_push_impl(arr, v);
+}
+
+EMLITE_USED
+Handle emlite_val_make_int(int t) {
+    return emlite_val_make_int_impl(t);
+}
+
+EMLITE_USED
+Handle emlite_val_make_double(double t) {
+    return emlite_val_make_double_impl(t);
+}
+
+EMLITE_USED
+Handle emlite_val_make_str(const char *str, size_t len) {
+    return emlite_val_make_str_impl(str, len);
+}
+
+EMLITE_USED
+int emlite_val_get_value_int (Handle n) {
+    return emlite_val_get_value_int_impl(n);
+}
+
+EMLITE_USED
+double emlite_val_get_value_double(Handle n) {
+    return emlite_val_get_value_double_impl(n);
+}
+
+EMLITE_USED
+char *emlite_val_get_value_string(Handle n) {
+    return emlite_val_get_value_string_impl(n);
+}
+
+EMLITE_USED
+Handle emlite_val_get(Handle n, Handle idx) {
+    return emlite_val_get_impl(n, idx);
+}
+
+EMLITE_USED
+void emlite_val_set(Handle n, Handle idx, Handle val) {
+    return emlite_val_set_impl(n, idx, val);
+}
+
+EMLITE_USED
+Handle emlite_val_has(Handle n, Handle idx) {
+    return emlite_val_has_impl(n, idx);
+}
+
+EMLITE_USED
+bool emlite_val_is_string(Handle h) {
+    return emlite_val_is_string_impl(h);
+}
+
+EMLITE_USED
+bool emlite_val_is_number(Handle h) {
+    return emlite_val_is_number_impl(h);
+}
+
+EMLITE_USED
+bool emlite_val_not(Handle h) {
+    return emlite_val_not_impl(h);
+}
+
+EMLITE_USED
+bool emlite_val_gt(Handle a, Handle b) {
+    return emlite_val_gt_impl(a, b);
+}
+
+EMLITE_USED
+bool emlite_val_gte(Handle a, Handle b) {
+    return emlite_val_gte_impl(a, b);
+}
+
+EMLITE_USED
+bool emlite_val_lt(Handle a, Handle b) {
+    return emlite_val_lt_impl(a, b);
+}
+
+EMLITE_USED
+bool emlite_val_lte(Handle a, Handle b) {
+    return emlite_val_lte_impl(a, b);
+}
+
+EMLITE_USED
+bool emlite_val_equals(Handle a, Handle b) {
+    return emlite_val_equals_impl(a, b);
+}
+
+EMLITE_USED
+bool emlite_val_strictly_equals(Handle a, Handle b) {
+    return emlite_val_strictly_equals_impl(a, b);
+}
+
+EMLITE_USED
+bool emlite_val_instanceof(Handle a, Handle b) {
+    return emlite_val_instanceof_impl(a, b);
+}
+
+EMLITE_USED
+void emlite_val_throw(Handle arg) {
+    emlite_val_throw_impl(arg);
+}
+
+EMLITE_USED
+Handle emlite_val_obj_call(
+    Handle obj, const char *name, size_t len, Handle argv
+) {
+    return emlite_val_obj_call_impl(obj, name, len, argv);
+}
+
+EMLITE_USED
+Handle emlite_val_obj_has_own_prop(
+    Handle obj, const char *prop, size_t len
+) {
+    return emlite_val_obj_has_own_prop_impl(obj, prop, len);
+}
+
+EMLITE_USED
+Handle emlite_val_make_callback(Handle fidx, Handle data) {
+    return emlite_val_make_callback_impl(fidx, data);
+}
+
+EMLITE_USED
+void emlite_print_object_map() {
+    emlite_print_object_map_impl();
+}
+
+EMLITE_USED
+void emlite_reset_object_map() {
+    emlite_reset_object_map_impl();
+}
+
+EMLITE_USED
+void emlite_val_inc_ref(Handle h) {
+    emlite_val_inc_ref_impl(h);
+}
+
+EMLITE_USED
+void emlite_val_dec_ref(Handle h) {
+    emlite_val_dec_ref_impl(h);
+}
