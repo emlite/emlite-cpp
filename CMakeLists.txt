@@ -4,6 +4,7 @@ project(emlite VERSION 0.1.0 LANGUAGES C CXX)
 option(EMLITE_BUILD_EXAMPLES "Build examples" OFF)
 option(EMLITE_BUILD_TESTS "Build tests" OFF)
 option(EMLITE_USE_DLMALLOC "Use dlmalloc for freestanding environments" OFF)
+option(EMLITE_USE_EMSCRIPTEN_JS_GLUE "Use emscripten's default js output" OFF)
 
 add_library(emlite INTERFACE)
 
@@ -39,6 +40,10 @@ if (EMLITE_USE_DLMALLOC)
     target_compile_definitions(emlite INTERFACE HAVE_DLMALLOC)
     target_link_libraries(emlite INTERFACE dlmalloc)
     set(DLMALLOC_LIB dlmalloc)
+endif()
+
+if(EMLITE_USE_EMSCRIPTEN_JS_GLUE)
+    target_compile_definitions(emlite INTERFACE EMLITE_USE_EMSCRIPTEN_JS_GLUE)
 endif()
 
 add_library(emlite::emlite ALIAS emlite)
