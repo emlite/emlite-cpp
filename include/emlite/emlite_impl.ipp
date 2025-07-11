@@ -58,18 +58,18 @@ Val Val::take_ownership(Handle h) noexcept {
 }
 
 Val Val::global(const char *v) noexcept {
-    return Val::take_ownership(emlite_val_global_this())
+    return Val::take_ownership(EMLITE_GLOBALTHIS)
         .get(v);
 }
 
 Val Val::global() noexcept {
-    return Val::take_ownership(emlite_val_global_this());
+    return Val::take_ownership(EMLITE_GLOBALTHIS);
 }
 
-Val Val::null() noexcept { return Val::take_ownership(0); }
+Val Val::null() noexcept { return Val::take_ownership(EMLITE_NULL); }
 
 Val Val::undefined() noexcept {
-    return Val::take_ownership(1);
+    return Val::take_ownership(EMLITE_UNDEFINED);
 }
 
 Val Val::object() noexcept {
@@ -188,7 +188,7 @@ bool Val::operator<=(const Val &other) const {
     return emlite_val_lte(v_, other.v_);
 }
 
-Console::Console() : Val(Val::global("console")) {}
+Console::Console() : Val(Val::take_ownership(EMLITE_CONSOLE)) {}
 
 void Console::clear() const {
     call("clear");

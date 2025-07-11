@@ -59,16 +59,16 @@ typedef uint32_t Handle;
 /// Represents a javascript object
 typedef Handle (*Callback)(Handle, Handle data);
 
-/// @returns a null handle
-extern Handle emlite_val_null(void);
-/// @returns a js undefined handle
-extern Handle emlite_val_undefined(void);
-/// @returns a false value handle
-extern Handle emlite_val_false(void);
-/// @returns a true value handle
-extern Handle emlite_val_true(void);
-/// @returns a the globalThis handle
-extern Handle emlite_val_global_this(void);
+enum EMLITE_PREDEFINED_HANDLES {
+    EMLITE_NULL = 0,
+    EMLITE_UNDEFINED,
+    EMLITE_FALSE,
+    EMLITE_TRUE,
+    EMLITE_GLOBALTHIS,
+    EMLITE_CONSOLE,
+    EMLITE_RESERVED,
+};
+
 /// @returns a new array handle
 extern Handle emlite_val_new_array(void);
 /// @returns a new js Object

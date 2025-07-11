@@ -2,16 +2,21 @@ const std = @import("std");
 const meta = std.meta;
 
 pub export fn emlite_target() i32 {
-    return 1023;
+    return 1024;
 }
 
 pub const Handle = u32;
 
-extern "env" fn emlite_val_null() Handle;
-extern "env" fn emlite_val_undefined() Handle;
-extern "env" fn emlite_val_false() Handle;
-extern "env" fn emlite_val_true() Handle;
-extern "env" fn emlite_val_global_this() Handle;
+const EmlitePrefHandles = enum(i32) {
+    Null = 0,
+    Undefined,
+    False,
+    True,
+    GlobalThis,
+    Console,
+    Reserved,
+};
+
 extern "env" fn emlite_val_new_array() Handle;
 extern "env" fn emlite_val_new_object() Handle;
 extern "env" fn emlite_val_typeof(val: Handle) [*:0] u8;
@@ -49,9 +54,9 @@ pub const Val = struct {
 
     pub fn fromHandle(h: Handle) Val { return .{ .handle = h }; }
 
-    pub fn nil() Val       { return fromHandle(emlite_val_null()); }
-    pub fn undefined_() Val  { return fromHandle(emlite_val_undefined()); }
-    pub fn globalThis() Val { return fromHandle(emlite_val_global_this()); }
+    pub fn nil() Val       { return fromHandle(@intFromEnum(EmlitePrefHandles.Null)); }
+    pub fn undefined_() Val  { return fromHandle(@intFromEnum(EmlitePrefHandles.Undefined)); }
+    pub fn globalThis() Val { return fromHandle(@intFromEnum(EmlitePrefHandles.GlobalThis)); }
     pub fn object() Val     { return fromHandle(emlite_val_new_object()); }
     pub fn array() Val      { return fromHandle(emlite_val_new_array()); }
 
@@ -121,7 +126,7 @@ pub const Val = struct {
     }
     pub fn asInt(self: Val) i32  { return @as(i32, emlite_val_get_value_int(self.handle)); }
     pub fn asF64(self: Val) f64  { return emlite_val_get_value_double(self.handle); }
-    pub fn asBool(self: Val) bool { return self.handle > 3; }
+    pub fn asBool(self: Val) bool { return self.handle > @intFromEnum(EmlitePrefHandles.False); }
     pub fn asOwnedString(self: Val) [*:0] u8 {
         return emlite_val_get_value_string(self.handle);
     }

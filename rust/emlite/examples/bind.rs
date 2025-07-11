@@ -1,4 +1,4 @@
-use emlite::{*, env::Handle};
+use emlite::{env::Handle, *};
 use std::ops::{Deref, DerefMut};
 
 struct MyJsClass {
@@ -7,7 +7,8 @@ struct MyJsClass {
 
 impl MyJsClass {
     fn define() {
-        eval!(r#"
+        eval!(
+            r#"
             class MyJsClass {
                 constructor(x, y) {
                     this.x = x;
@@ -15,11 +16,12 @@ impl MyJsClass {
                 }
                 print() { console.log(this.x, this.y); }
             } globalThis["MyJsClass"] = MyJsClass;
-        "#);
+        "#
+        );
     }
     fn new(x: i32, y: i32) -> Self {
         Self {
-            val: Val::global("MyJsClass").new(&argv![x, y])
+            val: Val::global("MyJsClass").new(&argv![x, y]),
         }
     }
     fn print(&self) {
@@ -27,11 +29,9 @@ impl MyJsClass {
     }
 }
 
-impl FromVal for MyJsClass  {
+impl FromVal for MyJsClass {
     fn from_val(v: &Val) -> Self {
-        MyJsClass {
-            val: v.clone(),
-        }
+        MyJsClass { val: v.clone() }
     }
     fn take_ownership(v: Handle) -> Self {
         Self::from_val(&Val::take_ownership(v))
@@ -65,11 +65,13 @@ fn main() {
     MyJsClass::define();
     let c = MyJsClass::new(5, 6);
     c.call("print", &[]);
-    let b = eval!(r#"
+    let b = eval!(
+        r#"
         let b = new MyJsClass(6, 7);
         b.print();
         b
-    "#);
+    "#
+    );
     let a = b.as_::<MyJsClass>();
     a.print();
     let console = Console::get();

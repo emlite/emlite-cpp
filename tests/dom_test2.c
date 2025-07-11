@@ -14,7 +14,7 @@ em_Val console_log(char *s) {
 
 Handle btn_click_cb(Handle h, Handle data) {
     console_log("Clicked");
-    return emlite_val_undefined();
+    return EMLITE_UNDEFINED;
 }
 
 EMLITE_USED int add(int a, int b) {

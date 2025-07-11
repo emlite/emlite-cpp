@@ -167,7 +167,7 @@ async function main() {
     // if your C/C++ has a main function, use: `wasi.start(inst)`. If not, use `wasi.initialize(inst)`.
     wasi.start(inst);
     // test our exported function `add` in tests/dom_test1.cpp works
-    window.alert(inst.exports.add(1, 2));
+    window.alert(inst.exports.add?.(1, 2));
 }
 
 await main();
@@ -249,6 +249,12 @@ await main();
 
 #### Targeting emscripten
 emlite-rs supports emscripten's default mode when it outputs js glue code. This will require building for the wasm32-unknown-emscripten target.
+The most convenient way to pass extra flags to the toolchain is via a .cargo/config.toml file:
+```toml
+[target.wasm32-unknown-emscripten]
+rustflags = ["-Clink-args=-sERROR_ON_UNDEFINED_SYMBOLS=0 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS=wasmTable -Wl,--strip-all"]
+```
+
 You just need to load the emscripten code after emlite:
 ```html
 <!DOCTYPE html>
@@ -264,6 +270,28 @@ You just need to load the emscripten code after emlite:
         const emlite = new Emlite();
     </script>
     <script async src="./bin/mywasms.js"></script>
+</body>
+</html>
+```
+
+If you pass the `-sMODULARIZE=1 -sEXPORT_ES6=1` flags to emscripten, you will have to initialize your module accordingly:
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script type="module">
+        import { Emlite } from "./src/emlite.js";
+        import initModule from "./bin/mywasm.js";
+        window.onload = async () => {
+            const emlite = new Emlite();
+            const mymain = await initModule();
+        };
+    </script>
 </body>
 </html>
 ```

@@ -3,19 +3,13 @@
 #[unsafe(no_mangle)]
 #[unsafe(export_name = "emlite_target")]
 pub extern "C" fn emlite_target() -> i32 {
-    1023
+    1024
 }
 
 use core::ffi::{c_char, c_double, c_int, c_void};
 pub type Handle = u32;
 
 unsafe extern "C" {
-    pub fn emlite_val_null() -> Handle;
-    pub fn emlite_val_undefined() -> Handle;
-    pub fn emlite_val_false() -> Handle;
-    pub fn emlite_val_true() -> Handle;
-    pub fn emlite_val_global_this() -> Handle;
-
     pub fn emlite_val_new_array() -> Handle;
     pub fn emlite_val_new_object() -> Handle;
 

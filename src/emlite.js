@@ -3,7 +3,7 @@
 // 1.0.23 => 1000023
 // 11.0.23 => 11000023
 // version = (major × 1 000 000) + (minor × 1 000) + patch
-const EMLITE_VERSION = 1023;
+const EMLITE_VERSION = 1024;
 
 class HandleTable {
     constructor() {
@@ -58,6 +58,7 @@ HANDLE_MAP.add(undefined);
 HANDLE_MAP.add(false);
 HANDLE_MAP.add(true);
 HANDLE_MAP.add(globalThis);
+HANDLE_MAP.add(console);
 HANDLE_MAP.add(Symbol("_EMLITE_RESERVED_"));
 globalThis.EMLITE_VALMAP = HANDLE_MAP;
 
@@ -192,12 +193,6 @@ export class Emlite {
     /** Returns the env required for wasm instantiation. @returns {Object} env object */
     get env() {
         const core = {
-            emlite_val_null: () => 0,
-            emlite_val_undefined: () => 1,
-            emlite_val_false: () => 2,
-            emlite_val_true: () => 3,
-            emlite_val_global_this: () => 4,
-
             __cxa_allocate_exception: () => { },
             __cxa_free_exception: () => { },
             __cxa_throw: () => { },
@@ -239,7 +234,7 @@ export class Emlite {
                 return Object.prototype.hasOwnProperty.call(target, prop);
             },
             emlite_val_inc_ref: h => HANDLE_MAP.incRef(h),
-            emlite_val_dec_ref: h => { if (h > 5) HANDLE_MAP.decRef(h); },
+            emlite_val_dec_ref: h => { if (h > 6) HANDLE_MAP.decRef(h); },
             emlite_val_throw: n => { throw HANDLE_MAP.get(n); },
 
             emlite_val_make_callback: (fidx, data) => {

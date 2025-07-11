@@ -1,5 +1,6 @@
+#include "emlite.h"
 int emlite_target(void) {
-    return 1023;
+    return 1024;
 }
 
 #if __has_include(<errno.h>)
@@ -279,19 +280,18 @@ em_Val em_Val_from_handle(Handle v) {
 }
 
 em_Val em_Val_global(const char *name) {
-    Handle global = emlite_val_global_this();
     return em_Val_from_handle(
-        emlite_val_get(global, em_Val_from_string(name).h)
+        emlite_val_get(EMLITE_GLOBALTHIS, em_Val_from_string(name).h)
     );
 }
 
 em_Val em_Val_global_this() {
-    return em_Val_from_handle(emlite_val_global_this());
+    return em_Val_from_handle(EMLITE_GLOBALTHIS);
 }
 
-em_Val em_Val_null() { return em_Val_from_handle(0); }
+em_Val em_Val_null() { return em_Val_from_handle(EMLITE_NULL); }
 
-em_Val em_Val_undefined() { return em_Val_from_handle(1); }
+em_Val em_Val_undefined() { return em_Val_from_handle(EMLITE_UNDEFINED); }
 
 em_Val em_Val_object() {
     return em_Val_from_handle(emlite_val_new_object());
@@ -402,7 +402,7 @@ int em_Val_as_int(em_Val self) {
     return emlite_val_get_value_int(self.h);
 }
 
-bool em_Val_as_bool(em_Val self) { return self.h > 3; }
+bool em_Val_as_bool(em_Val self) { return self.h > EMLITE_FALSE; }
 
 double em_Val_as_double(em_Val self) {
     return emlite_val_get_value_double(self.h);

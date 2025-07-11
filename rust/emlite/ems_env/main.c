@@ -30,16 +30,6 @@ typedef Handle (*Callback)(Handle);
 
 
 // clang-format off
-EM_JS(Handle, emlite_val_null_impl, (), { return 0; });
-
-EM_JS(Handle, emlite_val_undefined_impl, (), { return 1; });
-
-EM_JS(Handle, emlite_val_false_impl, (), { return 2; });
-
-EM_JS(Handle, emlite_val_true_impl, (), { return 3; });
-
-EM_JS(Handle, emlite_val_global_this_impl, (), { return 4; });
-
 EM_JS(Handle, emlite_val_new_array_impl, (), {
     return EMLITE_VALMAP.add([]);
 });
@@ -241,28 +231,6 @@ EM_JS(void, emlite_val_dec_ref_impl, (Handle h), {
     if (h > 4) EMLITE_VALMAP.decRef(h);
 });
 // clang-format on
-
-EMLITE_USED
-Handle emlite_val_null() { return emlite_val_null_impl(); }
-
-EMLITE_USED
-Handle emlite_val_undefined() {
-    return emlite_val_undefined_impl();
-}
-
-EMLITE_USED
-Handle emlite_val_false() {
-    return emlite_val_false_impl();
-}
-
-EMLITE_USED
-Handle emlite_val_true() { return emlite_val_true_impl(); }
-
-EMLITE_USED
-Handle emlite_val_global_this() {
-    return emlite_val_global_this_impl();
-}
-
 EMLITE_USED
 Handle emlite_val_new_array() {
     return emlite_val_new_array_impl();

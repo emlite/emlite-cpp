@@ -80,7 +80,7 @@ async function main() {
         env: emlite.env,
     });
     emlite.setExports(instance.exports);
-    instance.exports.main();
+    instance.exports.main?.();
     // if you have another exported function marked with EMLITE_USED, you can get it in the instance exports
 }
 

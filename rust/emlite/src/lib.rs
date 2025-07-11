@@ -2,6 +2,17 @@ pub mod env;
 use crate::env::*;
 use std::ffi::CStr;
 
+#[repr(u32)]
+pub enum EmlitePredefHandles {
+    Null = 0,
+    Undefined,
+    False,
+    True,
+    GlobalThis,
+    Console,
+    Reserved,
+}
+
 /// Runs JS eval
 #[macro_export]
 macro_rules! eval {
@@ -32,7 +43,7 @@ pub struct Val {
 impl Val {
     /// Returns the globalThis object
     pub fn global_this() -> Val {
-        Val::take_ownership(unsafe { emlite_val_global_this() })
+        Val::take_ownership(EmlitePredefHandles::GlobalThis as _)
     }
 
     /// Gets the property `prop`
@@ -48,12 +59,12 @@ impl Val {
 
     /// Gets a js null Val
     pub fn null() -> Val {
-        Val::take_ownership(unsafe { emlite_val_null() })
+        Val::take_ownership(EmlitePredefHandles::Null as _)
     }
 
     /// Gets a js undefined Val
     pub fn undefined() -> Val {
-        Val::take_ownership(unsafe { emlite_val_undefined() })
+        Val::take_ownership(EmlitePredefHandles::Undefined as _)
     }
 
     /// Gets a new js object
@@ -166,7 +177,7 @@ impl Val {
             f(&vals).as_handle()
         }
         let a: *mut Box<dyn FnMut(&[Val]) -> Val> = Box::into_raw(Box::new(Box::new(cb)));
-        let data = Val::from(a as Handle as i32);
+        let data = Val::from(a as Handle as u32);
         unsafe {
             emlite_val_inc_ref(data.as_handle());
         }
@@ -215,9 +226,51 @@ impl Val {
     }
 }
 
+impl From<bool> for Val {
+    fn from(v: bool) -> Self {
+        Val::take_ownership(unsafe { emlite_val_make_int(v as _) })
+    }
+}
+
+impl From<i8> for Val {
+    fn from(v: i8) -> Self {
+        Val::take_ownership(unsafe { emlite_val_make_int(v as _) })
+    }
+}
+
+impl From<u8> for Val {
+    fn from(v: u8) -> Self {
+        Val::take_ownership(unsafe { emlite_val_make_int(v as _) })
+    }
+}
+
+impl From<i16> for Val {
+    fn from(v: i16) -> Self {
+        Val::take_ownership(unsafe { emlite_val_make_int(v as _) })
+    }
+}
+
+impl From<u16> for Val {
+    fn from(v: u16) -> Self {
+        Val::take_ownership(unsafe { emlite_val_make_int(v as _) })
+    }
+}
+
 impl From<i32> for Val {
     fn from(v: i32) -> Self {
         Val::take_ownership(unsafe { emlite_val_make_int(v) })
+    }
+}
+
+impl From<u32> for Val {
+    fn from(v: u32) -> Self {
+        Val::take_ownership(unsafe { emlite_val_make_int(v as _) })
+    }
+}
+
+impl From<f32> for Val {
+    fn from(v: f32) -> Self {
+        Val::take_ownership(unsafe { emlite_val_make_double(v as _) })
     }
 }
 
@@ -259,7 +312,9 @@ impl Drop for Val {
 
 impl Clone for Val {
     fn clone(&self) -> Val {
-        unsafe { emlite_val_inc_ref(self.as_handle()); }
+        unsafe {
+            emlite_val_inc_ref(self.as_handle());
+        }
         Val::take_ownership(self.as_handle())
     }
 }
@@ -373,9 +428,7 @@ impl FromVal for Val {
         }
     }
     fn take_ownership(v: Handle) -> Self {
-        Val {
-            inner: v,
-        }
+        Val { inner: v }
     }
     #[inline(always)]
     fn as_handle(&self) -> Handle {
@@ -385,13 +438,13 @@ impl FromVal for Val {
 
 impl FromVal for bool {
     fn from_val(v: &Val) -> Self {
-        v.as_handle() > 3
+        v.as_handle() > EmlitePredefHandles::False as u32
     }
     fn take_ownership(v: Handle) -> Self {
         Self::from_val(&Val::take_ownership(v))
     }
     fn as_handle(&self) -> Handle {
-        3
+        EmlitePredefHandles::False as u32
     }
 }
 
@@ -435,13 +488,13 @@ impl_float!(f32, f64);
 
 impl FromVal for String {
     fn from_val(v: &Val) -> Self {
-        unsafe { 
+        unsafe {
             let ptr = emlite_val_get_value_string(v.as_handle());
             CStr::from_ptr(ptr).to_string_lossy().into_owned()
         }
     }
     fn take_ownership(v: Handle) -> Self {
-        unsafe { 
+        unsafe {
             let ptr = emlite_val_get_value_string(v);
             CStr::from_ptr(ptr).to_string_lossy().into_owned()
         }

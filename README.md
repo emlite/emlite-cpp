@@ -102,7 +102,7 @@ To quickly try out emlite in the browser, create an index.html file:
             // if your C/C++ has a main function, use: `wasi.start(inst)`. If not, use `wasi.initialize(inst)`.
             wasi.start(inst);
             // test our exported function `add` in tests/dom_test1.cpp works
-            // window.alert(inst.exports.add(1, 2));
+            // window.alert(inst.exports.add?.(1, 2));
         };
     </script>
 </body>
@@ -134,7 +134,8 @@ The @bjorn3/browser_wasi_shim dependency is not required for freestanding builds
             });
             emlite.setExports(inst.exports);
             // test our exported function `add` in tests/dom_test1.cpp works
-            window.alert(inst.exports.add(1, 2));
+            inst.exports.main?.();
+            window.alert(inst.exports.add?.(1, 2));
         };
     </script>
 </body>
@@ -162,7 +163,8 @@ async function main() {
         env: emlite.env,
     });
     emlite.setExports(inst.exports);
-    // window.alert(inst.exports.add(1, 2));
+    inst.exports.main?.();
+    window.alert(inst.exports.add?.(1, 2));
 }
 
 await main();
@@ -187,6 +189,7 @@ async function main() {
         env: emlite.env,
     });
     emlite.setExports(instance.exports);
+    inst.exports.main?.();
     // if you have another exported function marked with EMLITE_USED, you can get it in the instance exports
     instance.exports.some_func();
 }
@@ -225,7 +228,7 @@ async function main() {
     // if your C/C++ has a main function, use: `wasi.start(inst)`. If not, use `wasi.initialize(inst)`.
     wasi.start(inst);
     // test our exported function `add` in tests/dom_test1.cpp works
-    window.alert(inst.exports.add(1, 2));
+    window.alert(inst.exports.add?.(1, 2));
 }
 
 await main();

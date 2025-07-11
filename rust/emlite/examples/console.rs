@@ -1,4 +1,4 @@
-use emlite::{argv, Console};
+use emlite::{Console, argv};
 
 fn main() {
     let con = Console::get();
