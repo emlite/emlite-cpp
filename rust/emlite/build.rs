@@ -4,7 +4,7 @@ fn main() {
         println!("cargo:rerun-if-changed=ems_env");
         const TOOLCHAIN_SUBPATH: &str = "cmake/Modules/Platform/Emscripten.cmake";
         let mut emscripten_root =
-            std::path::PathBuf::from(std::env::var("EMSCRIPTEN_ROOT").unwrap_or(String::new()));
+            std::path::PathBuf::from(std::env::var("EMSCRIPTEN_ROOT").unwrap_or_default());
         if !emscripten_root.exists() {
             emscripten_root = std::path::PathBuf::from(
                 std::env::var("EMSDK").expect("Neither EMSDK nor EMSCRIPTEN_ROOT were set."),

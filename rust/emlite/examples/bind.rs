@@ -55,9 +55,11 @@ impl DerefMut for MyJsClass {
     }
 }
 
-impl Into<Val> for MyJsClass {
-    fn into(self) -> Val {
-        Val::take_ownership(self.val.as_handle())
+impl From<MyJsClass> for Val {
+    fn from(s: MyJsClass) -> Val {
+        let handle = s.as_handle();
+        std::mem::forget(s);
+        Val::take_ownership(handle)
     }
 }
 

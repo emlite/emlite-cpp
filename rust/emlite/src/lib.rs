@@ -176,8 +176,9 @@ impl Val {
             std::mem::forget(func0);
             f(&vals).as_handle()
         }
+        #[allow(clippy::type_complexity)]
         let a: *mut Box<dyn FnMut(&[Val]) -> Val> = Box::into_raw(Box::new(Box::new(cb)));
-        let data = Val::from(a as Handle as u32);
+        let data = Val::from(a as Handle);
         unsafe {
             emlite_val_inc_ref(data.as_handle());
         }
@@ -276,6 +277,18 @@ impl From<i64> for Val {
 
 impl From<u64> for Val {
     fn from(v: u64) -> Self {
+        Val::take_ownership(unsafe { emlite_val_make_int(v as _) })
+    }
+}
+
+impl From<usize> for Val {
+    fn from(v: usize) -> Self {
+        Val::take_ownership(unsafe { emlite_val_make_int(v as _) })
+    }
+}
+
+impl From<isize> for Val {
+    fn from(v: isize) -> Self {
         Val::take_ownership(unsafe { emlite_val_make_int(v as _) })
     }
 }
@@ -384,9 +397,9 @@ impl DerefMut for Console {
     }
 }
 
-impl Into<Val> for Console {
-    fn into(self) -> Val {
-        Val::take_ownership(self.inner)
+impl From<Console> for Val {
+    fn from(val: Console) -> Self {
+        Val::take_ownership(val.inner)
     }
 }
 
