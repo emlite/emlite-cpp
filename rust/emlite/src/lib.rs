@@ -517,3 +517,22 @@ impl FromVal for String {
         0
     }
 }
+
+
+impl FromVal for &str {
+    fn from_val(v: &Val) -> Self {
+        unsafe {
+            let ptr = emlite_val_get_value_string(v.as_handle());
+            CStr::from_ptr(ptr).to_str().unwrap()
+        }
+    }
+    fn take_ownership(v: Handle) -> Self {
+        unsafe {
+            let ptr = emlite_val_get_value_string(v);
+            CStr::from_ptr(ptr).to_str().unwrap()
+        }
+    }
+    fn as_handle(&self) -> Handle {
+        0
+    }
+}
