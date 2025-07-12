@@ -268,6 +268,18 @@ impl From<u32> for Val {
     }
 }
 
+impl From<i64> for Val {
+    fn from(v: i64) -> Self {
+        Val::take_ownership(unsafe { emlite_val_make_int(v as _) })
+    }
+}
+
+impl From<u64> for Val {
+    fn from(v: u64) -> Self {
+        Val::take_ownership(unsafe { emlite_val_make_int(v as _) })
+    }
+}
+
 impl From<f32> for Val {
     fn from(v: f32) -> Self {
         Val::take_ownership(unsafe { emlite_val_make_double(v as _) })
