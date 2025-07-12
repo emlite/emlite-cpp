@@ -42,8 +42,8 @@ pub struct Val {
 
 impl Val {
     /// Returns the globalThis object
-    pub fn global_this() -> Val {
-        Val::take_ownership(EmlitePredefHandles::GlobalThis as _)
+    pub const fn global_this() -> Val {
+        Val { inner: EmlitePredefHandles::GlobalThis as _ }
     }
 
     /// Gets the property `prop`
@@ -58,13 +58,13 @@ impl Val {
     }
 
     /// Gets a js null Val
-    pub fn null() -> Val {
-        Val::take_ownership(EmlitePredefHandles::Null as _)
+    pub const fn null() -> Val {
+        Val { inner: EmlitePredefHandles::Null as _ }
     }
 
     /// Gets a js undefined Val
-    pub fn undefined() -> Val {
-        Val::take_ownership(EmlitePredefHandles::Undefined as _)
+    pub const fn undefined() -> Val {
+        Val { inner: EmlitePredefHandles::Undefined as _ }
     }
 
     /// Gets a new js object
@@ -341,9 +341,11 @@ pub struct Console {
 
 impl Console {
     /// Gets the console
-    pub fn get() -> Console {
+    pub const fn get() -> Console {
         Console {
-            val: Val::global("console"),
+            val: Val {
+                inner: EmlitePredefHandles::Console as _,
+            },
         }
     }
 
