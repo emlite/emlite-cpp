@@ -44,7 +44,7 @@ unsafe extern "C" {
     pub fn emlite_val_instanceof(arg1: Handle, arg2: Handle) -> bool;
     pub fn emlite_val_inc_ref(val: Handle);
     pub fn emlite_val_dec_ref(val: Handle);
-    pub fn emlite_val_throw(val: Handle);
+    pub fn emlite_val_throw(val: Handle) -> !;
 
     pub fn emlite_val_obj_call(
         obj: Handle,

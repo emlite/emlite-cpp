@@ -1,6 +1,14 @@
+#![no_std]
+extern crate alloc;
+
 pub mod env;
 use crate::env::*;
-use std::ffi::CStr;
+use core::ffi::CStr;
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::boxed::Box;
+use alloc::vec::Vec;
+use alloc::format;
 
 #[repr(u32)]
 pub enum EmlitePredefHandles {
@@ -173,7 +181,7 @@ impl Val {
             let func0 = Val::take_ownership(data);
             let a = func0.as_::<i32>() as usize as *mut Box<dyn FnMut(&[Val]) -> Val>;
             let f: &mut (dyn FnMut(&[Val]) -> Val) = unsafe { &mut **a };
-            std::mem::forget(func0);
+            core::mem::forget(func0);
             f(&vals).as_handle()
         }
         #[allow(clippy::type_complexity)]
@@ -207,7 +215,7 @@ impl Val {
     }
 
     /// Throws a js object represented by Val
-    pub fn throw(v: Val) {
+    pub fn throw(v: Val) -> ! {
         unsafe {
             emlite_val_throw(v.as_handle());
         }
@@ -216,6 +224,30 @@ impl Val {
     /// Checks whether this Val is an instanceof `v`
     pub fn instanceof(&self, v: Val) -> bool {
         unsafe { emlite_val_instanceof(self.as_handle(), v.as_handle()) }
+    }
+
+    pub fn is_number(&self) -> bool {
+        unsafe { emlite_val_is_number(self.as_handle()) }
+    }
+    
+    pub fn is_string(&self) -> bool {
+        unsafe { emlite_val_is_string(self.as_handle()) }
+    }
+
+    pub fn is_null(&self) -> bool {
+        self.as_handle() == EmlitePredefHandles::Null as u32
+    }
+
+    pub fn is_undefined(&self) -> bool {
+        self.as_handle() == EmlitePredefHandles::Undefined as u32
+    }
+
+    pub fn is_error(&self) -> bool {
+        self.instanceof(Val::global("Error"))
+    }
+
+    pub fn is_function(&self) -> bool {
+        self.instanceof(Val::global("Function"))
     }
 
     #[inline(always)]
@@ -344,7 +376,7 @@ impl Clone for Val {
     }
 }
 
-use std::ops::{Deref, DerefMut};
+use core::ops::{Deref, DerefMut};
 
 /// A console wrapper
 #[derive(Clone, Debug)]
@@ -403,8 +435,8 @@ impl From<Console> for Val {
     }
 }
 
-use std::cmp::Ordering;
-use std::ops::Not;
+use core::cmp::Ordering;
+use core::ops::Not;
 
 impl PartialEq for Val {
     fn eq(&self, other: &Val) -> bool {
