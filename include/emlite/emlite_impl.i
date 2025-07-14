@@ -401,7 +401,7 @@ int em_Val_as_int(em_Val self) {
     return emlite_val_get_value_int(self.h);
 }
 
-bool em_Val_as_bool(em_Val self) { return self.h > EMLITE_FALSE; }
+bool em_Val_as_bool(em_Val self) { return !emlite_val_not(self.h); }
 
 double em_Val_as_double(em_Val self) {
     return emlite_val_get_value_double(self.h);

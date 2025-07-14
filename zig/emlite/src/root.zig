@@ -126,7 +126,7 @@ pub const Val = struct {
     }
     pub fn asInt(self: Val) i32  { return @as(i32, emlite_val_get_value_int(self.handle)); }
     pub fn asF64(self: Val) f64  { return emlite_val_get_value_double(self.handle); }
-    pub fn asBool(self: Val) bool { return self.handle > @intFromEnum(EmlitePrefHandles.False); }
+    pub fn asBool(self: Val) bool { return !emlite_val_not(self.handle); }
     pub fn asOwnedString(self: Val) [*:0] u8 {
         return emlite_val_get_value_string(self.handle);
     }

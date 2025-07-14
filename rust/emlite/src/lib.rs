@@ -497,13 +497,15 @@ impl FromVal for Val {
 
 impl FromVal for bool {
     fn from_val(v: &Val) -> Self {
-        v.as_handle() > EmlitePredefHandles::False as u32
+        unsafe {
+            !env::emlite_val_not(v.as_handle())
+        }
     }
     fn take_ownership(v: Handle) -> Self {
         Self::from_val(&Val::take_ownership(v))
     }
     fn as_handle(&self) -> Handle {
-        EmlitePredefHandles::False as u32
+        if *self { EmlitePredefHandles::False as u32 } else { EmlitePredefHandles::True as u32 }
     }
 }
 

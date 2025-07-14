@@ -376,10 +376,7 @@ template <typename T>
 T Val::as() const noexcept {
     if constexpr (detail::is_integral_v<T>) {
         if constexpr (detail::is_same_v<T, bool>) {
-            if (v_ > EMLITE_FALSE)
-                return true;
-            else
-                return false;
+            return !emlite_val_not(v_);
         } else {
             return emlite_val_get_value_int(v_);
         }
