@@ -25,7 +25,7 @@ function bundleWasm(wasmPath) {
 
     if (dir.includes("freestanding")) {
         fs.writeFileSync(wrapper, `
-            import { Emlite } from "../../src/emlite.js";
+            import { Emlite } from "../node_modules/emlite/src/emlite.js";
 
             async function main() {
                 const emlite = new Emlite();
@@ -43,7 +43,7 @@ function bundleWasm(wasmPath) {
         );
     } else {
         fs.writeFileSync(wrapper, `
-            import { Emlite } from "../../src/emlite.js";
+            import { Emlite } from "../node_modules/emlite/src/emlite.js";
             import { WASI, File, OpenFile, ConsoleStdout } from "@bjorn3/browser_wasi_shim";
 
             async function main() {

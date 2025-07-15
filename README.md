@@ -1,7 +1,7 @@
-# Emlite
-Emlite is a tiny JS bridge for native code (C/C++/Rust/Zig) via Wasm, which is agnostic of the underlying toolchain. Thus it can target wasm32-unknown-unknown (freestanding, via stock clang), wasm32-wasi, wasm32-wasip1 and emscripten. 
+# Emlite-cpp
+Emlite is a tiny JS bridge for native C/C++ code via Wasm, which is agnostic of the underlying toolchain. Thus it can target wasm32-unknown-unknown (freestanding, via stock clang), wasm32-wasi, wasm32-wasip1 and emscripten. 
 It provides a header only library and a single javascript file that allows plain C or C++ code — compiled for wasm — to interoperate with javascript (including the DOM) and other JavaScript objects/runtimes without writing much JS “glue.”
-It provides both a C api and a higher level C++ api similar to emscripten's val api. The repo also provides higher-level Rust and Zig bindings to emlite.
+It provides both a C api and a higher level C++ api similar to emscripten's val api.
 For freestanding builds, it provides a simple bump allocator (invocable via malloc), however this repo also vendors dlmalloc in the src directory. Please check the CMakeLists.txt to see how it's used in the tests and examples.
 
 ## Requirements
@@ -142,137 +142,6 @@ The @bjorn3/browser_wasi_shim dependency is not required for freestanding builds
 </html>
 ```
 
-## Deployment
-
-### Using wasm32-unknown-unknown
-#### In the browser
-Install emlite via npm:
-```bash
-npm install emlite
-```
-
-In your javascript code:
-```javascript
-import { Emlite } from "emlite";
-
-async function main() {
-    const emlite = new Emlite();
-    const bytes = await emlite.readFile(new URL("./bin/mywasm.wasm", import.meta.url));
-    let wasm = await WebAssembly.compile(bytes);
-    let inst = await WebAssembly.instantiate(wasm, {
-        env: emlite.env,
-    });
-    emlite.setExports(inst.exports);
-    inst.exports.main?.();
-    window.alert(inst.exports.add?.(1, 2));
-}
-
-await main();
-```
-
-#### With a javascript engine like nodejs
-You can get emlite from npm:
-```bash
-npm install emlite
-```
-
-Then in your javascript file:
-```javascript
-import { Emlite } from "emlite";
-
-async function main() {
-    const emlite = new Emlite();
-    const url = new URL("./bin/console.wasm", import.meta.url);
-    const bytes = await emlite.readFile(url);
-    const wasm = await WebAssembly.compile(bytes);
-    const instance = await WebAssembly.instantiate(wasm, {
-        env: emlite.env,
-    });
-    emlite.setExports(instance.exports);
-    inst.exports.main?.();
-    // if you have another exported function marked with EMLITE_USED, you can get it in the instance exports
-    instance.exports.some_func();
-}
-
-await main();
-```
-
-### Using wasm32-wasi, wasm32-wasip1 or emscripten
-#### In the browser
-To use emlite with wasm32-wasi, wasm32-wasip1 or standalone_wasm emscripten** in your web stack, you will need a wasi javascript polyfill, here we use @bjorn3/browser_wasi_shim to provides us with said polyfill:
-```bash
-npm install emlite
-npm install @bjorn3/browser_wasi_shim
-```
-
-In your javascript code:
-```javascript
-import { Emlite } from "emlite";
-import { WASI, File, OpenFile, ConsoleStdout } from "@bjorn3/browser_wasi_shim";
-
-async function main() {
-    let fds = [
-        new OpenFile(new File([])), // 0, stdin
-        ConsoleStdout.lineBuffered(msg => console.log(`[WASI stdout] ${msg}`)), // 1, stdout
-        ConsoleStdout.lineBuffered(msg => console.warn(`[WASI stderr] ${msg}`)), // 2, stderr
-    ];
-    let wasi = new WASI([], [], fds);
-    const emlite = new Emlite();
-    const bytes = await emlite.readFile(new URL("./bin/dom_test1.wasm", import.meta.url));
-    let wasm = await WebAssembly.compile(bytes);
-    let inst = await WebAssembly.instantiate(wasm, {
-        "wasi_snapshot_preview1": wasi.wasiImport,
-        "env": emlite.env,
-    });
-    emlite.setExports(inst.exports);
-    // if your C/C++ has a main function, use: `wasi.start(inst)`. If not, use `wasi.initialize(inst)`.
-    wasi.start(inst);
-    // test our exported function `add` in tests/dom_test1.cpp works
-    window.alert(inst.exports.add?.(1, 2));
-}
-
-await main();
-```
-
-** Note that this depends on emscripten's ability to create standalone wasm files, which will also require a wasi shim, see more info [here](https://v8.dev/blog/emscripten-standalone-wasm). To use Emlite with emscripten's default mode, please read the [README.emscripten.md](./README.emscripten.md) document.
-
-#### With a javascript engine like nodejs
-You can get emlite from npm:
-```bash
-npm install emlite
-```
-
-Then in your javascript file:
-```javascript
-import { Emlite } from "emlite";
-import { WASI } from "node:wasi";
-import { argv, env } from "node:process";
-
-async function main() {
-    const wasi = new WASI({
-        version: 'preview1',
-        args: argv,
-        env,
-    });
-    
-    const emlite = new Emlite();
-    const url = new URL("./bin/console.wasm", import.meta.url);
-    const bytes = await emlite.readFile(url);
-    const wasm = await WebAssembly.compile(bytes);
-    const instance = await WebAssembly.instantiate(wasm, {
-        wasi_snapshot_preview1: wasi.wasiImport,
-        env: emlite.env,
-    });
-    wasi.start(instance);
-    emlite.setExports(instance.exports);
-    // if you have another exported function marked with EMLITE_USED, you can get it in the instance exports
-    instance.exports.some_func();
-}
-
-await main();
-```
-Note that nodejs as of version 22.16 requires a _start function in the wasm module. That can be achieved by defining an `int main() {}` function. It's also why we use `wasi.start(instance)` in the js module.
-
 ## Building
 ### Using CMake
 You can use CMake's FetchContent to get this repo, otherwise you can just copy the header files into your project.
@@ -330,8 +199,8 @@ As mentioned previously, emlite only includes a simple bump allocator. It's advi
 ## Testing
 To test emlite, you can clone this repo and run it's test suite:
 ```bash
-git clone https://github.com/MoAlyousef/emlite
-cd emlite
+git clone https://github.com/emlite/emlite-cpp
+cd emlite-cpp
 npm install
 npm run test_all
 npm run serve

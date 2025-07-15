@@ -2,7 +2,7 @@
 // node tests/index.js
 
 import fs from "node:fs";
-import { Emlite } from "../src/emlite.js";
+import { Emlite } from "emlite";
 import { WASI } from "node:wasi";
 import { argv, env } from "node:process";
 

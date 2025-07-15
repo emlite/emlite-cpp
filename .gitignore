@@ -1,10 +1,5 @@
 /bin
-*.wasm
 .clangd
-/rust/emlite/target
-/rust/emlite/Cargo.lock
-/zig/emlite/zig-out
-/zig/emlite/.zig-cache
 /node_modules
 /package-lock.json
 index.html

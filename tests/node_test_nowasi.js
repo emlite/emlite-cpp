@@ -1,4 +1,4 @@
-import { Emlite } from "../src/emlite.js";
+import { Emlite } from "emlite";
 
 async function main() {
     const emlite = new Emlite();
