@@ -21,10 +21,6 @@ Notice how we remove the `--import-memory` link flag. To load in the browser whe
     <title>Document</title>
 </head>
 <body>
-    <script type="module">
-        import { Emlite } from "./src/emlite.js";
-        const emlite = new Emlite();
-    </script>
     <script async src="./bin/mywasms.js"></script>
 </body>
 </html>
@@ -52,11 +48,9 @@ This can then be imported in your browser for example using:
 </head>
 <body>
     <script type="module">
-        import { Emlite } from "./src/emlite.js";
         // main.mjs is generated from emscripten
         import initModule from "./bin/main.mjs";
         window.onload = async () => {
-            const emlite = new Emlite();
             const mymain = await initModule();
         };
     </script>
@@ -79,10 +73,6 @@ You can create a shell my_shell.html file:
     <title>Document</title>
   </head>
   <body>
-    <script type="module">
-        import { Emlite } from "./src/emlite.js";
-        new Emlite();
-    </script>
   {{{ SCRIPT }}}
   </body>
 </html>
