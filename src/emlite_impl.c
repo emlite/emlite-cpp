@@ -1,7 +1,7 @@
 #include <emlite/emlite.h>
 
 int emlite_target(void) {
-    return 1024;
+    return 1027;
 }
 
 #if __has_include(<errno.h>)
