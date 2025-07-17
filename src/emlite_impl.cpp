@@ -1,3 +1,5 @@
+#include <emlite/emlite.hpp>
+
 #if __has_include(<new>)
 #else
 void *operator new(size_t size) { return emlite_malloc(size); }

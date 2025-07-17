@@ -1,6 +1,5 @@
 #include <stdio.h>
 
-#define EMLITE_IMPL
 #include <emlite/emlite.h>
 
 em_Val console_log(char *s) {

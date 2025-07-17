@@ -1,37 +1,46 @@
-// clang-format off
-// example build command:
-// clang++ --target=wasm32 -o dom_test1_nostdlib.wasm -Iinclude tests/dom_test1_nostdlib.cpp -nostdlib -Os -Wl,--allow-undefined,--no-entry,--import-memory,--export-memory,--export-dynamic,--export-if-defined=main,--export-table,,--strip-all
-// clang-format on
+#include <cstddef>
+#include <cstdio>
+#include <vector>
 
-#define EMLITE_IMPL
 #include <emlite/emlite.hpp>
 
 using namespace emlite;
 
-EMLITE_USED extern "C" int add(int a, int b) {
+int main() {
     Console().log("Hello from Emlite");
-
-    auto arr = Uniq<int[]>(new int[200]);
-    for (int i = 0; i < 200; i++)
-        arr[i] = i;
 
     auto doc = Val::global("document");
     // operator[]
     auto body = doc.call("getElementsByTagName", "body")[0];
     auto btn  = doc.call("createElement", "BUTTON");
     btn.set("textContent", "Click Me!");
+    // test as<> and wasi's fd_write
+    puts(btn.get("textContent").as<Uniq<char[]>>().get());
 
+    puts(btn.type_of().get());
+
+    body.call("appendChild", btn);
     // emlite_val_make_callback
     btn.call(
         "addEventListener",
         "click",
-        Val::make_fn([](auto) -> Val {
-            Console().log("Clicked");
+        Val::make_fn([=](auto p) -> Val {
+            auto [params, len] = p;
+            Console().log(params[0]);
+            Console().log(doc);
             return Val::undefined();
         })
     );
 
-    body.call("appendChild", btn);
+    // check memory growth!
+    std::vector<int> vals = {0, 1, 2};
+    for (int i = 0; i < 100; i++) {
+        vals.push_back(i);
+    }
+
+    // check wasi's fd_write shim works
+    printf("%d\n", vals.back());
+
     // check Val::new_
     auto String = Val::global("String");
     auto str1 =
@@ -70,8 +79,17 @@ EMLITE_USED extern "C" int add(int a, int b) {
     auto status =
         Notification.call("requestPermission").await();
     Console().log(status);
-    auto twenty = arr[20];
-    return a + twenty + b;
-}
 
-int main() {}
+    auto arr =
+        Val::global("eval")("let arr = [1, 2, 3, 4, 5]; arr"
+        );
+
+    size_t len = 0;
+    auto arr2  = Val::vec_from_js_array<int>(arr, len);
+
+    printf("%ld\n", len);
+    for (size_t i = 0; i < len; i++) {
+        printf("%d\n", arr2[i]);
+    }
+    // emlite_print_object_map();
+}

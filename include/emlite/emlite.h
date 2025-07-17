@@ -275,13 +275,6 @@ em_Val emlite_eval_v(const char *src, ...);
 #define EMLITE_EVAL(x, ...)                                \
     emlite_eval_v(#x __VA_OPT__(, __VA_ARGS__))
 
-#ifdef EMLITE_IMPL
-#ifdef EMLITE_USE_EMSCRIPTEN_JS_GLUE
-#include "emlite_emscripten_impl.i"
-#endif
-#include "emlite_impl.i"
-#endif
-
 #ifdef __cplusplus
 }
 #endif

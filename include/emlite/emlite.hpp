@@ -424,6 +424,3 @@ Val emlite_eval_cpp(const char *fmt, Args &&...args) {
 #define EMLITE_EVAL(x, ...)                                \
     emlite::emlite_eval_cpp(#x __VA_OPT__(, __VA_ARGS__))
 
-#ifdef EMLITE_IMPL
-#include "emlite_impl.ipp"
-#endif

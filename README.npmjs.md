@@ -130,7 +130,7 @@ export async function some_other_func(...args) {
 }
 ```
 
-Similarly if you use emscripten with the EMLITE_USE_EMSCRIPTEN_JS_GLUE flag:
+Similarly if you use emscripten with the EMSCRIPTEN_STANDALONE_WASM flag:
 ```javascript
 import { Emlite } from "emlite";
 import initModule from "./bin/main.mjs";

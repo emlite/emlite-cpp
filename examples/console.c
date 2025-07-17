@@ -1,4 +1,3 @@
-#define EMLITE_IMPL
 #include <emlite/emlite.h>
 
 EMLITE_USED int main() {

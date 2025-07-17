@@ -1,6 +1,5 @@
 #include <stdio.h>
 
-#define EMLITE_IMPL
 #include <emlite/emlite.hpp>
 
 using namespace emlite;

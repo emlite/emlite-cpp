@@ -1,8 +1,3 @@
-// clang-format off
-// clang-18 --target=wasm32 -o dom_test2_nostdlib.wasm -Iinclude tests/dom_test2_nostdlib.c -nostdlib -Os -Wl,--allow-undefined,--no-entry,--import-memory,--export-memory,--export-dynamic,--export-if-defined=main,--export-table,,--strip-all
-// clang-format on
-
-#define EMLITE_IMPL
 #include <emlite/emlite.h>
 
 em_Val console_log(em_Val args) {

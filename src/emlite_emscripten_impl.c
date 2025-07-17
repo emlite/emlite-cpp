@@ -1,3 +1,5 @@
+#include <emlite/emlite.h>
+
 // EM_JS and _EM_JS macros copied from
 // https://github.com/emscripten-core/emscripten/blob/main/system/include/emscripten/em_js.h
 // Copyright 2018 The Emscripten Authors.
@@ -303,7 +305,7 @@ EM_JS(void, emlite_val_inc_ref_impl, (Handle h), {
 
 EM_JS(void, emlite_val_dec_ref_impl, (Handle h), {
     if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table();
-    if (h > 4) EMLITE_VALMAP.decRef(h);
+    if (h > 5) EMLITE_VALMAP.decRef(h);
 });
 // clang-format on
 EMLITE_USED

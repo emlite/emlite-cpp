@@ -76,7 +76,6 @@ await main();
 
 In your src/main.cpp:
 ```c++
-#define EMLITE_IMPL
 #include <emlite/emlite.hpp>
 
 int main() {
