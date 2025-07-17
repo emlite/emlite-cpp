@@ -289,7 +289,7 @@ EM_JS(void, emlite_print_object_map_impl, (), {
 EM_JS(void, emlite_reset_object_map_impl, (), {
     if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table();
     for (const h of[... EMLITE_VALMAP._h2e.keys()]) {
-        if (h > 4) {
+        if (h > 5) {
             const value = EMLITE_VALMAP._h2e.get(h).value;
 
             EMLITE_VALMAP._h2e.delete(h);
