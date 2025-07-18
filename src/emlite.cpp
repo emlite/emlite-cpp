@@ -160,8 +160,24 @@ bool Val::is_string() const noexcept {
     return emlite_val_is_string(v_);
 }
 
-bool Val:: instanceof (const Val &v) const noexcept {
+bool Val::instanceof (const Val &v) const noexcept {
     return emlite_val_instanceof(v_, v.v_);
+}
+
+bool Val::is_function() const noexcept {
+    return instanceof(Val::global("Function"));
+}
+
+bool Val::is_error() const noexcept {
+    return instanceof(Val::global("Error"));
+}
+
+bool Val::is_undefined() const noexcept {
+    return v_ == EMLITE_UNDEFINED;
+}
+
+bool Val::is_null() const noexcept {
+    return v_ == EMLITE_NULL;
 }
 
 bool Val::operator!() const { return emlite_val_not(v_); }

@@ -17,12 +17,12 @@ set(EMLITE_HEADERS
 )
 
 set(EMLITE_SOURCES
-    src/emlite_impl.c
-    src/emlite_impl.cpp
+    src/emlite.c
+    src/emlite.cpp
 )
 
 if(EMSCRIPTEN AND NOT EMSCRIPTEN_STANDALONE_WASM)
-    list(APPEND EMLITE_SOURCES src/emlite_emscripten_impl.c)
+    list(APPEND EMLITE_SOURCES src/emlite_emscripten.c)
 endif()
 
 target_sources(emlite 

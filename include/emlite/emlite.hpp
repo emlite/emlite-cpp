@@ -196,6 +196,14 @@ class Val {
     [[nodiscard]] bool is_number() const noexcept;
     /// @returns bool if Val is a string
     [[nodiscard]] bool is_string() const noexcept;
+    /// @returns bool if Val is a function
+    [[nodiscard]] bool is_function() const noexcept;
+    /// @returns bool if Val is an error
+    [[nodiscard]] bool is_error() const noexcept;
+    /// @returns bool if Val is undefined
+    [[nodiscard]] bool is_undefined() const noexcept;
+    /// @returns bool if Val is null
+    [[nodiscard]] bool is_null() const noexcept;
     /// @returns bool if Val is an instanceof
     /// @param v the other Val
     [[nodiscard]] bool instanceof
