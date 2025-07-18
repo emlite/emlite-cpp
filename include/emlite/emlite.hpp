@@ -1,16 +1,15 @@
 #pragma once
 
-#include "emlite.h"
-#undef EMLITE_EVAL
+#include "detail/externs.h"
 
 extern void *operator new(size_t, void *place) noexcept;
 
 namespace emlite {
 
 namespace detail {
-#include "func.hpp"
-#include "mem.hpp"
-#include "tiny_traits.hpp"
+#include "detail/func.hpp"
+#include "detail/mem.hpp"
+#include "detail/tiny_traits.hpp"
 
 template <
     typename... Args,

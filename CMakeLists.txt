@@ -10,9 +10,10 @@ add_library(emlite)
 set(EMLITE_HEADERS
     include/emlite/emlite.h
     include/emlite/emlite.hpp
-    include/emlite/func.hpp
-    include/emlite/mem.hpp
-    include/emlite/tiny_traits.hpp
+    include/emlite/detail/externs.h
+    include/emlite/detail/func.hpp
+    include/emlite/detail/mem.hpp
+    include/emlite/detail/tiny_traits.hpp
 )
 
 set(EMLITE_SOURCES
