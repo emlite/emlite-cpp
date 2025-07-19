@@ -3,12 +3,8 @@
 #include <emlite/emlite.h>
 
 em_Val console_log(char *s) {
-    em_Val str     = em_Val_from_string(s);
     em_Val console = em_Val_global("console");
-    em_Val ret     = em_Val_call(console, "log", 1, str);
-    em_Val_delete(console);
-    em_Val_delete(str);
-    return ret;
+    return em_Val_call(console, "log",  em_Val_from(s));
 }
 
 Handle btn_click_cb(Handle h, Handle data) {
@@ -20,49 +16,41 @@ EMLITE_USED int add(int a, int b) {
     console_log("Hello from Emlite");
 
     em_Val doc       = em_Val_global("document");
-    em_Val body_elem = em_Val_from_string("body");
     em_Val bodies    = em_Val_call(
-        doc, "getElementsByTagName", 1, body_elem
+        doc, "getElementsByTagName",  em_Val_from("body")
     );
-    em_Val body = em_Val_at(bodies, em_Val_from_int(0));
-    em_Val elem = em_Val_from_string("BUTTON");
-    em_Val btn = em_Val_call(doc, "createElement", 1, elem);
-    em_Val btn_label = em_Val_from_string("Click Me!");
-    em_Val_set(btn, em_Val_from_string("textContent"), btn_label);
+    em_Val body = em_Val_at(bodies, em_Val_from(0));
+    em_Val elem = em_Val_from("BUTTON");
+    em_Val btn = em_Val_call(doc, "createElement",  elem);
+    em_Val_set(btn, em_Val_from("textContent"), em_Val_from("Click Me!"));
 
-    em_Val textContent = em_Val_get(btn, em_Val_from_string("textContent"));
-    printf("%s\n", em_Val_as_string(textContent));
+    em_Val textContent = em_Val_get(btn, em_Val_from("textContent"));
+    printf("%s\n", em_Val_as(char *, textContent));
     (void)fflush(stdout);
     char *typeofbtn = em_Val_typeof(btn);
     printf("%s\n", typeofbtn);
     free(typeofbtn);
 
-    em_Val appended = em_Val_call(body, "appendChild", 1, btn);
-
-    em_Val event  = em_Val_from_string("click");
-    em_Val btn_cb = em_Val_make_fn(btn_click_cb, 0);
-    em_Val_call(btn, "addEventListener", 2, event, btn_cb);
+    em_Val_call(body, "appendChild",  btn);
+    em_Val_call(btn, "addEventListener", em_Val_from("click"), em_Val_make_fn(btn_click_cb, 0));
 
     // check em_Val_new
     em_Val String       = em_Val_global("String");
-    em_Val str1_content = em_Val_from_string(
+    em_Val str1 = em_Val_new(String, em_Val_from(
         "created a string object number 1"
-    );
-    em_Val str2_content = em_Val_from_string(
+    ));
+    em_Val str2 = em_Val_new(String, em_Val_from(
         "created a string object number 2"
-    );
-    em_Val str1 = em_Val_new(String, 1, str1_content);
-    em_Val str2 = em_Val_new(String, 1, str2_content);
+    ));
 
-    console_log(em_Val_as_string(str1));
-    console_log(em_Val_as_string(str2));
-    console_log(em_Val_as_string(str1));
+    console_log(em_Val_as(char *, str1));
+    console_log(em_Val_as(char *, str2));
+    console_log(em_Val_as(char *, str1));
 
     em_Val Math       = em_Val_global("Math");
-    em_Val floor      = em_Val_get(Math, em_Val_from_string("floor"));
-    em_Val double_inp = em_Val_from_double(2.5);
-    em_Val ret        = em_Val_invoke(floor, 1, double_inp);
-    console_log(em_Val_as_string(ret));
+    em_Val floor      = em_Val_get(Math, em_Val_from("floor"));
+    em_Val ret        = em_Val_invoke(floor, em_Val_from(2.5));
+    console_log(em_Val_as(char *, ret));
 
     // clang-format off
     em_Val retval = EMLITE_EVAL(
@@ -76,40 +64,16 @@ EMLITE_USED int add(int a, int b) {
         6
     );
     // clang-format on
-    console_log(em_Val_as_string(retval));
+    console_log(em_Val_as(char *, retval));
 
     // test await
     em_Val Notification = em_Val_global("Notification");
     em_Val call =
-        em_Val_call(Notification, "requestPermission", 0);
+        em_Val_call(Notification, "requestPermission");
     em_Val status = em_Val_await(call);
-    console_log(em_Val_as_string(status));
+    console_log(em_Val_as(char *, status));
 
-    // emlite_reset_object_map();
-    em_Val_delete(status);
-    em_Val_delete(call);
-    em_Val_delete(Notification);
-    em_Val_delete(retval);
-    em_Val_delete(ret);
-    em_Val_delete(double_inp);
-    em_Val_delete(floor);
-    em_Val_delete(Math);
-    em_Val_delete(str2);
-    em_Val_delete(str2_content);
-    em_Val_delete(str1);
-    em_Val_delete(str1_content);
-    em_Val_delete(String);
-    em_Val_delete(btn_cb);
-    em_Val_delete(event);
-    em_Val_delete(appended);
-    em_Val_delete(textContent);
-    em_Val_delete(btn_label);
-    em_Val_delete(btn);
-    em_Val_delete(elem);
-    em_Val_delete(body);
-    em_Val_delete(bodies);
-    em_Val_delete(body_elem);
-    em_Val_delete(doc);
+    emlite_reset_object_map();
 
     return a + b;
 }

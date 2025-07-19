@@ -5,10 +5,43 @@
 #define EMLITE_EVAL(x, ...)                                \
     emlite_eval_v(#x __VA_OPT__(, __VA_ARGS__))
 
+#define em_Val_from(x)                                                                                                                                         \
+    _Generic(((x)), double: em_Val_from_double, int: em_Val_from_int, char *: em_Val_from_string, const char *: em_Val_from_string, default: em_Val_from_val)( \
+        x                                                                                                                                                      \
+    )
+
+#define em_Val_as(TYPE, VAL)                                                                                                                 \
+    _Generic((TYPE)0, int: em_Val_as_int, bool: em_Val_as_bool, double: em_Val_as_double, char *: em_Val_as_string, default: em_Val_as_val)( \
+        VAL                                                                                                                                  \
+    )
+
+#define EM_NARG_(...)                                      \
+    ((int)(sizeof((em_Val[]){(em_Val){0}, ##__VA_ARGS__}   \
+           ) / sizeof(em_Val) -                            \
+           1))
+
+#define em_Val_call(self, method, ...)                     \
+    em_Val_call_(                                          \
+        (self),                                            \
+        (method),                                          \
+        EM_NARG_(__VA_ARGS__),                             \
+        ##__VA_ARGS__                                      \
+    )
+
+#define em_Val_new(self, ...)                              \
+    em_Val_new_(                                           \
+        (self), EM_NARG_(__VA_ARGS__), ##__VA_ARGS__       \
+    )
+
+#define em_Val_invoke(self, ...)                           \
+    em_Val_invoke_(                                        \
+        (self), EM_NARG_(__VA_ARGS__), ##__VA_ARGS__       \
+    )
+
 #ifdef __cplusplus
 extern "C" {
 #endif
- 
+
 /// A higher level wrapper around a Handle
 typedef struct {
     Handle h;
@@ -20,6 +53,8 @@ em_Val em_Val_from_int(int i);
 em_Val em_Val_from_double(double i);
 /// Create an em_Val from a string @param i
 em_Val em_Val_from_string(const char *i);
+/// Create an em_Val from a val @param i
+em_Val em_Val_from_val(em_Val i);
 /// Create an em_Val from a raw handle @param v
 em_Val em_Val_from_handle(Handle v);
 /// Gets a global object by name @param name
@@ -101,23 +136,25 @@ double em_Val_as_double(em_Val self);
 /// on the caller side
 char *em_Val_as_string(em_Val self);
 
+em_Val em_Val_as_val(em_Val self);
+
 /// Calls a javascript method @param method
 /// of the underlying object.
 /// @param n the number of arguments
 /// @returns an em_Val object which could be a js undefined
-em_Val em_Val_call(
+em_Val em_Val_call_(
     em_Val self, const char *method, int n, ...
 );
 
 /// Calls a javascript object's constructor
 /// @param n the number of arguments
 /// @returns an em_Val object of the type of the caller
-em_Val em_Val_new(em_Val self, int n, ...);
+em_Val em_Val_new_(em_Val self, int n, ...);
 
 /// Invokes the function object
 /// @param n the number of arguments
 /// @returns an em_Val object which could be a js undefined
-em_Val em_Val_invoke(em_Val self, int n, ...);
+em_Val em_Val_invoke_(em_Val self, int n, ...);
 
 /// Evaluates the string @param src in the js side
 em_Val emlite_eval(const char *src);

@@ -276,6 +276,10 @@ em_Val em_Val_from_string(const char *s) {
     return (em_Val){.h = emlite_val_make_str(s, strlen(s))};
 }
 
+em_Val em_Val_from_val(em_Val s) {
+    return (em_Val){.h = s.h };
+}
+
 em_Val em_Val_from_handle(Handle v) {
     return (em_Val){.h = v};
 }
@@ -413,7 +417,11 @@ char *em_Val_as_string(em_Val self) {
     return emlite_val_get_value_string(self.h);
 }
 
-em_Val em_Val_call(
+em_Val em_Val_as_val(em_Val self) {
+    return em_Val_from_val(self);
+}
+
+em_Val em_Val_call_(
     em_Val self, const char *method, int n, ...
 ) {
     Handle arr = emlite_val_new_array();
@@ -431,7 +439,7 @@ em_Val em_Val_call(
     return ret;
 }
 
-em_Val em_Val_new(em_Val self, int n, ...) {
+em_Val em_Val_new_(em_Val self, int n, ...) {
     Handle arr = emlite_val_new_array();
     va_list args;
     va_start(args, n);
@@ -447,7 +455,7 @@ em_Val em_Val_new(em_Val self, int n, ...) {
     return ret;
 }
 
-em_Val em_Val_invoke(em_Val self, int n, ...) {
+em_Val em_Val_invoke_(em_Val self, int n, ...) {
     Handle arr = emlite_val_new_array();
     va_list args;
     va_start(args, n);

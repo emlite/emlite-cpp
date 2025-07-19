@@ -2,43 +2,40 @@
 
 em_Val console_log(em_Val args) {
     em_Val console = em_Val_global("console");
-    return em_Val_call(console, "log", 1, args);
+    return em_Val_call(console, "log", args);
 }
 
 Handle btn_click_cb(Handle h, Handle data) {
-    console_log(em_Val_from_string("Clicked"));
+    console_log(em_Val_from("Clicked"));
     return EMLITE_UNDEFINED;
 }
 
 EMLITE_USED int add(int a, int b) {
-    console_log(em_Val_from_string("Hello from Emlite"));
+    console_log(em_Val_from("Hello from Emlite"));
 
     em_Val doc  = em_Val_global("document");
     em_Val body = em_Val_at(
         em_Val_call(
             doc,
             "getElementsByTagName",
-            1,
-            em_Val_from_string("body")
+            em_Val_from("body")
         ),
-        em_Val_from_int(0)
+        em_Val_from(0)
     );
     em_Val btn = em_Val_call(
         doc,
         "createElement",
-        1,
-        em_Val_from_string("BUTTON")
+        em_Val_from("BUTTON")
     );
     em_Val_set(
-        btn, em_Val_from_string("textContent"), em_Val_from_string("Click Me!")
+        btn, em_Val_from("textContent"), em_Val_from("Click Me!")
     );
 
     em_Val_call(body, "appendChild", 1, btn);
     em_Val_call(
         btn,
         "addEventListener",
-        2,
-        em_Val_from_string("click"),
+        em_Val_from("click"),
         em_Val_make_fn(btn_click_cb, 0)
     );
 
@@ -46,15 +43,13 @@ EMLITE_USED int add(int a, int b) {
     em_Val String = em_Val_global("String");
     em_Val str1   = em_Val_new(
         String,
-        1,
-        em_Val_from_string(
+        em_Val_from(
             "created a string object number 1"
         )
     );
     em_Val str2 = em_Val_new(
         String,
-        1,
-        em_Val_from_string(
+        em_Val_from(
             "created a string object number 2"
         )
     );
@@ -63,14 +58,14 @@ EMLITE_USED int add(int a, int b) {
     console_log(str2);
     console_log(str1);
 
-    console_log(em_Val_from_string(em_Val_as_string(str1)));
-    console_log(em_Val_from_string(em_Val_as_string(str2)));
-    console_log(em_Val_from_string(em_Val_as_string(str1)));
+    console_log(em_Val_from(em_Val_as(char *, str1)));
+    console_log(em_Val_from(em_Val_as(char *, str2)));
+    console_log(em_Val_from(em_Val_as(char *, str1)));
 
     em_Val floor =
-        em_Val_get(em_Val_global("Math"), em_Val_from_string("floor"));
+        em_Val_get(em_Val_global("Math"), em_Val_from("floor"));
     em_Val ret =
-        em_Val_invoke(floor, 1, em_Val_from_double(2.5));
+        em_Val_invoke(floor, em_Val_from(2.5));
     console_log(ret);
 
     // clang-format off
@@ -90,7 +85,7 @@ EMLITE_USED int add(int a, int b) {
     // test await
     em_Val Notification = em_Val_global("Notification");
     em_Val status       = em_Val_await(
-        em_Val_call(Notification, "requestPermission", 0)
+        em_Val_call(Notification, "requestPermission")
     );
     console_log(status);
 
