@@ -11,10 +11,6 @@ add_library(emlite)
 set(EMLITE_HEADERS)
 set(EMLITE_SOURCES)
 
-if(EMSCRIPTEN AND NOT EMSCRIPTEN_STANDALONE_WASM)
-    list(APPEND EMLITE_SOURCES src/emlite_emscripten.c)
-endif()
-
 if (EMLITE_CLIB_ONLY)
     set(EMLITE_HEADERS
         include/emlite/emlite.h
@@ -40,6 +36,10 @@ else()
     )
     target_compile_features(emlite PUBLIC cxx_std_17)
     set_target_properties(emlite PROPERTIES LINKER_LANGUAGE CXX)
+endif()
+
+if(EMSCRIPTEN AND NOT EMSCRIPTEN_STANDALONE_WASM)
+    list(APPEND EMLITE_SOURCES src/emlite_emscripten.c)
 endif()
 
 target_sources(emlite 

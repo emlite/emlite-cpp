@@ -1,4 +1,4 @@
-#include <emlite/emlite.h>
+#include <emlite/detail/externs.h>
 
 // EM_JS and _EM_JS macros copied from
 // https://github.com/emscripten-core/emscripten/blob/main/system/include/emscripten/em_js.h
