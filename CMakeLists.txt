@@ -3,26 +3,43 @@ project(emlite VERSION 0.1.0 LANGUAGES C CXX)
 
 option(EMLITE_BUILD_EXAMPLES "Build examples" OFF)
 option(EMLITE_USE_DLMALLOC "Use dlmalloc for freestanding environments" OFF)
+option(EMLITE_CLIB_ONLY "Build only the emlite C library" OFF)
 option(EMSCRIPTEN_STANDALONE_WASM "Use emscripten's default js output" OFF)
 
 add_library(emlite)
 
-set(EMLITE_HEADERS
-    include/emlite/emlite.h
-    include/emlite/emlite.hpp
-    include/emlite/detail/externs.h
-    include/emlite/detail/func.hpp
-    include/emlite/detail/mem.hpp
-    include/emlite/detail/tiny_traits.hpp
-)
-
-set(EMLITE_SOURCES
-    src/emlite.c
-    src/emlite.cpp
-)
+set(EMLITE_HEADERS)
+set(EMLITE_SOURCES)
 
 if(EMSCRIPTEN AND NOT EMSCRIPTEN_STANDALONE_WASM)
     list(APPEND EMLITE_SOURCES src/emlite_emscripten.c)
+endif()
+
+if (EMLITE_CLIB_ONLY)
+    set(EMLITE_HEADERS
+        include/emlite/emlite.h
+        include/emlite/detail/externs.h
+    )
+    set(EMLITE_SOURCES
+        src/emlite.c
+    )
+    target_compile_features(emlite PUBLIC c_std_11)
+    set_target_properties(emlite PROPERTIES LINKER_LANGUAGE C)
+else()
+    set(EMLITE_HEADERS
+        include/emlite/emlite.h
+        include/emlite/emlite.hpp
+        include/emlite/detail/externs.h
+        include/emlite/detail/func.hpp
+        include/emlite/detail/mem.hpp
+        include/emlite/detail/tiny_traits.hpp
+    )
+    set(EMLITE_SOURCES
+        src/emlite.c
+        src/emlite.cpp
+    )
+    target_compile_features(emlite PUBLIC cxx_std_17)
+    set_target_properties(emlite PROPERTIES LINKER_LANGUAGE CXX)
 endif()
 
 target_sources(emlite 
@@ -33,8 +50,6 @@ target_sources(emlite
         BASE_DIRS ${CMAKE_CURRENT_LIST_DIR}/include
         FILES ${EMLITE_HEADERS}
 )
-
-target_compile_features(emlite PUBLIC cxx_std_17)
 
 set(DLMALLOC_LIB)
 if (EMLITE_USE_DLMALLOC)
@@ -81,3 +96,4 @@ install(EXPORT emliteTargets
 if (EMLITE_BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
+
