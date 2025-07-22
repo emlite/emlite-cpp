@@ -14,6 +14,10 @@ add_executable(console console.c)
 target_link_libraries(console PRIVATE emlite::emlite)
 set_target_properties(console PROPERTIES LINKER_LANGUAGE C SUFFIX ${DEFAULT_SUFFIX} LINK_FLAGS ${DEFAULT_LINK_FLAGS})
 
+add_executable(cbind cbind.c)
+target_link_libraries(cbind PRIVATE emlite::emlite)
+set_target_properties(cbind PROPERTIES LINKER_LANGUAGE C SUFFIX ${DEFAULT_SUFFIX} LINK_FLAGS ${DEFAULT_LINK_FLAGS})
+
 add_executable(eval eval.cpp)
 target_link_libraries(eval PRIVATE emlite::emlite)
 set_target_properties(eval PROPERTIES LINKER_LANGUAGE CXX SUFFIX ${DEFAULT_SUFFIX} LINK_FLAGS ${DEFAULT_LINK_FLAGS})

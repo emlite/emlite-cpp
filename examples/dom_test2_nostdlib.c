@@ -31,7 +31,7 @@ EMLITE_USED int add(int a, int b) {
         btn, em_Val_from("textContent"), em_Val_from("Click Me!")
     );
 
-    em_Val_call(body, "appendChild", 1, btn);
+    em_Val_call(body, "appendChild", btn);
     em_Val_call(
         btn,
         "addEventListener",

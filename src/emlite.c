@@ -474,7 +474,7 @@ em_Val em_Val_invoke_(em_Val self, int n, ...) {
 em_Val emlite_eval(const char *src) {
     em_Val eval   = em_Val_global("eval");
     em_Val js_src = em_Val_from_string(src);
-    em_Val ret    = em_Val_invoke(eval, 1, js_src);
+    em_Val ret    = em_Val_invoke(eval, js_src);
     em_Val_delete(js_src);
     em_Val_delete(eval);
     return ret;
