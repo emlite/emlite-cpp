@@ -5,14 +5,50 @@
 #define EMLITE_EVAL(x, ...)                                \
     emlite_eval_v(#x __VA_OPT__(, __VA_ARGS__))
 
-#define em_Val_from(x)                                                                                                                                         \
-    _Generic(((x)), double: em_Val_from_double, int: em_Val_from_int, char *: em_Val_from_string, const char *: em_Val_from_string, default: em_Val_from_val)( \
-        x                                                                                                                                                      \
+#define em_Val_from(x)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                \
+    _Generic((x), _Bool: em_Val_from_int, char: em_Val_from_int, signed char: em_Val_from_int, unsigned char: em_Val_from_int, short: em_Val_from_int, unsigned short: em_Val_from_int, int: em_Val_from_int, unsigned int: em_Val_from_int, long: em_Val_from_int, unsigned long: em_Val_from_int, long long: em_Val_from_int, unsigned long long: em_Val_from_int, float: em_Val_from_double, double: em_Val_from_double, long double: em_Val_from_double, char *: em_Val_from_string, const char *: em_Val_from_string, default: em_Val_from_val)( \
+        x                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             \
     )
 
-#define em_Val_as(TYPE, VAL)                                                                                                                 \
-    _Generic((TYPE)0, int: em_Val_as_int, bool: em_Val_as_bool, double: em_Val_as_double, char *: em_Val_as_string, default: em_Val_as_val)( \
-        VAL                                                                                                                                  \
+#define em_Val_as(TYPE, VAL)                               \
+    _Generic(                                              \
+        ((TYPE){0}),                                           \
+        _Bool: (!emlite_val_not(em_Val_as_handle(VAL))),   \
+        char: (char                                        \
+        )emlite_val_get_value_int(em_Val_as_handle(VAL)),  \
+        signed char: (signed char                          \
+        )emlite_val_get_value_int(em_Val_as_handle(VAL)),  \
+        unsigned char: (unsigned char                      \
+        )emlite_val_get_value_int(em_Val_as_handle(VAL)),  \
+        short: (short                                      \
+        )emlite_val_get_value_int(em_Val_as_handle(VAL)),  \
+        unsigned short: (unsigned short                    \
+        )emlite_val_get_value_int(em_Val_as_handle(VAL)),  \
+        int: (int                                          \
+        )emlite_val_get_value_int(em_Val_as_handle(VAL)),  \
+        unsigned int: (unsigned int                        \
+        )emlite_val_get_value_int(em_Val_as_handle(VAL)),  \
+        long: (long                                        \
+        )emlite_val_get_value_int(em_Val_as_handle(VAL)),  \
+        unsigned long: (unsigned long                      \
+        )emlite_val_get_value_int(em_Val_as_handle(VAL)),  \
+        long long: (long long                              \
+        )emlite_val_get_value_int(em_Val_as_handle(VAL)),  \
+        unsigned long long: (unsigned long long            \
+        )emlite_val_get_value_int(em_Val_as_handle(VAL)),  \
+        float: (float                                      \
+        )emlite_val_get_value_double(em_Val_as_handle(VAL) \
+        ),                                                 \
+        double: (double                                    \
+        )emlite_val_get_value_double(em_Val_as_handle(VAL) \
+        ),                                                 \
+        long double: (long double                          \
+        )emlite_val_get_value_double(em_Val_as_handle(VAL) \
+        ),                                                 \
+        char *: emlite_val_get_value_string(               \
+            em_Val_as_handle(VAL)                          \
+        ),                                                 \
+        default: *(TYPE *)&(em_Val){ em_Val_as_handle(VAL) } \
     )
 
 #define EM_NARG_(...)                                      \
@@ -54,7 +90,7 @@ em_Val em_Val_from_double(double i);
 /// Create an em_Val from a string @param i
 em_Val em_Val_from_string(const char *i);
 /// Create an em_Val from a val @param i
-em_Val em_Val_from_val(em_Val i);
+em_Val em_Val_from_val(void *i);
 /// Create an em_Val from a raw handle @param v
 em_Val em_Val_from_handle(Handle v);
 /// Gets a global object by name @param name
