@@ -2,7 +2,17 @@
 
 #include "detail/externs.h"
 
-extern void *operator new(size_t, void *place) noexcept;
+#if __has_include(<new>)
+#include <new>
+#define EMLITE_HAVE_STD_NEW 1
+#else
+#define EMLITE_HAVE_STD_NEW 0
+#endif
+
+#if !EMLITE_HAVE_STD_NEW
+extern "C++" void *
+operator new(std::size_t, void *) noexcept;
+#endif
 
 namespace emlite {
 
@@ -430,4 +440,3 @@ Val emlite_eval_cpp(const char *fmt, Args &&...args) {
 
 #define EMLITE_EVAL(x, ...)                                \
     emlite::emlite_eval_cpp(#x __VA_OPT__(, __VA_ARGS__))
-
