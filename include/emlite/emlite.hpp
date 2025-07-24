@@ -11,7 +11,7 @@
 
 #if !EMLITE_HAVE_STD_NEW
 extern "C++" void *
-operator new(std::size_t, void *) noexcept;
+operator new(size_t, void *) noexcept;
 #endif
 
 namespace emlite {
