@@ -12,7 +12,7 @@
 
 #define em_Val_as(TYPE, VAL)                               \
     _Generic(                                              \
-        ((TYPE){0}),                                           \
+        ((TYPE){0}),                                       \
         _Bool: (!emlite_val_not(em_Val_as_handle(VAL))),   \
         char: (char                                        \
         )emlite_val_get_value_int(em_Val_as_handle(VAL)),  \
@@ -48,7 +48,7 @@
         char *: emlite_val_get_value_string(               \
             em_Val_as_handle(VAL)                          \
         ),                                                 \
-        default: *(TYPE *)&(em_Val){ em_Val_as_handle(VAL) } \
+        default: *(TYPE *)&(em_Val){em_Val_as_handle(VAL)} \
     )
 
 #define EM_NARG_(...)                                      \
@@ -137,6 +137,14 @@ em_Val em_Val_await(em_Val self);
 bool em_Val_is_number(em_Val self);
 /// Checks whether the underlying type is a string
 bool em_Val_is_string(em_Val self);
+/// Checks whether the underlying type is a error
+bool em_Val_is_error(em_Val self);
+/// Checks whether the underlying type is a function
+bool em_Val_is_function(em_Val self);
+/// Checks whether the underlying type is a undefined
+bool em_Val_is_undefined(em_Val self);
+/// Checks whether the underlying type is a null
+bool em_Val_is_null(em_Val self);
 /// Checks whether @param self is an instanceof @param v
 bool em_Val_instanceof(em_Val self, em_Val v);
 bool em_Val_not(em_Val self);

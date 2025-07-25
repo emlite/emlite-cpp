@@ -1,8 +1,6 @@
 #include <emlite/emlite.h>
 
-int emlite_target(void) {
-    return 1027;
-}
+int emlite_target(void) { return 1027; }
 
 #if __has_include(<errno.h>)
 #include <errno.h>
@@ -38,9 +36,7 @@ EMLITE_USED void *emlite_malloc(size_t sz) {
 EMLITE_USED void *emlite_realloc(void *ptr, size_t sz) {
     return realloc(ptr, sz);
 }
-EMLITE_USED void emlite_free(void *ptr) {
-    free(ptr);
-}
+EMLITE_USED void emlite_free(void *ptr) { free(ptr); }
 #else
 void abort(void) { __builtin_unreachable(); }
 
@@ -277,7 +273,7 @@ em_Val em_Val_from_string(const char *s) {
 }
 
 em_Val em_Val_from_val(void *s) {
-    return (em_Val){.h = ((em_Val *)s)->h };
+    return (em_Val){.h = ((em_Val *)s)->h};
 }
 
 em_Val em_Val_from_handle(Handle v) {
@@ -285,18 +281,22 @@ em_Val em_Val_from_handle(Handle v) {
 }
 
 em_Val em_Val_global(const char *name) {
-    return em_Val_from_handle(
-        emlite_val_get(EMLITE_GLOBALTHIS, em_Val_from_string(name).h)
-    );
+    return em_Val_from_handle(emlite_val_get(
+        EMLITE_GLOBALTHIS, em_Val_from_string(name).h
+    ));
 }
 
 em_Val em_Val_global_this() {
     return em_Val_from_handle(EMLITE_GLOBALTHIS);
 }
 
-em_Val em_Val_null() { return em_Val_from_handle(EMLITE_NULL); }
+em_Val em_Val_null() {
+    return em_Val_from_handle(EMLITE_NULL);
+}
 
-em_Val em_Val_undefined() { return em_Val_from_handle(EMLITE_UNDEFINED); }
+em_Val em_Val_undefined() {
+    return em_Val_from_handle(EMLITE_UNDEFINED);
+}
 
 em_Val em_Val_object() {
     return em_Val_from_handle(emlite_val_new_object());
@@ -367,6 +367,24 @@ bool em_Val_is_string(em_Val self) {
     return emlite_val_is_string(self.h);
 }
 
+bool em_Val_is_error(em_Val self) {
+    return em_Val_instanceof(self, em_Val_global("Error"));
+}
+
+bool em_Val_is_function(em_Val self) {
+    return em_Val_instanceof(
+        self, em_Val_global("Function")
+    );
+}
+
+bool em_Val_is_undefined(em_Val self) {
+    return self.h == EMLITE_UNDEFINED;
+}
+
+bool em_Val_is_null(em_Val self) {
+    return self.h == EMLITE_NULL;
+}
+
 bool em_Val_instanceof(em_Val self, em_Val v) {
     return emlite_val_instanceof(self.h, v.h);
 }
@@ -407,7 +425,9 @@ int em_Val_as_int(em_Val self) {
     return emlite_val_get_value_int(self.h);
 }
 
-bool em_Val_as_bool(em_Val self) { return !emlite_val_not(self.h); }
+bool em_Val_as_bool(em_Val self) {
+    return !emlite_val_not(self.h);
+}
 
 double em_Val_as_double(em_Val self) {
     return emlite_val_get_value_double(self.h);
