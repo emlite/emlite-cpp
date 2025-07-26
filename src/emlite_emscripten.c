@@ -89,7 +89,9 @@ EM_JS(Handle, emlite_val_new_object_impl, (), {
 
 EM_JS(char *, emlite_val_typeof_impl, (Handle n), {
     if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table();
-    const str = (typeof EMLITE_VALMAP.get(n)) + "\0";
+    const val = EMLITE_VALMAP.get(n);
+    if (!val || typeof val !== 'string') return 0;
+    const str = val + "\0";
     const len = Module.lengthBytesUTF8(str);
     const buf = _malloc(len);
     stringToUTF8(str, buf, len);
