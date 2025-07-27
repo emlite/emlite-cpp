@@ -75,6 +75,24 @@ HANDLE_MAP.add(console);
 HANDLE_MAP.add(Symbol("_EMLITE_RESERVED_"));
 globalThis.EMLITE_VALMAP = HANDLE_MAP;
 globalThis.EMLITE_INITIALIZED = true;
+
+
+function normalizeThrown(e) {
+  if (e instanceof Error) return e;
+  try {
+    const err = new Error(String(e));
+    if (e && typeof e === "object") {
+      if ("name" in e) err.name = e.name;
+      if ("code" in e) err.code = e.code;
+    }
+    err.cause = e;
+    return err;
+  } catch {
+    return new Error("Unknown JS exception");
+  }
+}
+
+globalThis.normalizeThrown = normalizeThrown;
 });
 
 EM_JS(Handle, emlite_val_new_array_impl, (), {
@@ -89,9 +107,7 @@ EM_JS(Handle, emlite_val_new_object_impl, (), {
 
 EM_JS(char *, emlite_val_typeof_impl, (Handle n), {
     if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table();
-    const val = EMLITE_VALMAP.get(n);
-    if (!val || typeof val !== 'string') return 0;
-    const str = val + "\0";
+    const str = (typeof EMLITE_VALMAP.get(n)) + "\0";
     const len = Module.lengthBytesUTF8(str);
     const buf = _malloc(len);
     stringToUTF8(str, buf, len);
@@ -108,9 +124,13 @@ EM_JS(
         const args   = EMLITE_VALMAP.get(argv).map(
             h => EMLITE_VALMAP.get(h)
         );
-        return EMLITE_VALMAP.add(
-            Reflect.construct(target, args)
-        );
+        let ret;
+        try {
+          ret = Reflect.construct(target, args);
+        } catch (e) {
+          ret = normalizeThrown(e);
+        }
+        return EMLITE_VALMAP.add(ret);
     }
 );
 
@@ -124,15 +144,19 @@ EM_JS(
         const args   = EMLITE_VALMAP.get(argv).map(
             h => EMLITE_VALMAP.get(h)
         );
-        return EMLITE_VALMAP.add(
-            Reflect.apply(target, undefined, args)
-        );
+        let ret;
+        try {
+          ret = Reflect.apply(target, undefined, args);
+        } catch (e) {
+          ret = normalizeThrown(e);
+        }
+        return EMLITE_VALMAP.add(ret);
     }
 );
 
 EM_JS(void, emlite_val_push_impl, (Handle arr, Handle v), {
     if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table();
-    EMLITE_VALMAP.get(arr).push(v);
+    try { EMLITE_VALMAP.get(arr).push(v); } catch {}
 });
 
 EM_JS(Handle, emlite_val_make_int_impl, (int t), {
@@ -154,17 +178,19 @@ EM_JS(
 
 EM_JS(int, emlite_val_get_value_int_impl, (Handle n), {
     if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table();
-    return EMLITE_VALMAP.get(n);
+    return EMLITE_VALMAP.get(n) | 0;
 });
 
 EM_JS(double, emlite_val_get_value_double_impl, (Handle n), {
     if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table();
-    return EMLITE_VALMAP.get(n);
+    return Number(EMLITE_VALMAP.get(n));
 });
 
 EM_JS(char *, emlite_val_get_value_string_impl, (Handle n), {
     if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table();
-    const str = EMLITE_VALMAP.get(n) + "\0";
+    const val = EMLITE_VALMAP.get(n);
+    if (!val || !(typeof val === "string" || val instanceof String)) return 0;
+    const str = val + "\0";
     const len = Module.lengthBytesUTF8(str);
     const buf = _malloc(len);
     stringToUTF8(str, buf, len);
@@ -183,19 +209,23 @@ EM_JS(void, emlite_val_set_impl, (Handle n, Handle idx, Handle val), {
 
 EM_JS(bool, emlite_val_has_impl, (Handle n, Handle idx), {
     if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table();
-    return Reflect.has(EMLITE_VALMAP.get(n), EMLITE_VALMAP.get(idx));
+    try {
+        return Reflect.has(EMLITE_VALMAP.get(n), EMLITE_VALMAP.get(idx));
+    } catch {
+        return false;
+    }
 });
 
 EM_JS(bool, emlite_val_is_string_impl, (Handle h), {
     if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table();
     const obj            = EMLITE_VALMAP.get(h);
-    return typeof obj === "string" || obj instanceof
-        String;
+    return typeof obj === "string" || obj instanceof String;
 });
 
 EM_JS(bool, emlite_val_is_number_impl, (Handle arg), {
     if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table();
-    return typeof EMLITE_VALMAP.get(arg) === "number";
+    const obj = EMLITE_VALMAP.get(arg);
+    return typeof obj === "number" || obj instanceof Number;
 });
 
 EM_JS(bool, emlite_val_not_impl, (Handle h), {
@@ -253,9 +283,13 @@ EM_JS(
         const args   = EMLITE_VALMAP.get(argv).map(
             h => EMLITE_VALMAP.get(h)
         );
-        return EMLITE_VALMAP.add(
-            Reflect.apply(target[method], target, args)
-        );
+        let ret;
+        try {
+          ret = Reflect.apply(target[method], target, args);
+        } catch (e) {
+          ret = normalizeThrown(e);
+        }
+        return EMLITE_VALMAP.add(ret);
     }
 );
 
@@ -278,7 +312,13 @@ EM_JS(Handle, emlite_val_make_callback_impl, (Handle fidx, Handle data), {
     const jsFn = (... args) => {
         const arrHandle =
             EMLITE_VALMAP.add(args.map(v => v));
-        return Module.wasmTable.get(fidx)(arrHandle, data);
+        let ret;
+        try {
+            ret = Module.wasmTable.get(fidx)(arrHandle, data);
+        } catch (e) {
+            ret = normalizeThrown(e);
+        }
+        return ret;
     };
     return EMLITE_VALMAP.add(jsFn);
 });
@@ -291,7 +331,7 @@ EM_JS(void, emlite_print_object_map_impl, (), {
 EM_JS(void, emlite_reset_object_map_impl, (), {
     if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table();
     for (const h of[... EMLITE_VALMAP._h2e.keys()]) {
-        if (h > 5) {
+        if (h > 6) {
             const value = EMLITE_VALMAP._h2e.get(h).value;
 
             EMLITE_VALMAP._h2e.delete(h);
@@ -307,7 +347,7 @@ EM_JS(void, emlite_val_inc_ref_impl, (Handle h), {
 
 EM_JS(void, emlite_val_dec_ref_impl, (Handle h), {
     if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table();
-    if (h > 5) EMLITE_VALMAP.decRef(h);
+    if (h > 6) EMLITE_VALMAP.decRef(h);
 });
 // clang-format on
 EMLITE_USED
