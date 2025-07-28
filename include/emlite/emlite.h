@@ -186,6 +186,14 @@ em_Val em_Val_as_val(em_Val self);
 /// of the underlying object.
 /// @param n the number of arguments
 /// @returns an em_Val object which could be a js undefined
+em_Val em_Val_call_v(
+    em_Val self, const char *method, int n, va_list ap
+);
+
+/// Calls a javascript method @param method
+/// of the underlying object.
+/// @param n the number of arguments
+/// @returns an em_Val object which could be a js undefined
 em_Val em_Val_call_(
     em_Val self, const char *method, int n, ...
 );
@@ -193,7 +201,17 @@ em_Val em_Val_call_(
 /// Calls a javascript object's constructor
 /// @param n the number of arguments
 /// @returns an em_Val object of the type of the caller
+em_Val em_Val_new_v(em_Val self, int n, va_list ap);
+
+/// Calls a javascript object's constructor
+/// @param n the number of arguments
+/// @returns an em_Val object of the type of the caller
 em_Val em_Val_new_(em_Val self, int n, ...);
+
+/// Invokes the function object
+/// @param n the number of arguments
+/// @returns an em_Val object which could be a js undefined
+em_Val em_Val_invoke_v(em_Val self, int n, va_list ap);
 
 /// Invokes the function object
 /// @param n the number of arguments

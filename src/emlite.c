@@ -441,29 +441,39 @@ em_Val em_Val_as_val(em_Val self) {
     return em_Val_from_val(&self);
 }
 
-em_Val em_Val_call_(
-    em_Val self, const char *method, int n, ...
+em_Val em_Val_call_v(
+    em_Val self, const char *method, int n, va_list ap
 ) {
     Handle arr = emlite_val_new_array();
     va_list args;
-    va_start(args, n);
-    for (int i = 0; i < n; i++) {
+    va_copy(args, ap);
+    for (int i = 0; i < n; ++i) {
         em_Val c = va_arg(args, em_Val);
         emlite_val_push(arr, em_Val_as_handle(c));
     }
     va_end(args);
-    em_Val ret = em_Val_from_handle(emlite_val_obj_call(
-        self.h, method, strlen(method), arr
-    ));
+    em_Val ret = em_Val_from_handle(
+        emlite_val_obj_call(self.h, method, (int)strlen(method), arr)
+    );
     emlite_val_dec_ref(arr);
     return ret;
 }
 
-em_Val em_Val_new_(em_Val self, int n, ...) {
+em_Val em_Val_call_(
+    em_Val self, const char *method, int n, ...
+) {
+    va_list ap;
+    va_start(ap, n);
+    em_Val ret = em_Val_call_v(self, method, n, ap);
+    va_end(ap);
+    return ret;
+}
+
+em_Val em_Val_new_v(em_Val self, int n, va_list ap) {
     Handle arr = emlite_val_new_array();
     va_list args;
-    va_start(args, n);
-    for (int i = 0; i < n; i++) {
+    va_copy(args, ap);
+    for (int i = 0; i < n; ++i) {
         em_Val c = va_arg(args, em_Val);
         emlite_val_push(arr, em_Val_as_handle(c));
     }
@@ -475,19 +485,35 @@ em_Val em_Val_new_(em_Val self, int n, ...) {
     return ret;
 }
 
-em_Val em_Val_invoke_(em_Val self, int n, ...) {
+em_Val em_Val_new_(em_Val self, int n, ...) {
+    va_list ap;
+    va_start(ap, n);
+    em_Val ret = em_Val_new_v(self, n, ap);
+    va_end(ap);
+    return ret;
+}
+
+em_Val em_Val_invoke_v(em_Val self, int n, va_list ap) {
     Handle arr = emlite_val_new_array();
     va_list args;
-    va_start(args, n);
-    for (int i = 0; i < n; i++) {
+    va_copy(args, ap);
+    for (int i = 0; i < n; ++i) {
         em_Val c = va_arg(args, em_Val);
         emlite_val_push(arr, em_Val_as_handle(c));
     }
     va_end(args);
-    em_Val ret =
-        em_Val_from_handle(emlite_val_func_call(self.h, arr)
-        );
+    em_Val ret = em_Val_from_handle(
+        emlite_val_func_call(self.h, arr)
+    );
     emlite_val_dec_ref(arr);
+    return ret;
+}
+
+em_Val em_Val_invoke_(em_Val self, int n, ...) {
+    va_list ap;
+    va_start(ap, n);
+    em_Val ret = em_Val_invoke_v(self, n, ap);
+    va_end(ap);
     return ret;
 }
 
