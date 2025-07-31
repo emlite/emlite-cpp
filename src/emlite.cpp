@@ -51,7 +51,7 @@ Val::~Val() {
         emlite_val_dec_ref(v_);
 }
 
-Val Val::clone() const noexcept { return Val(*this); }
+Val Val::clone() const noexcept { return *this; }
 
 Val Val::take_ownership(Handle h) noexcept {
     Val v;
@@ -88,13 +88,14 @@ Val Val::dup(Handle h) noexcept {
 }
 
 Handle Val::release(Val &&v) noexcept {
-    auto temp = v.v_;
-    v.v_      = 0;
+    auto v_ = detail::move(v);
+    auto temp = v_.v_;
+    v_.v_      = 0;
     return temp;
 }
 
 void Val::delete_(Val &&v) noexcept {
-    emlite_val_dec_ref(v.v_);
+    emlite_val_dec_ref(detail::move(v).v_);
 }
 
 void Val::throw_(const Val &v) {
@@ -115,7 +116,7 @@ bool Val::has_own_property(const char *prop
 }
 
 Val Val::make_fn(Callback f, const Val &data) noexcept {
-    uint32_t fidx =
+    auto fidx =
         static_cast<uint32_t>(reinterpret_cast<uintptr_t>(f)
         );
     return Val::take_ownership(emlite_val_make_callback(
@@ -138,7 +139,7 @@ Val Val::make_fn(Closure<Val(Params)> &&f) noexcept {
             Val::release((Val &&)func0);
             return ret.as_handle();
         },
-        Val((uintptr_t) new Closure<Val(Params)>(f))
+        Val((uintptr_t) new Closure<Val(Params)>(detail::move(f)))
     );
 }
 

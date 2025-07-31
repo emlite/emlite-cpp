@@ -198,3 +198,8 @@ struct make_index_sequence_impl<0, I...> {
 template <size_t N>
 using make_index_sequence =
     typename make_index_sequence_impl<N>::type;
+
+template <class T>
+constexpr remove_reference_t<T>&& move(T&& t) noexcept {
+    return static_cast<remove_reference_t<T>&&>(t);
+}

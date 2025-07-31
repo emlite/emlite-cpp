@@ -28,7 +28,7 @@ template <
     typename P>
 constexpr decltype(auto)
 call_with_params_impl(F &&f, P &&p, index_sequence<I...>) {
-    return forward<F>(f)(p.vals[I].template as<Args>()...);
+    return forward<F>(f)(forward<P>(p).vals[I].template as<Args>()...);
 }
 
 template <typename... Args, typename F, typename P>
@@ -74,7 +74,7 @@ class Val {
 
     /// Clone Val into a new val, this increments the
     /// refcount
-    Val clone() const noexcept;
+    [[nodiscard]] Val clone() const noexcept;
 
     /// Creates a new Val object from a raw handle.
     /// @param v is a raw javascript handle
@@ -108,7 +108,7 @@ class Val {
             if constexpr (!detail::is_same_v<void, Ret>)
                 return Val(
                     detail::call_with_params<Args...>(
-                        (Closure<Ret(Args...)> &&)f, p
+                        detail::forward<F>(f), p
                     )
                 );
             else {
@@ -161,7 +161,7 @@ class Val {
     /// Get the Val object's property
     /// @param prop the property name
     template <typename T>
-    Val get(T &&prop) const {
+    [[nodiscard]] Val get(T &&prop) const {
         return Val::take_ownership(emlite_val_get(
             v_, Val(detail::forward<T>(prop)).as_handle()
         ));
@@ -198,7 +198,7 @@ class Val {
     /// @param idx at the specified index
     template <typename T>
     Val operator[](T &&idx) const {
-        return get(idx);
+        return get(detail::forward<T>(idx));
     }
     /// Awaits the function object
     [[nodiscard]] Val await() const;
