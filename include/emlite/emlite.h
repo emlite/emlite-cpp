@@ -6,7 +6,7 @@
     emlite_eval_v(#x __VA_OPT__(, __VA_ARGS__))
 
 #define em_Val_from(x)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           \
-    _Generic((x), _Bool: em_Val_from_int, char: em_Val_from_int, signed char: em_Val_from_int, unsigned char: em_Val_from_uint, short: em_Val_from_int, unsigned short: em_Val_from_uint, int: em_Val_from_int, unsigned int: em_Val_from_uint, long: em_Val_from_int, unsigned long: em_Val_from_uint, long long: em_Val_from_bigint, unsigned long long: em_Val_from_biguint, float: em_Val_from_double, double: em_Val_from_double, long double: em_Val_from_double, char *: em_Val_from_string, const char *: em_Val_from_string, default: em_Val_from_val)( \
+    _Generic((x), _Bool: em_Val_from_bool, char: em_Val_from_int, signed char: em_Val_from_int, unsigned char: em_Val_from_uint, short: em_Val_from_int, unsigned short: em_Val_from_uint, int: em_Val_from_int, unsigned int: em_Val_from_uint, long: em_Val_from_int, unsigned long: em_Val_from_uint, long long: em_Val_from_bigint, unsigned long long: em_Val_from_biguint, float: em_Val_from_double, double: em_Val_from_double, long double: em_Val_from_double, char *: em_Val_from_string, const char *: em_Val_from_string, default: em_Val_from_val)( \
         x                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        \
     )
 
@@ -86,6 +86,8 @@ typedef struct {
 } em_Val;
 
 /// Create an em_Val from an integer value @param i
+em_Val em_Val_from_bool(bool i);
+/// Create an em_Val from an integer value @param i
 em_Val em_Val_from_int(int i);
 /// Create an em_Val from an unsigned integer value @param i
 em_Val em_Val_from_uint(unsigned int i);
@@ -143,6 +145,8 @@ em_Val em_Val_at(em_Val self, em_Val idx);
 /// Awaits the em_Val function object
 em_Val em_Val_await(em_Val self);
 /// Checks whether the underlying type is a number
+bool em_Val_is_bool(em_Val self);
+/// Checks whether the underlying type is a number
 bool em_Val_is_number(em_Val self);
 /// Checks whether the underlying type is a string
 bool em_Val_is_string(em_Val self);
@@ -173,7 +177,9 @@ bool em_Val_lt(em_Val self, em_Val other);
 /// Checks whether @param self is less than or equals @param
 /// other
 bool em_Val_lte(em_Val self, em_Val other);
-
+/// Returns the underlying bool representation of the js
+/// object
+bool em_Val_as_bool(em_Val self);
 /// Returns the underlying int representation of the js
 /// object
 int em_Val_as_int(em_Val self);

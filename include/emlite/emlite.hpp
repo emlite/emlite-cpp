@@ -150,7 +150,7 @@ class Val {
     template <typename T>
     static Handle make_integer_value(T value) noexcept {
         if constexpr (detail::is_same_v<T, bool>) {
-            return emlite_val_make_int(value ? 1 : 0);
+            return emlite_val_make_bool(value ? 1 : 0);
         } else if constexpr (sizeof(T) <= 4 &&
                              detail::is_signed_v<T>) {
             // int8_t, int16_t, int32_t, short, int (if
@@ -292,6 +292,8 @@ class Val {
     }
     /// Awaits the function object
     [[nodiscard]] Val await() const;
+    /// @returns bool if Val is a number
+    [[nodiscard]] bool is_bool() const noexcept;
     /// @returns bool if Val is a number
     [[nodiscard]] bool is_number() const noexcept;
     /// @returns bool if Val is a string

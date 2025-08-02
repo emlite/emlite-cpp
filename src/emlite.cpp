@@ -153,6 +153,10 @@ Val Val::await() const {
 }
 // clang-format on
 
+bool Val::is_bool() const noexcept {
+    return emlite_val_is_bool(v_);
+}
+
 bool Val::is_number() const noexcept {
     return emlite_val_is_number(v_);
 }

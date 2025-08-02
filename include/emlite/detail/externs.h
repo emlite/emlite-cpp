@@ -88,6 +88,9 @@ extern Handle emlite_val_func_call(
 /// Pushes a js object represented by @param v
 /// to array @param arr
 extern void emlite_val_push(Handle arr, Handle v);
+/// Creates a bool value on the js side
+/// @param value a boolean value
+extern Handle emlite_val_make_bool(bool value);
 /// Creates a 32-bit signed integer value on the js side
 /// @param value 32-bit signed integer (-2^31 to 2^31-1)
 extern Handle emlite_val_make_int(int value);
@@ -111,6 +114,8 @@ extern Handle emlite_val_make_double(double t);
 /// The created string requires deallocation on the caller
 /// side
 extern Handle emlite_val_make_str(const char *, size_t);
+/// @returns the underlying bool value
+extern bool emlite_val_get_value_bool(Handle);
 /// @returns the underlying 32-bit signed integer value
 extern int emlite_val_get_value_int(Handle);
 /// @returns the underlying 32-bit unsigned integer value
@@ -139,6 +144,8 @@ extern bool emlite_val_has(Handle, Handle);
 extern bool emlite_val_is_string(Handle);
 /// @returns whether the Handle is a number
 extern bool emlite_val_is_number(Handle);
+/// @returns whether the Handle is a bool
+extern bool emlite_val_is_bool(Handle);
 extern bool emlite_val_not(Handle);
 /// @returns whether a Handle is greater than another
 extern bool emlite_val_gt(Handle, Handle);

@@ -159,6 +159,11 @@ EM_JS(void, emlite_val_push_impl, (Handle arr, Handle v), {
     try { EMLITE_VALMAP.get(arr).push(v); } catch {}
 });
 
+EM_JS(Handle, emlite_val_make_bool_impl, (bool value), {
+    if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table();
+    return EMLITE_VALMAP.add(!!value);  // 32-bit signed: -2^31 to 2^31-1
+});
+
 EM_JS(Handle, emlite_val_make_int_impl, (int value), {
     if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table();
     return EMLITE_VALMAP.add(value | 0);  // 32-bit signed: -2^31 to 2^31-1
@@ -192,6 +197,11 @@ EM_JS(
     (const char *str, size_t len),
     { if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table(); return EMLITE_VALMAP.add(UTF8ToString(str, len)); }
 );
+
+EM_JS(bool, emlite_val_get_value_bool_impl, (Handle n), {
+    if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table();
+    return (EMLITE_VALMAP.get(n) ? 1 : 0);
+});
 
 EM_JS(int, emlite_val_get_value_int_impl, (Handle n), {
     if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table();
@@ -271,6 +281,12 @@ EM_JS(bool, emlite_val_is_number_impl, (Handle arg), {
     if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table();
     const obj = EMLITE_VALMAP.get(arg);
     return typeof obj === "number" || obj instanceof Number;
+});
+
+EM_JS(bool, emlite_val_is_bool_impl, (Handle h), {
+    if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table();
+    const v = EMLITE_VALMAP.get(h);
+    return ((typeof v === "boolean") || (v instanceof Boolean)) | 0;
 });
 
 EM_JS(bool, emlite_val_not_impl, (Handle h), {
@@ -428,6 +444,11 @@ void emlite_val_push(Handle arr, Handle v) {
 }
 
 EMLITE_USED
+Handle emlite_val_make_bool(bool value) {
+    return emlite_val_make_bool_impl(value);
+}
+
+EMLITE_USED
 Handle emlite_val_make_int(int value) {
     return emlite_val_make_int_impl(value);
 }
@@ -483,6 +504,11 @@ double emlite_val_get_value_double(Handle n) {
 }
 
 EMLITE_USED
+bool emlite_val_get_value_bool(Handle n) {
+    return emlite_val_get_value_bool_impl(n);
+}
+
+EMLITE_USED
 char *emlite_val_get_value_string(Handle n) {
     return emlite_val_get_value_string_impl(n);
 }
@@ -505,6 +531,11 @@ bool emlite_val_has(Handle n, Handle idx) {
 EMLITE_USED
 bool emlite_val_is_string(Handle h) {
     return emlite_val_is_string_impl(h);
+}
+
+EMLITE_USED
+bool emlite_val_is_bool(Handle h) {
+    return emlite_val_is_bool_impl(h);
 }
 
 EMLITE_USED

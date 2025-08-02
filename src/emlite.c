@@ -261,6 +261,10 @@ int snprintf(char *out, size_t n, const char *fmt, ...) {
 }
 #endif
 
+em_Val em_Val_from_bool(bool i) {
+    return (em_Val){.h = emlite_val_make_bool(i)};
+}
+
 em_Val em_Val_from_int(int i) {
     return (em_Val){.h = emlite_val_make_int(i)};
 }
@@ -369,6 +373,10 @@ em_Val em_Val_await(em_Val self) {
         "return EMLITE_VALMAP.toHandle(ret); })()",
         self.h
     );
+}
+
+bool em_Val_is_bool(em_Val self) {
+    return emlite_val_is_bool(self.h);
 }
 
 bool em_Val_is_number(em_Val self) {
