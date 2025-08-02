@@ -1,10 +1,11 @@
 #pragma once
 
 // these are freestanding headers
+#include <limits.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdarg.h>
 
 #ifndef EMLITE_USED
 #define EMLITE_USED                                        \
@@ -22,7 +23,6 @@
 #define EMLITE_EXPORT(NAME)                                \
     __attribute__((export_name(#NAME)))
 #endif
-
 
 /// A javascript raw handle
 typedef uint32_t Handle;
@@ -43,7 +43,6 @@ enum EMLITE_PREDEFINED_HANDLES {
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 int snprintf(char *out, size_t n, const char *fmt, ...);
 int vsnprintf(
@@ -89,9 +88,22 @@ extern Handle emlite_val_func_call(
 /// Pushes a js object represented by @param v
 /// to array @param arr
 extern void emlite_val_push(Handle arr, Handle v);
-/// Creates an integer value on the js side and returns its
-/// handle
-extern Handle emlite_val_make_int(int t);
+/// Creates a 32-bit signed integer value on the js side
+/// @param value 32-bit signed integer (-2^31 to 2^31-1)
+extern Handle emlite_val_make_int(int value);
+/// Creates a 32-bit unsigned integer value on the js side
+/// @param value 32-bit unsigned integer (0 to 2^32-1)
+extern Handle emlite_val_make_uint(unsigned int value);
+/// Creates a 64-bit signed integer value using BigInt on
+/// the js side
+/// @param value 64-bit signed integer (full range)
+extern Handle emlite_val_make_bigint(long long value);
+/// Creates a 64-bit unsigned integer value using BigInt on
+/// the js side
+/// @param value 64-bit unsigned integer (full range)
+extern Handle emlite_val_make_biguint(
+    unsigned long long value
+);
 /// Creates a double value on the js side and returns its
 /// handle
 extern Handle emlite_val_make_double(double t);
@@ -99,11 +111,20 @@ extern Handle emlite_val_make_double(double t);
 /// The created string requires deallocation on the caller
 /// side
 extern Handle emlite_val_make_str(const char *, size_t);
-/// @returns the underlying integer value of the js object
-/// represted by a Handle
+/// @returns the underlying 32-bit signed integer value
 extern int emlite_val_get_value_int(Handle);
+/// @returns the underlying 32-bit unsigned integer value
+extern unsigned int emlite_val_get_value_uint(Handle);
+/// @returns the underlying 64-bit signed integer value
+/// (from BigInt)
+extern long long emlite_val_get_value_bigint(Handle);
+/// @returns the underlying 64-bit unsigned integer value
+/// (from BigInt)
+extern unsigned long long emlite_val_get_value_biguint(
+    Handle
+);
 /// @returns the underlying double value of the js object
-/// represted by a Handle
+/// represented by a Handle
 extern double emlite_val_get_value_double(Handle);
 /// @returns the underlying string value of the js object
 /// represted by a Handle

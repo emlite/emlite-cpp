@@ -10,8 +10,7 @@
 #endif
 
 #if !EMLITE_HAVE_STD_NEW
-extern "C++" void *
-operator new(size_t, void *) noexcept;
+extern "C++" void *operator new(size_t, void *) noexcept;
 #endif
 
 namespace emlite {
@@ -28,7 +27,9 @@ template <
     typename P>
 constexpr decltype(auto)
 call_with_params_impl(F &&f, P &&p, index_sequence<I...>) {
-    return forward<F>(f)(forward<P>(p).vals[I].template as<Args>()...);
+    return forward<F>(f)(
+        forward<P>(p).vals[I].template as<Args>()...
+    );
 }
 
 template <typename... Args, typename F, typename P>
@@ -137,10 +138,93 @@ class Val {
     /// @tparam T any numeric value which conforms to
     /// is_integral or is_floating_point or a string or has
     /// a `T::as_handle()` method
+  private:
+    /// Template helper to dispatch integer types to
+    /// appropriate creation functions
+    template <typename T>
+    static Handle make_integer_value(T value) noexcept {
+        if constexpr (detail::is_same_v<T, bool>) {
+            return emlite_val_make_int(value ? 1 : 0);
+        } else if constexpr (sizeof(T) <= 4 &&
+                             detail::is_signed_v<T>) {
+            // int8_t, int16_t, int32_t, short, int (if
+            // 32-bit), signed char
+            return emlite_val_make_int(
+                static_cast<int>(value)
+            );
+        } else if constexpr (sizeof(T) <= 4 &&
+                             !detail::is_signed_v<T>) {
+            // uint8_t, uint16_t, uint32_t, unsigned short,
+            // unsigned int (if 32-bit), unsigned char
+            return emlite_val_make_uint(
+                static_cast<unsigned int>(value)
+            );
+        } else if constexpr (sizeof(T) == 8 &&
+                             detail::is_signed_v<T>) {
+            // int64_t, long long, long (if 64-bit)
+            return emlite_val_make_bigint(
+                static_cast<long long>(value)
+            );
+        } else if constexpr (sizeof(T) == 8 &&
+                             !detail::is_signed_v<T>) {
+            // uint64_t, unsigned long long, size_t (if
+            // 64-bit)
+            return emlite_val_make_biguint(
+                static_cast<unsigned long long>(value)
+            );
+        } else {
+            // Fallback for unusual integer types
+            return emlite_val_make_int(
+                static_cast<int>(value)
+            );
+        }
+    }
+
+    /// Template helper to dispatch integer types to
+    /// appropriate getter functions
+    template <typename T>
+    T get_integer_value(Handle h) const noexcept {
+        if constexpr (detail::is_same_v<T, bool>) {
+            return !emlite_val_not(h);
+        } else if constexpr (sizeof(T) <= 4 &&
+                             detail::is_signed_v<T>) {
+            // int8_t, int16_t, int32_t, short, int (if
+            // 32-bit), signed char
+            return static_cast<T>(emlite_val_get_value_int(h
+            ));
+        } else if constexpr (sizeof(T) <= 4 &&
+                             !detail::is_signed_v<T>) {
+            // uint8_t, uint16_t, uint32_t, unsigned short,
+            // unsigned int (if 32-bit), unsigned char
+            return static_cast<T>(
+                emlite_val_get_value_uint(h)
+            );
+        } else if constexpr (sizeof(T) == 8 &&
+                             detail::is_signed_v<T>) {
+            // int64_t, long long, long (if 64-bit)
+            return static_cast<T>(
+                emlite_val_get_value_bigint(h)
+            );
+        } else if constexpr (sizeof(T) == 8 &&
+                             !detail::is_signed_v<T>) {
+            // uint64_t, unsigned long long, size_t (if
+            // 64-bit)
+            return static_cast<T>(
+                emlite_val_get_value_biguint(h)
+            );
+        } else {
+            // Fallback for unusual integer types
+            return static_cast<T>(emlite_val_get_value_int(h
+            ));
+        }
+    }
+
+  public:
     template <typename T>
     explicit Val(T v) noexcept : v_(0) {
         if constexpr (detail::is_integral_v<T>) {
-            v_ = emlite_val_make_int(v);
+            v_ = make_integer_value(v
+            ); // No overflow, preserves signedness
         } else if constexpr (detail::is_floating_point_v<
                                  T>) {
             v_ = emlite_val_make_double(v);
@@ -392,13 +476,10 @@ Val Val::operator()(Args &&...vals) const {
 template <typename T>
 T Val::as() const noexcept {
     if constexpr (detail::is_integral_v<T>) {
-        if constexpr (detail::is_same_v<T, bool>) {
-            return !emlite_val_not(v_);
-        } else {
-            return emlite_val_get_value_int(v_);
-        }
+        return get_integer_value<T>(v_
+        ); // Use type-specific getters
     } else if constexpr (detail::is_floating_point_v<T>)
-        return emlite_val_get_value_int(v_);
+        return emlite_val_get_value_double(v_);
     else if constexpr (detail::is_same_v<T, Uniq<char[]>>)
         return Uniq<char[]>(emlite_val_get_value_string(v_)
         );

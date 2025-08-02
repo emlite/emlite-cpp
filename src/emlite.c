@@ -1,6 +1,6 @@
 #include <emlite/emlite.h>
 
-int emlite_target(void) { return 1030; }
+int emlite_target(void) { return 1031; }
 
 #if __has_include(<errno.h>)
 #include <errno.h>
@@ -265,6 +265,18 @@ em_Val em_Val_from_int(int i) {
     return (em_Val){.h = emlite_val_make_int(i)};
 }
 
+em_Val em_Val_from_uint(unsigned int i) {
+    return (em_Val){.h = emlite_val_make_uint(i)};
+}
+
+em_Val em_Val_from_bigint(long long i) {
+    return (em_Val){.h = emlite_val_make_bigint(i)};
+}
+
+em_Val em_Val_from_biguint(unsigned long long i) {
+    return (em_Val){.h = emlite_val_make_biguint(i)};
+}
+
 em_Val em_Val_from_double(double i) {
     return (em_Val){.h = emlite_val_make_double(i)};
 }
@@ -425,6 +437,18 @@ int em_Val_as_int(em_Val self) {
     return emlite_val_get_value_int(self.h);
 }
 
+unsigned int em_Val_as_uint(em_Val self) {
+    return emlite_val_get_value_uint(self.h);
+}
+
+long long em_Val_as_bigint(em_Val self) {
+    return emlite_val_get_value_bigint(self.h);
+}
+
+unsigned long long em_Val_as_biguint(em_Val self) {
+    return emlite_val_get_value_biguint(self.h);
+}
+
 bool em_Val_as_bool(em_Val self) {
     return !emlite_val_not(self.h);
 }
@@ -452,9 +476,9 @@ em_Val em_Val_call_v(
         emlite_val_push(arr, em_Val_as_handle(c));
     }
     va_end(args);
-    em_Val ret = em_Val_from_handle(
-        emlite_val_obj_call(self.h, method, (int)strlen(method), arr)
-    );
+    em_Val ret = em_Val_from_handle(emlite_val_obj_call(
+        self.h, method, (int)strlen(method), arr
+    ));
     emlite_val_dec_ref(arr);
     return ret;
 }
@@ -502,9 +526,9 @@ em_Val em_Val_invoke_v(em_Val self, int n, va_list ap) {
         emlite_val_push(arr, em_Val_as_handle(c));
     }
     va_end(args);
-    em_Val ret = em_Val_from_handle(
-        emlite_val_func_call(self.h, arr)
-    );
+    em_Val ret =
+        em_Val_from_handle(emlite_val_func_call(self.h, arr)
+        );
     emlite_val_dec_ref(arr);
     return ret;
 }

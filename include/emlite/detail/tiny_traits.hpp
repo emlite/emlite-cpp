@@ -97,10 +97,30 @@ template <typename T>
 constexpr bool is_floating_point_v =
     is_floating_point<T>::value;
 
+template <typename T>
+struct is_signed {
+    static constexpr bool value = false;
+};
+
+template <typename T>
+constexpr bool is_signed_v = is_signed<T>::value;
+
 #define IS_INTEGRAL(x)                                     \
     template <>                                            \
     struct is_integral<x> {                                \
         static constexpr bool value = true;                \
+    };
+
+#define IS_SIGNED(x)                                       \
+    template <>                                            \
+    struct is_signed<x> {                                  \
+        static constexpr bool value = true;                \
+    };
+
+#define IS_UNSIGNED(x)                                     \
+    template <>                                            \
+    struct is_signed<x> {                                  \
+        static constexpr bool value = false;               \
     };
 
 #define IS_FLOATING(x)                                     \
@@ -124,6 +144,25 @@ IS_INTEGRAL(long)
 IS_INTEGRAL(unsigned long)
 IS_INTEGRAL(long long)
 IS_INTEGRAL(unsigned long long)
+
+// Signed/unsigned type traits
+IS_SIGNED(signed char)
+IS_SIGNED(short)
+IS_SIGNED(int)
+IS_SIGNED(long)
+IS_SIGNED(long long)
+IS_UNSIGNED(bool)
+IS_UNSIGNED(char
+) // char signedness is implementation-defined, assuming
+  // unsigned
+IS_UNSIGNED(unsigned char)
+IS_UNSIGNED(wchar_t) // Usually unsigned
+IS_UNSIGNED(char16_t)
+IS_UNSIGNED(char32_t)
+IS_UNSIGNED(unsigned short)
+IS_UNSIGNED(unsigned int)
+IS_UNSIGNED(unsigned long)
+IS_UNSIGNED(unsigned long long)
 
 IS_FLOATING(float)
 IS_FLOATING(double)
@@ -151,7 +190,7 @@ template <class T>
 typename remove_reference<T>::type &&declval() noexcept;
 
 template <class, class>
-struct is_convertible; 
+struct is_convertible;
 
 namespace detail {
 template <class F, class T>
@@ -200,6 +239,6 @@ using make_index_sequence =
     typename make_index_sequence_impl<N>::type;
 
 template <class T>
-constexpr remove_reference_t<T>&& move(T&& t) noexcept {
-    return static_cast<remove_reference_t<T>&&>(t);
+constexpr remove_reference_t<T> &&move(T &&t) noexcept {
+    return static_cast<remove_reference_t<T> &&>(t);
 }

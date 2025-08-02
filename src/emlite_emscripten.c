@@ -159,9 +159,26 @@ EM_JS(void, emlite_val_push_impl, (Handle arr, Handle v), {
     try { EMLITE_VALMAP.get(arr).push(v); } catch {}
 });
 
-EM_JS(Handle, emlite_val_make_int_impl, (int t), {
+EM_JS(Handle, emlite_val_make_int_impl, (int value), {
     if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table();
-    return EMLITE_VALMAP.add(t | 0);
+    return EMLITE_VALMAP.add(value | 0);  // 32-bit signed: -2^31 to 2^31-1
+});
+
+EM_JS(Handle, emlite_val_make_uint_impl, (unsigned int value), {
+    if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table();
+    return EMLITE_VALMAP.add(value >>> 0);  // 32-bit unsigned: 0 to 2^32-1
+});
+
+EM_JS(Handle, emlite_val_make_bigint_impl, (long long value), {
+    if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table();
+    return EMLITE_VALMAP.add(BigInt(value));  // 64-bit signed BigInt
+});
+
+EM_JS(Handle, emlite_val_make_biguint_impl, (unsigned long long value), {
+    if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table();
+    let x = BigInt(value); // may be negative due to signed i64 view
+    if (x < 0n) x += 1n << 64n; // normalize to [0, 2^64-1]
+    return EMLITE_VALMAP.add(x);  // 64-bit unsigned BigInt
 });
 
 EM_JS(Handle, emlite_val_make_double_impl, (double t), {
@@ -178,7 +195,35 @@ EM_JS(
 
 EM_JS(int, emlite_val_get_value_int_impl, (Handle n), {
     if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table();
-    return EMLITE_VALMAP.get(n) | 0;
+    const val = EMLITE_VALMAP.get(n);
+    if (typeof val === 'bigint') {
+        return Number(val) | 0;  // Convert BigInt to 32-bit signed (may truncate)
+    }
+    return val | 0;  // 32-bit signed conversion
+});
+
+EM_JS(unsigned int, emlite_val_get_value_uint_impl, (Handle n), {
+    if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table();
+    const val = EMLITE_VALMAP.get(n);
+    if (typeof val === 'bigint') {
+        return Number(val) >>> 0;  // Convert BigInt to 32-bit unsigned (may truncate)
+    }
+    return val >>> 0;  // 32-bit unsigned conversion
+});
+
+EM_JS(long long, emlite_val_get_value_bigint_impl, (Handle h), {
+    if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table();
+    const v = EMLITE_VALMAP.get(h);
+    if (typeof v === "bigint") return v; // already BigInt
+    return BigInt(Math.trunc(Number(v))); // coerce number → BigInt
+});
+
+EM_JS(unsigned long long, emlite_val_get_value_biguint_impl, (Handle h), {
+    if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table();
+    const v = EMLITE_VALMAP.get(h);
+    if (typeof v === "bigint") return v >= 0n ? v : 0n; // clamp negative
+    const n = Math.trunc(Number(v));
+    return BigInt(n >= 0 ? n : 0); // clamp to unsigned
 });
 
 EM_JS(double, emlite_val_get_value_double_impl, (Handle n), {
@@ -383,8 +428,23 @@ void emlite_val_push(Handle arr, Handle v) {
 }
 
 EMLITE_USED
-Handle emlite_val_make_int(int t) {
-    return emlite_val_make_int_impl(t);
+Handle emlite_val_make_int(int value) {
+    return emlite_val_make_int_impl(value);
+}
+
+EMLITE_USED
+Handle emlite_val_make_uint(unsigned int value) {
+    return emlite_val_make_uint_impl(value);
+}
+
+EMLITE_USED
+Handle emlite_val_make_bigint(long long value) {
+    return emlite_val_make_bigint_impl(value);
+}
+
+EMLITE_USED
+Handle emlite_val_make_biguint(unsigned long long value) {
+    return emlite_val_make_biguint_impl(value);
 }
 
 EMLITE_USED
@@ -398,8 +458,23 @@ Handle emlite_val_make_str(const char *str, size_t len) {
 }
 
 EMLITE_USED
-int emlite_val_get_value_int (Handle n) {
+int emlite_val_get_value_int(Handle n) {
     return emlite_val_get_value_int_impl(n);
+}
+
+EMLITE_USED
+unsigned int emlite_val_get_value_uint(Handle n) {
+    return emlite_val_get_value_uint_impl(n);
+}
+
+EMLITE_USED
+long long emlite_val_get_value_bigint(Handle n) {
+    return emlite_val_get_value_bigint_impl(n);
+}
+
+EMLITE_USED
+unsigned long long emlite_val_get_value_biguint(Handle n) {
+    return emlite_val_get_value_biguint_impl(n);
 }
 
 EMLITE_USED

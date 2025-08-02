@@ -5,9 +5,9 @@
 #define EMLITE_EVAL(x, ...)                                \
     emlite_eval_v(#x __VA_OPT__(, __VA_ARGS__))
 
-#define em_Val_from(x)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                \
-    _Generic((x), _Bool: em_Val_from_int, char: em_Val_from_int, signed char: em_Val_from_int, unsigned char: em_Val_from_int, short: em_Val_from_int, unsigned short: em_Val_from_int, int: em_Val_from_int, unsigned int: em_Val_from_int, long: em_Val_from_int, unsigned long: em_Val_from_int, long long: em_Val_from_int, unsigned long long: em_Val_from_int, float: em_Val_from_double, double: em_Val_from_double, long double: em_Val_from_double, char *: em_Val_from_string, const char *: em_Val_from_string, default: em_Val_from_val)( \
-        x                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             \
+#define em_Val_from(x)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           \
+    _Generic((x), _Bool: em_Val_from_int, char: em_Val_from_int, signed char: em_Val_from_int, unsigned char: em_Val_from_uint, short: em_Val_from_int, unsigned short: em_Val_from_uint, int: em_Val_from_int, unsigned int: em_Val_from_uint, long: em_Val_from_int, unsigned long: em_Val_from_uint, long long: em_Val_from_bigint, unsigned long long: em_Val_from_biguint, float: em_Val_from_double, double: em_Val_from_double, long double: em_Val_from_double, char *: em_Val_from_string, const char *: em_Val_from_string, default: em_Val_from_val)( \
+        x                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        \
     )
 
 #define em_Val_as(TYPE, VAL)                               \
@@ -19,23 +19,25 @@
         signed char: (signed char                          \
         )emlite_val_get_value_int(em_Val_as_handle(VAL)),  \
         unsigned char: (unsigned char                      \
-        )emlite_val_get_value_int(em_Val_as_handle(VAL)),  \
+        )emlite_val_get_value_uint(em_Val_as_handle(VAL)), \
         short: (short                                      \
         )emlite_val_get_value_int(em_Val_as_handle(VAL)),  \
         unsigned short: (unsigned short                    \
-        )emlite_val_get_value_int(em_Val_as_handle(VAL)),  \
+        )emlite_val_get_value_uint(em_Val_as_handle(VAL)), \
         int: (int                                          \
         )emlite_val_get_value_int(em_Val_as_handle(VAL)),  \
         unsigned int: (unsigned int                        \
-        )emlite_val_get_value_int(em_Val_as_handle(VAL)),  \
+        )emlite_val_get_value_uint(em_Val_as_handle(VAL)), \
         long: (long                                        \
         )emlite_val_get_value_int(em_Val_as_handle(VAL)),  \
         unsigned long: (unsigned long                      \
-        )emlite_val_get_value_int(em_Val_as_handle(VAL)),  \
+        )emlite_val_get_value_uint(em_Val_as_handle(VAL)), \
         long long: (long long                              \
-        )emlite_val_get_value_int(em_Val_as_handle(VAL)),  \
+        )emlite_val_get_value_bigint(em_Val_as_handle(VAL) \
+        ),                                                 \
         unsigned long long: (unsigned long long            \
-        )emlite_val_get_value_int(em_Val_as_handle(VAL)),  \
+        )emlite_val_get_value_biguint(em_Val_as_handle(VAL \
+        )),                                                \
         float: (float                                      \
         )emlite_val_get_value_double(em_Val_as_handle(VAL) \
         ),                                                 \
@@ -85,6 +87,13 @@ typedef struct {
 
 /// Create an em_Val from an integer value @param i
 em_Val em_Val_from_int(int i);
+/// Create an em_Val from an unsigned integer value @param i
+em_Val em_Val_from_uint(unsigned int i);
+/// Create an em_Val from a big integer value @param i
+em_Val em_Val_from_bigint(long long i);
+/// Create an em_Val from a big unsigned integer value
+/// @param i
+em_Val em_Val_from_biguint(unsigned long long i);
 /// Create an em_Val from a double value @param i
 em_Val em_Val_from_double(double i);
 /// Create an em_Val from a string @param i
@@ -168,6 +177,15 @@ bool em_Val_lte(em_Val self, em_Val other);
 /// Returns the underlying int representation of the js
 /// object
 int em_Val_as_int(em_Val self);
+/// Returns the underlying uint representation of the js
+/// object
+unsigned int em_Val_as_uint(em_Val self);
+/// Returns the underlying bigint representation of the js
+/// object
+long long em_Val_as_bigint(em_Val self);
+/// Returns the underlying biguint representation of the js
+/// object
+unsigned long long em_Val_as_biguint(em_Val self);
 /// Returns the underlying bool representation of the js
 /// object
 bool em_Val_as_bool(em_Val self);
