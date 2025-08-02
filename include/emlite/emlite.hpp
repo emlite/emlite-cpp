@@ -44,12 +44,12 @@ constexpr decltype(auto) call_with_params(F &&f, P &&p) {
 } // namespace detail
 
 using detail::Closure;
-using detail::Uniq;
-using detail::Result;
-using detail::Option;
-using detail::nullopt;
-using detail::some;
 using detail::none;
+using detail::nullopt;
+using detail::Option;
+using detail::Result;
+using detail::some;
+using detail::Uniq;
 
 class Val;
 
@@ -376,6 +376,33 @@ class Val {
     template <typename T>
     [[nodiscard]] T as() const noexcept;
 
+    template <typename T>
+    [[nodiscard]] Option<T> safe_cast() const noexcept {
+        if constexpr (detail::is_same_v<T, bool> &&
+                      is_bool()) {
+            return as<bool>();
+        } else if constexpr (detail::is_integral_v<T> &&
+                             is_number()) {
+            return get_integer_value<T>(v_);
+        } else if constexpr (detail::is_floating_point_v<
+                                 T> &&
+                             is_number()) {
+            return as<T>();
+        } else if constexpr (detail::is_same_v<
+                                 T,
+                                 Uniq<char[]>> &&
+                             is_string()) {
+            return as<T>();
+        } else if constexpr (instanceof
+                             (T::instance()) &&
+                                 detail::
+                                     is_base_of_v<Val, T>) {
+            return as<T>();
+        } else {
+            return nullopt;
+        }
+    }
+
     /// Converts a javascript array to a Uniq C++ array
     /// @tparam any numeric type
     /// @param v The Val representing the javascript array
@@ -486,20 +513,25 @@ T Val::as() const noexcept {
     if constexpr (detail::is_option_v<T>) {
         // Option<U> - return Some(value) or None
         using U = typename T::value_type;
-        // Simple type checking - return None for type mismatches
+        // Simple type checking - return None for type
+        // mismatches
         if constexpr (detail::is_integral_v<U>) {
             if (is_number()) {
                 return T(get_integer_value<U>(v_));
             }
             return T(); // None
-        } else if constexpr (detail::is_floating_point_v<U>) {
+        } else if constexpr (detail::is_floating_point_v<
+                                 U>) {
             if (is_number()) {
                 return T(emlite_val_get_value_double(v_));
             }
             return T(); // None
-        } else if constexpr (detail::is_same_v<U, Uniq<char[]>>) {
+        } else if constexpr (detail::is_same_v<
+                                 U,
+                                 Uniq<char[]>>) {
             if (is_string()) {
-                auto str_ptr = emlite_val_get_value_string(v_);
+                auto str_ptr =
+                    emlite_val_get_value_string(v_);
                 if (str_ptr) {
                     return T(Uniq<char[]>(str_ptr));
                 }
@@ -517,30 +549,40 @@ T Val::as() const noexcept {
                 return T(get_integer_value<U>(v_));
             } else {
                 if constexpr (detail::is_same_v<E, Val>) {
-                    return T(Val::global("Error").new_("Expected number"));
+                    return T(Val::global("Error").new_(
+                        "Expected number"
+                    ));
                 } else {
                     return T(E{});
                 }
             }
-        } else if constexpr (detail::is_floating_point_v<U>) {
+        } else if constexpr (detail::is_floating_point_v<
+                                 U>) {
             if (is_number()) {
                 return T(emlite_val_get_value_double(v_));
             } else {
                 if constexpr (detail::is_same_v<E, Val>) {
-                    return T(Val::global("Error").new_("Expected number"));
+                    return T(Val::global("Error").new_(
+                        "Expected number"
+                    ));
                 } else {
                     return T(E{});
                 }
             }
-        } else if constexpr (detail::is_same_v<U, Uniq<char[]>>) {
+        } else if constexpr (detail::is_same_v<
+                                 U,
+                                 Uniq<char[]>>) {
             if (is_string()) {
-                auto str_ptr = emlite_val_get_value_string(v_);
+                auto str_ptr =
+                    emlite_val_get_value_string(v_);
                 if (str_ptr) {
                     return T(Uniq<char[]>(str_ptr));
                 }
             }
             if constexpr (detail::is_same_v<E, Val>) {
-                return T(Val::global("Error").new_("Expected string"));
+                return T(Val::global("Error").new_(
+                    "Expected string"
+                ));
             } else {
                 return T(E{});
             }
@@ -591,24 +633,28 @@ Val emlite_eval_cpp(const char *fmt, Args &&...args) {
 }
 
 // Option method implementations
-template<typename T>
-const T& Option<T>::value() const {
+template <typename T>
+const T &Option<T>::value() const {
     if (!has_value_) {
-        Val::throw_(Val::global("Error").new_("Option has no value"));
+        Val::throw_(
+            Val::global("Error").new_("Option has no value")
+        );
     }
     return value_;
 }
 
-template<typename T>
-T& Option<T>::value() {
+template <typename T>
+T &Option<T>::value() {
     if (!has_value_) {
-        Val::throw_(Val::global("Error").new_("Option has no value"));
+        Val::throw_(
+            Val::global("Error").new_("Option has no value")
+        );
     }
     return value_;
 }
 
-template<typename T>
-T Option<T>::expect(const char* message) const {
+template <typename T>
+T Option<T>::expect(const char *message) const {
     if (!has_value_) {
         Val::throw_(Val::global("Error").new_(message));
     }
@@ -616,40 +662,50 @@ T Option<T>::expect(const char* message) const {
 }
 
 // Result method implementations
-template<typename T, typename E>
-const T& Result<T, E>::value() const {
+template <typename T, typename E>
+const T &Result<T, E>::value() const {
     if (!has_value_) {
         if (has_error_) {
             if constexpr (is_same_v<E, Val>) {
                 Val::throw_(error_);
             } else {
-                Val::throw_(Val::global("Error").new_("Result has error"));
+                Val::throw_(Val::global("Error").new_(
+                    "Result has error"
+                ));
             }
         }
-        Val::throw_(Val::global("Error").new_("Result has no value"));
+        Val::throw_(
+            Val::global("Error").new_("Result has no value")
+        );
     }
     return value_;
 }
 
-template<typename T, typename E>
-T& Result<T, E>::value() {
+template <typename T, typename E>
+T &Result<T, E>::value() {
     if (!has_value_) {
         if (has_error_) {
             if constexpr (is_same_v<E, Val>) {
                 Val::throw_(error_);
             } else {
-                Val::throw_(Val::global("Error").new_("Result has error"));
+                Val::throw_(Val::global("Error").new_(
+                    "Result has error"
+                ));
             }
         }
-        Val::throw_(Val::global("Error").new_("Result has no value"));
+        Val::throw_(
+            Val::global("Error").new_("Result has no value")
+        );
     }
     return value_;
 }
 
-template<typename T, typename E>
-const E& Result<T, E>::error() const {
+template <typename T, typename E>
+const E &Result<T, E>::error() const {
     if (!has_error_) {
-        Val::throw_(Val::global("Error").new_("Result has no error"));
+        Val::throw_(
+            Val::global("Error").new_("Result has no error")
+        );
     }
     return error_;
 }
