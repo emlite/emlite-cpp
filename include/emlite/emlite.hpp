@@ -393,8 +393,7 @@ class Val {
                                  Uniq<char[]>> &&
                              is_string()) {
             return as<T>();
-        } else if constexpr (instanceof
-                             (T::instance()) &&
+        } else if (instanceof(T::instance()) &&
                                  detail::
                                      is_base_of_v<Val, T>) {
             return as<T>();
