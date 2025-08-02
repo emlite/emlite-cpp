@@ -29,6 +29,7 @@ else()
         include/emlite/detail/func.hpp
         include/emlite/detail/mem.hpp
         include/emlite/detail/tiny_traits.hpp
+        include/emlite/detail/utils.hpp
     )
     set(EMLITE_SOURCES
         src/emlite.c
