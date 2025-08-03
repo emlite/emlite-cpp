@@ -2,79 +2,44 @@
 
 #include "detail/externs.h"
 
-#define EMLITE_EVAL(x, ...)                                \
-    emlite_eval_v(#x __VA_OPT__(, __VA_ARGS__))
+#define EMLITE_EVAL(x, ...) emlite_eval_v(#x __VA_OPT__(, __VA_ARGS__))
 
-#define em_Val_from(x)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           \
+#define em_Val_from(x)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            \
     _Generic((x), _Bool: em_Val_from_bool, char: em_Val_from_int, signed char: em_Val_from_int, unsigned char: em_Val_from_uint, short: em_Val_from_int, unsigned short: em_Val_from_uint, int: em_Val_from_int, unsigned int: em_Val_from_uint, long: em_Val_from_int, unsigned long: em_Val_from_uint, long long: em_Val_from_bigint, unsigned long long: em_Val_from_biguint, float: em_Val_from_double, double: em_Val_from_double, long double: em_Val_from_double, char *: em_Val_from_string, const char *: em_Val_from_string, default: em_Val_from_val)( \
-        x                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        \
+        x                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         \
     )
 
-#define em_Val_as(TYPE, VAL)                               \
-    _Generic(                                              \
-        ((TYPE){0}),                                       \
-        _Bool: (!emlite_val_not(em_Val_as_handle(VAL))),   \
-        char: (char                                        \
-        )emlite_val_get_value_int(em_Val_as_handle(VAL)),  \
-        signed char: (signed char                          \
-        )emlite_val_get_value_int(em_Val_as_handle(VAL)),  \
-        unsigned char: (unsigned char                      \
-        )emlite_val_get_value_uint(em_Val_as_handle(VAL)), \
-        short: (short                                      \
-        )emlite_val_get_value_int(em_Val_as_handle(VAL)),  \
-        unsigned short: (unsigned short                    \
-        )emlite_val_get_value_uint(em_Val_as_handle(VAL)), \
-        int: (int                                          \
-        )emlite_val_get_value_int(em_Val_as_handle(VAL)),  \
-        unsigned int: (unsigned int                        \
-        )emlite_val_get_value_uint(em_Val_as_handle(VAL)), \
-        long: (long                                        \
-        )emlite_val_get_value_int(em_Val_as_handle(VAL)),  \
-        unsigned long: (unsigned long                      \
-        )emlite_val_get_value_uint(em_Val_as_handle(VAL)), \
-        long long: (long long                              \
-        )emlite_val_get_value_bigint(em_Val_as_handle(VAL) \
-        ),                                                 \
-        unsigned long long: (unsigned long long            \
-        )emlite_val_get_value_biguint(em_Val_as_handle(VAL \
-        )),                                                \
-        float: (float                                      \
-        )emlite_val_get_value_double(em_Val_as_handle(VAL) \
-        ),                                                 \
-        double: (double                                    \
-        )emlite_val_get_value_double(em_Val_as_handle(VAL) \
-        ),                                                 \
-        long double: (long double                          \
-        )emlite_val_get_value_double(em_Val_as_handle(VAL) \
-        ),                                                 \
-        char *: emlite_val_get_value_string(               \
-            em_Val_as_handle(VAL)                          \
-        ),                                                 \
-        default: *(TYPE *)&(em_Val){em_Val_as_handle(VAL)} \
+#define em_Val_as(TYPE, VAL)                                                                       \
+    _Generic(                                                                                      \
+        ((TYPE){0}),                                                                               \
+        _Bool: (!emlite_val_not(em_Val_as_handle(VAL))),                                           \
+        char: (char)emlite_val_get_value_int(em_Val_as_handle(VAL)),                               \
+        signed char: (signed char)emlite_val_get_value_int(em_Val_as_handle(VAL)),                 \
+        unsigned char: (unsigned char)emlite_val_get_value_uint(em_Val_as_handle(VAL)),            \
+        short: (short)emlite_val_get_value_int(em_Val_as_handle(VAL)),                             \
+        unsigned short: (unsigned short)emlite_val_get_value_uint(em_Val_as_handle(VAL)),          \
+        int: (int)emlite_val_get_value_int(em_Val_as_handle(VAL)),                                 \
+        unsigned int: (unsigned int)emlite_val_get_value_uint(em_Val_as_handle(VAL)),              \
+        long: (long)emlite_val_get_value_int(em_Val_as_handle(VAL)),                               \
+        unsigned long: (unsigned long)emlite_val_get_value_uint(em_Val_as_handle(VAL)),            \
+        long long: (long long)emlite_val_get_value_bigint(em_Val_as_handle(VAL)),                  \
+        unsigned long long: (unsigned long long)emlite_val_get_value_biguint(em_Val_as_handle(VAL) \
+        ),                                                                                         \
+        float: (float)emlite_val_get_value_double(em_Val_as_handle(VAL)),                          \
+        double: (double)emlite_val_get_value_double(em_Val_as_handle(VAL)),                        \
+        long double: (long double)emlite_val_get_value_double(em_Val_as_handle(VAL)),              \
+        char *: emlite_val_get_value_string(em_Val_as_handle(VAL)),                                \
+        default: *(TYPE *)&(em_Val){em_Val_as_handle(VAL)}                                         \
     )
 
-#define EM_NARG_(...)                                      \
-    ((int)(sizeof((em_Val[]){(em_Val){0}, ##__VA_ARGS__}   \
-           ) / sizeof(em_Val) -                            \
-           1))
+#define EM_NARG_(...) ((int)(sizeof((em_Val[]){(em_Val){0}, ##__VA_ARGS__}) / sizeof(em_Val) - 1))
 
-#define em_Val_call(self, method, ...)                     \
-    em_Val_call_(                                          \
-        (self),                                            \
-        (method),                                          \
-        EM_NARG_(__VA_ARGS__),                             \
-        ##__VA_ARGS__                                      \
-    )
+#define em_Val_call(self, method, ...)                                                             \
+    em_Val_call_((self), (method), EM_NARG_(__VA_ARGS__), ##__VA_ARGS__)
 
-#define em_Val_new(self, ...)                              \
-    em_Val_new_(                                           \
-        (self), EM_NARG_(__VA_ARGS__), ##__VA_ARGS__       \
-    )
+#define em_Val_new(self, ...) em_Val_new_((self), EM_NARG_(__VA_ARGS__), ##__VA_ARGS__)
 
-#define em_Val_invoke(self, ...)                           \
-    em_Val_invoke_(                                        \
-        (self), EM_NARG_(__VA_ARGS__), ##__VA_ARGS__       \
-    )
+#define em_Val_invoke(self, ...) em_Val_invoke_((self), EM_NARG_(__VA_ARGS__), ##__VA_ARGS__)
 
 #ifdef __cplusplus
 extern "C" {
@@ -210,17 +175,13 @@ em_Val em_Val_as_val(em_Val self);
 /// of the underlying object.
 /// @param n the number of arguments
 /// @returns an em_Val object which could be a js undefined
-em_Val em_Val_call_v(
-    em_Val self, const char *method, int n, va_list ap
-);
+em_Val em_Val_call_v(em_Val self, const char *method, int n, va_list ap);
 
 /// Calls a javascript method @param method
 /// of the underlying object.
 /// @param n the number of arguments
 /// @returns an em_Val object which could be a js undefined
-em_Val em_Val_call_(
-    em_Val self, const char *method, int n, ...
-);
+em_Val em_Val_call_(em_Val self, const char *method, int n, ...);
 
 /// Calls a javascript object's constructor
 /// @param n the number of arguments

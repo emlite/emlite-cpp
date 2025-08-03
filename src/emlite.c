@@ -20,22 +20,14 @@ size_t strlen(const char *s) {
     return (size_t)(p - s);
 }
 // needed for dlmalloc
-void *memset(void *dest, int ch, size_t count) {
-    return __builtin_memset(dest, ch, count);
-}
-void *memcpy(void *dest, const void *src, size_t n) {
-    return __builtin_memcpy(dest, src, n);
-}
+void *memset(void *dest, int ch, size_t count) { return __builtin_memset(dest, ch, count); }
+void *memcpy(void *dest, const void *src, size_t n) { return __builtin_memcpy(dest, src, n); }
 #endif
 
 #if __has_include(<stdlib.h>)
 #include <stdlib.h>
-EMLITE_USED void *emlite_malloc(size_t sz) {
-    return malloc(sz);
-}
-EMLITE_USED void *emlite_realloc(void *ptr, size_t sz) {
-    return realloc(ptr, sz);
-}
+EMLITE_USED void *emlite_malloc(size_t sz) { return malloc(sz); }
+EMLITE_USED void *emlite_realloc(void *ptr, size_t sz) { return realloc(ptr, sz); }
 EMLITE_USED void emlite_free(void *ptr) { free(ptr); }
 #else
 void abort(void) { __builtin_unreachable(); }
@@ -49,9 +41,7 @@ static uintptr_t heap_top = (uintptr_t)&__heap_base;
 
 /* Round p up to the next multiple of n (n must be a
  * power-of-two). */
-static inline uintptr_t align_up(uintptr_t p, uintptr_t n) {
-    return (p + n - 1u) & ~(n - 1u);
-}
+static inline uintptr_t align_up(uintptr_t p, uintptr_t n) { return (p + n - 1u) & ~(n - 1u); }
 // sbrk code copied from wasi-libc implementation:
 // https://github.com/WebAssembly/wasi-libc/blob/main/libc-bottom-half/sources/sbrk.c
 // Licensed by wasi-libc under MIT, Apache and Apache-LLVM
@@ -60,8 +50,7 @@ void *sbrk(intptr_t increment) {
     if (increment == 0) {
         // The wasm spec doesn't guarantee that memory.grow
         // of 0 always succeeds.
-        return (void *)(__builtin_wasm_memory_size(0) *
-                        WASM_PAGESIZE);
+        return (void *)(__builtin_wasm_memory_size(0) * WASM_PAGESIZE);
     }
 
     // We only support page-size increments.
@@ -74,9 +63,7 @@ void *sbrk(intptr_t increment) {
         abort();
     }
 
-    uintptr_t old = __builtin_wasm_memory_grow(
-        0, (uintptr_t)increment / WASM_PAGESIZE
-    );
+    uintptr_t old = __builtin_wasm_memory_grow(0, (uintptr_t)increment / WASM_PAGESIZE);
 
     if (old == SIZE_MAX) {
         errno = ENOMEM;
@@ -110,21 +97,17 @@ void *emlite_realloc(void *old, size_t sz) {
 #ifndef HAVE_DLMALLOC
 void *malloc(size_t s) { return emlite_malloc(s); }
 void free(void *ptr) { emlite_free(ptr); }
-void *realloc(void *ptr, size_t s) {
-    return emlite_realloc(ptr, s);
-}
+void *realloc(void *ptr, size_t s) { return emlite_realloc(ptr, s); }
 #endif
 #endif
 
 #if __has_include(<stdio.h>)
 #include <stdio.h>
 #else
-size_t emlite_utoa(
-    char *buf, unsigned long long value, int base, int upper
-) {
+size_t emlite_utoa(char *buf, unsigned long long value, int base, int upper) {
     static const char digits_low[] = "0123456789abcdef";
     static const char digits_up[]  = "0123456789ABCDEF";
-    const char *digits = upper ? digits_up : digits_low;
+    const char *digits             = upper ? digits_up : digits_low;
 
     size_t i = 0;
     if (value == 0) {
@@ -144,9 +127,7 @@ size_t emlite_utoa(
     return i;
 }
 
-int vsnprintf(
-    char *out, size_t n, const char *fmt, va_list ap
-) {
+int vsnprintf(char *out, size_t n, const char *fmt, va_list ap) {
     size_t pos = 0;
 
     while (*fmt) {
@@ -196,31 +177,25 @@ int vsnprintf(
         }
         case 'd':
         case 'i': {
-            long long v = longflag ? va_arg(ap, long long)
-                                   : va_arg(ap, int);
+            long long v = longflag ? va_arg(ap, long long) : va_arg(ap, int);
             if (v < 0) {
                 negative = 1;
                 v        = -v;
             }
-            chunk_len = emlite_utoa(
-                tmp, (unsigned long long)v, 10, 0
-            );
+            chunk_len = emlite_utoa(tmp, (unsigned long long)v, 10, 0);
             break;
         }
         case 'u': {
             unsigned long long v =
-                longflag ? va_arg(ap, unsigned long long)
-                         : va_arg(ap, unsigned int);
+                longflag ? va_arg(ap, unsigned long long) : va_arg(ap, unsigned int);
             chunk_len = emlite_utoa(tmp, v, 10, 0);
             break;
         }
         case 'x':
         case 'X': {
             unsigned long long v =
-                longflag ? va_arg(ap, unsigned long long)
-                         : va_arg(ap, unsigned int);
-            chunk_len =
-                emlite_utoa(tmp, v, 16, (*fmt == 'X'));
+                longflag ? va_arg(ap, unsigned long long) : va_arg(ap, unsigned int);
+            chunk_len = emlite_utoa(tmp, v, 16, (*fmt == 'X'));
             break;
         }
         default:
@@ -261,72 +236,44 @@ int snprintf(char *out, size_t n, const char *fmt, ...) {
 }
 #endif
 
-em_Val em_Val_from_bool(bool i) {
-    return (em_Val){.h = emlite_val_make_bool(i)};
-}
+em_Val em_Val_from_bool(bool i) { return (em_Val){.h = emlite_val_make_bool(i)}; }
 
-em_Val em_Val_from_int(int i) {
-    return (em_Val){.h = emlite_val_make_int(i)};
-}
+em_Val em_Val_from_int(int i) { return (em_Val){.h = emlite_val_make_int(i)}; }
 
-em_Val em_Val_from_uint(unsigned int i) {
-    return (em_Val){.h = emlite_val_make_uint(i)};
-}
+em_Val em_Val_from_uint(unsigned int i) { return (em_Val){.h = emlite_val_make_uint(i)}; }
 
-em_Val em_Val_from_bigint(long long i) {
-    return (em_Val){.h = emlite_val_make_bigint(i)};
-}
+em_Val em_Val_from_bigint(long long i) { return (em_Val){.h = emlite_val_make_bigint(i)}; }
 
 em_Val em_Val_from_biguint(unsigned long long i) {
     return (em_Val){.h = emlite_val_make_biguint(i)};
 }
 
-em_Val em_Val_from_double(double i) {
-    return (em_Val){.h = emlite_val_make_double(i)};
-}
+em_Val em_Val_from_double(double i) { return (em_Val){.h = emlite_val_make_double(i)}; }
 em_Val em_Val_from_string(const char *s) {
     return (em_Val){.h = emlite_val_make_str(s, strlen(s))};
 }
 
-em_Val em_Val_from_val(void *s) {
-    return (em_Val){.h = ((em_Val *)s)->h};
-}
+em_Val em_Val_from_val(void *s) { return (em_Val){.h = ((em_Val *)s)->h}; }
 
-em_Val em_Val_from_handle(Handle v) {
-    return (em_Val){.h = v};
-}
+em_Val em_Val_from_handle(Handle v) { return (em_Val){.h = v}; }
 
 em_Val em_Val_global(const char *name) {
-    return em_Val_from_handle(emlite_val_get(
-        EMLITE_GLOBALTHIS, em_Val_from_string(name).h
-    ));
+    return em_Val_from_handle(emlite_val_get(EMLITE_GLOBALTHIS, em_Val_from_string(name).h));
 }
 
-em_Val em_Val_global_this() {
-    return em_Val_from_handle(EMLITE_GLOBALTHIS);
-}
+em_Val em_Val_global_this() { return em_Val_from_handle(EMLITE_GLOBALTHIS); }
 
-em_Val em_Val_null() {
-    return em_Val_from_handle(EMLITE_NULL);
-}
+em_Val em_Val_null() { return em_Val_from_handle(EMLITE_NULL); }
 
-em_Val em_Val_undefined() {
-    return em_Val_from_handle(EMLITE_UNDEFINED);
-}
+em_Val em_Val_undefined() { return em_Val_from_handle(EMLITE_UNDEFINED); }
 
-em_Val em_Val_object() {
-    return em_Val_from_handle(emlite_val_new_object());
-}
+em_Val em_Val_object() { return em_Val_from_handle(emlite_val_new_object()); }
 
-em_Val em_Val_array() {
-    return em_Val_from_handle(emlite_val_new_array());
-}
+em_Val em_Val_array() { return em_Val_from_handle(emlite_val_new_array()); }
 
 em_Val em_Val_make_fn(Callback f, Handle data) {
     uint32_t fidx = (uint32_t)f;
-    return em_Val_from_handle(
-        emlite_val_make_callback(fidx, data)
-    );
+    return em_Val_from_handle(emlite_val_make_callback(fidx, data));
 }
 
 void em_Val_delete(em_Val v) { emlite_val_dec_ref(v.h); }
@@ -336,33 +283,21 @@ void em_Val_throw(em_Val v) { emlite_val_throw(v.h); }
 Handle em_Val_as_handle(em_Val self) { return self.h; }
 
 em_Val em_Val_get(em_Val self, em_Val prop) {
-    return em_Val_from_handle(emlite_val_get(self.h, prop.h)
-    );
+    return em_Val_from_handle(emlite_val_get(self.h, prop.h));
 }
 
-void em_Val_set(em_Val self, em_Val idx, em_Val val) {
-    emlite_val_set(self.h, idx.h, val.h);
+void em_Val_set(em_Val self, em_Val idx, em_Val val) { emlite_val_set(self.h, idx.h, val.h); }
+
+bool em_Val_has(em_Val self, em_Val val) { return emlite_val_has(self.h, val.h); }
+
+bool em_Val_has_own_property(em_Val self, const char *prop) {
+    return emlite_val_obj_has_own_prop(self.h, prop, strlen(prop));
 }
 
-bool em_Val_has(em_Val self, em_Val val) {
-    return emlite_val_has(self.h, val.h);
-}
-
-bool em_Val_has_own_property(
-    em_Val self, const char *prop
-) {
-    return emlite_val_obj_has_own_prop(
-        self.h, prop, strlen(prop)
-    );
-}
-
-char *em_Val_typeof(em_Val self) {
-    return emlite_val_typeof(self.h);
-}
+char *em_Val_typeof(em_Val self) { return emlite_val_typeof(self.h); }
 
 em_Val em_Val_at(em_Val self, em_Val elem) {
-    return em_Val_from_handle(emlite_val_get(self.h, elem.h)
-    );
+    return em_Val_from_handle(emlite_val_get(self.h, elem.h));
 }
 
 em_Val em_Val_await(em_Val self) {
@@ -375,107 +310,55 @@ em_Val em_Val_await(em_Val self) {
     );
 }
 
-bool em_Val_is_bool(em_Val self) {
-    return emlite_val_is_bool(self.h);
-}
+bool em_Val_is_bool(em_Val self) { return emlite_val_is_bool(self.h); }
 
-bool em_Val_is_number(em_Val self) {
-    return emlite_val_is_number(self.h);
-}
+bool em_Val_is_number(em_Val self) { return emlite_val_is_number(self.h); }
 
-bool em_Val_is_string(em_Val self) {
-    return emlite_val_is_string(self.h);
-}
+bool em_Val_is_string(em_Val self) { return emlite_val_is_string(self.h); }
 
-bool em_Val_is_error(em_Val self) {
-    return em_Val_instanceof(self, em_Val_global("Error"));
-}
+bool em_Val_is_error(em_Val self) { return em_Val_instanceof(self, em_Val_global("Error")); }
 
-bool em_Val_is_function(em_Val self) {
-    return em_Val_instanceof(
-        self, em_Val_global("Function")
-    );
-}
+bool em_Val_is_function(em_Val self) { return em_Val_instanceof(self, em_Val_global("Function")); }
 
-bool em_Val_is_undefined(em_Val self) {
-    return self.h == EMLITE_UNDEFINED;
-}
+bool em_Val_is_undefined(em_Val self) { return self.h == EMLITE_UNDEFINED; }
 
-bool em_Val_is_null(em_Val self) {
-    return self.h == EMLITE_NULL;
-}
+bool em_Val_is_null(em_Val self) { return self.h == EMLITE_NULL; }
 
-bool em_Val_instanceof(em_Val self, em_Val v) {
-    return emlite_val_instanceof(self.h, v.h);
-}
+bool em_Val_instanceof(em_Val self, em_Val v) { return emlite_val_instanceof(self.h, v.h); }
 
-bool em_Val_not(em_Val self) {
-    return emlite_val_not(self.h);
-}
+bool em_Val_not(em_Val self) { return emlite_val_not(self.h); }
 
-bool em_Val_seq(em_Val self, em_Val other) {
-    return emlite_val_strictly_equals(self.h, other.h);
-}
+bool em_Val_seq(em_Val self, em_Val other) { return emlite_val_strictly_equals(self.h, other.h); }
 
-bool em_Val_eq(em_Val self, em_Val other) {
-    return emlite_val_equals(self.h, other.h);
-}
+bool em_Val_eq(em_Val self, em_Val other) { return emlite_val_equals(self.h, other.h); }
 
-bool em_Val_neq(em_Val self, em_Val other) {
-    return !emlite_val_strictly_equals(self.h, other.h);
-}
+bool em_Val_neq(em_Val self, em_Val other) { return !emlite_val_strictly_equals(self.h, other.h); }
 
-bool em_Val_gt(em_Val self, em_Val other) {
-    return emlite_val_gt(self.h, other.h);
-}
+bool em_Val_gt(em_Val self, em_Val other) { return emlite_val_gt(self.h, other.h); }
 
-bool em_Val_gte(em_Val self, em_Val other) {
-    return emlite_val_gte(self.h, other.h);
-}
+bool em_Val_gte(em_Val self, em_Val other) { return emlite_val_gte(self.h, other.h); }
 
-bool em_Val_lt(em_Val self, em_Val other) {
-    return emlite_val_lt(self.h, other.h);
-}
+bool em_Val_lt(em_Val self, em_Val other) { return emlite_val_lt(self.h, other.h); }
 
-bool em_Val_lte(em_Val self, em_Val other) {
-    return emlite_val_lte(self.h, other.h);
-}
+bool em_Val_lte(em_Val self, em_Val other) { return emlite_val_lte(self.h, other.h); }
 
-int em_Val_as_int(em_Val self) {
-    return emlite_val_get_value_int(self.h);
-}
+int em_Val_as_int(em_Val self) { return emlite_val_get_value_int(self.h); }
 
-unsigned int em_Val_as_uint(em_Val self) {
-    return emlite_val_get_value_uint(self.h);
-}
+unsigned int em_Val_as_uint(em_Val self) { return emlite_val_get_value_uint(self.h); }
 
-long long em_Val_as_bigint(em_Val self) {
-    return emlite_val_get_value_bigint(self.h);
-}
+long long em_Val_as_bigint(em_Val self) { return emlite_val_get_value_bigint(self.h); }
 
-unsigned long long em_Val_as_biguint(em_Val self) {
-    return emlite_val_get_value_biguint(self.h);
-}
+unsigned long long em_Val_as_biguint(em_Val self) { return emlite_val_get_value_biguint(self.h); }
 
-bool em_Val_as_bool(em_Val self) {
-    return !emlite_val_not(self.h);
-}
+bool em_Val_as_bool(em_Val self) { return !emlite_val_not(self.h); }
 
-double em_Val_as_double(em_Val self) {
-    return emlite_val_get_value_double(self.h);
-}
+double em_Val_as_double(em_Val self) { return emlite_val_get_value_double(self.h); }
 
-char *em_Val_as_string(em_Val self) {
-    return emlite_val_get_value_string(self.h);
-}
+char *em_Val_as_string(em_Val self) { return emlite_val_get_value_string(self.h); }
 
-em_Val em_Val_as_val(em_Val self) {
-    return em_Val_from_val(&self);
-}
+em_Val em_Val_as_val(em_Val self) { return em_Val_from_val(&self); }
 
-em_Val em_Val_call_v(
-    em_Val self, const char *method, int n, va_list ap
-) {
+em_Val em_Val_call_v(em_Val self, const char *method, int n, va_list ap) {
     Handle arr = emlite_val_new_array();
     va_list args;
     va_copy(args, ap);
@@ -484,16 +367,12 @@ em_Val em_Val_call_v(
         emlite_val_push(arr, em_Val_as_handle(c));
     }
     va_end(args);
-    em_Val ret = em_Val_from_handle(emlite_val_obj_call(
-        self.h, method, (int)strlen(method), arr
-    ));
+    em_Val ret = em_Val_from_handle(emlite_val_obj_call(self.h, method, (int)strlen(method), arr));
     emlite_val_dec_ref(arr);
     return ret;
 }
 
-em_Val em_Val_call_(
-    em_Val self, const char *method, int n, ...
-) {
+em_Val em_Val_call_(em_Val self, const char *method, int n, ...) {
     va_list ap;
     va_start(ap, n);
     em_Val ret = em_Val_call_v(self, method, n, ap);
@@ -510,9 +389,7 @@ em_Val em_Val_new_v(em_Val self, int n, va_list ap) {
         emlite_val_push(arr, em_Val_as_handle(c));
     }
     va_end(args);
-    em_Val ret = em_Val_from_handle(
-        emlite_val_construct_new(self.h, arr)
-    );
+    em_Val ret = em_Val_from_handle(emlite_val_construct_new(self.h, arr));
     emlite_val_dec_ref(arr);
     return ret;
 }
@@ -534,9 +411,7 @@ em_Val em_Val_invoke_v(em_Val self, int n, va_list ap) {
         emlite_val_push(arr, em_Val_as_handle(c));
     }
     va_end(args);
-    em_Val ret =
-        em_Val_from_handle(emlite_val_func_call(self.h, arr)
-        );
+    em_Val ret = em_Val_from_handle(emlite_val_func_call(self.h, arr));
     emlite_val_dec_ref(arr);
     return ret;
 }

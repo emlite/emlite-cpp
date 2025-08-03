@@ -4,9 +4,7 @@
 #include <stddef.h>
 
 /// A smart pointer class with unique ownershipt
-template <
-    class T,
-    typename = enable_if_t<!is_same_v<T, void>>>
+template <class T, typename = enable_if_t<!is_same_v<T, void>>>
 class Uniq {
     T *ptr_ = nullptr;
 
@@ -14,16 +12,13 @@ class Uniq {
     using element_type = T;
 
     constexpr Uniq() noexcept = default;
-    constexpr Uniq(decltype(nullptr)) noexcept
-        : ptr_(nullptr) {}
+    constexpr Uniq(decltype(nullptr)) noexcept : ptr_(nullptr) {}
     explicit Uniq(T *p) noexcept : ptr_(p) {}
 
     Uniq(const Uniq &)            = delete;
     Uniq &operator=(const Uniq &) = delete;
 
-    Uniq(Uniq &&other) noexcept : ptr_(other.ptr_) {
-        other.ptr_ = nullptr;
-    }
+    Uniq(Uniq &&other) noexcept : ptr_(other.ptr_) { other.ptr_ = nullptr; }
 
     Uniq &operator=(Uniq &&other) noexcept {
         if (this != &other) {
@@ -55,9 +50,7 @@ class Uniq {
     }
 
     [[nodiscard]] T *get() const noexcept { return ptr_; }
-    [[nodiscard]] explicit operator bool() const noexcept {
-        return ptr_ != nullptr;
-    }
+    [[nodiscard]] explicit operator bool() const noexcept { return ptr_ != nullptr; }
 
     T &operator*() const noexcept { return *ptr_; }
     T *operator->() const noexcept { return ptr_; }
@@ -73,16 +66,13 @@ class Uniq<T[]> {
     using element_type = T;
 
     constexpr Uniq() noexcept = default;
-    constexpr Uniq(decltype(nullptr)) noexcept
-        : ptr_(nullptr) {}
+    constexpr Uniq(decltype(nullptr)) noexcept : ptr_(nullptr) {}
     explicit Uniq(T *p) noexcept : ptr_(p) {}
 
     Uniq(const Uniq &)            = delete;
     Uniq &operator=(const Uniq &) = delete;
 
-    Uniq(Uniq &&other) noexcept : ptr_(other.ptr_) {
-        other.ptr_ = nullptr;
-    }
+    Uniq(Uniq &&other) noexcept : ptr_(other.ptr_) { other.ptr_ = nullptr; }
 
     Uniq &operator=(Uniq &&other) noexcept {
         if (this != &other) {
@@ -114,13 +104,9 @@ class Uniq<T[]> {
     }
 
     [[nodiscard]] T *get() const noexcept { return ptr_; }
-    [[nodiscard]] explicit operator bool() const noexcept {
-        return ptr_ != nullptr;
-    }
+    [[nodiscard]] explicit operator bool() const noexcept { return ptr_ != nullptr; }
 
-    T &operator[](size_t i) const noexcept {
-        return ptr_[i];
-    }
+    T &operator[](size_t i) const noexcept { return ptr_[i]; }
 };
 
 /// A helper swap function for Uniq objects

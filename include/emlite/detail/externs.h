@@ -8,20 +8,15 @@
 #include <stdint.h>
 
 #ifndef EMLITE_USED
-#define EMLITE_USED                                        \
-    __attribute__((used, visibility("default")))
+#define EMLITE_USED __attribute__((used, visibility("default")))
 #endif
 
 #ifndef EMLITE_IMPORT
-#define EMLITE_IMPORT(NAME)                                \
-    __attribute__((                                        \
-        import_module("env"), import_name(#NAME)           \
-    ))
+#define EMLITE_IMPORT(NAME) __attribute__((import_module("env"), import_name(#NAME)))
 #endif
 
 #ifndef EMLITE_EXPORT
-#define EMLITE_EXPORT(NAME)                                \
-    __attribute__((export_name(#NAME)))
+#define EMLITE_EXPORT(NAME) __attribute__((export_name(#NAME)))
 #endif
 
 /// A javascript raw handle
@@ -45,9 +40,7 @@ extern "C" {
 #endif
 
 int snprintf(char *out, size_t n, const char *fmt, ...);
-int vsnprintf(
-    char *out, size_t n, const char *fmt, va_list ap
-);
+int vsnprintf(char *out, size_t n, const char *fmt, va_list ap);
 EMLITE_USED void *emlite_malloc(size_t);
 EMLITE_USED void *emlite_realloc(void *, size_t);
 EMLITE_USED void emlite_free(void *);
@@ -82,9 +75,7 @@ extern Handle emlite_val_construct_new(Handle, Handle argv);
 /// Calls the specified func via its handle @param func
 /// Passes it @param argv
 /// @returns the result of the call
-extern Handle emlite_val_func_call(
-    Handle func, Handle argv
-);
+extern Handle emlite_val_func_call(Handle func, Handle argv);
 /// Pushes a js object represented by @param v
 /// to array @param arr
 extern void emlite_val_push(Handle arr, Handle v);
@@ -104,9 +95,7 @@ extern Handle emlite_val_make_bigint(long long value);
 /// Creates a 64-bit unsigned integer value using BigInt on
 /// the js side
 /// @param value 64-bit unsigned integer (full range)
-extern Handle emlite_val_make_biguint(
-    unsigned long long value
-);
+extern Handle emlite_val_make_biguint(unsigned long long value);
 /// Creates a double value on the js side and returns its
 /// handle
 extern Handle emlite_val_make_double(double t);
@@ -125,9 +114,7 @@ extern unsigned int emlite_val_get_value_uint(Handle);
 extern long long emlite_val_get_value_bigint(Handle);
 /// @returns the underlying 64-bit unsigned integer value
 /// (from BigInt)
-extern unsigned long long emlite_val_get_value_biguint(
-    Handle
-);
+extern unsigned long long emlite_val_get_value_biguint(Handle);
 /// @returns the underlying double value of the js object
 /// represented by a Handle
 extern double emlite_val_get_value_double(Handle);
@@ -165,17 +152,11 @@ extern bool emlite_val_instanceof(Handle, Handle);
 /// Throws a js object represented by the passed Handle
 extern void emlite_val_throw(Handle);
 /// Calls an object's method by name
-extern Handle emlite_val_obj_call(
-    Handle obj, const char *name, size_t len, Handle argv
-);
+extern Handle emlite_val_obj_call(Handle obj, const char *name, size_t len, Handle argv);
 /// Checks whether an object has a non-inherited property
-extern bool emlite_val_obj_has_own_prop(
-    Handle, const char *prop, size_t len
-);
+extern bool emlite_val_obj_has_own_prop(Handle, const char *prop, size_t len);
 /// Creates a callback handle
-extern Handle emlite_val_make_callback(
-    Handle id, Handle data
-);
+extern Handle emlite_val_make_callback(Handle id, Handle data);
 /// Print the js OBJECT_MAP
 extern void emlite_print_object_map(void);
 /// Reset the OBJECT_MAP

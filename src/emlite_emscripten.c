@@ -5,16 +5,13 @@
 // Copyright 2018 The Emscripten Authors.
 // Licensed under MIT and the University of Illinois/NCSA
 // Open Source License
-#define _EM_JS(ret, c_name, js_name, params, code)         \
-    ret c_name params EMLITE_IMPORT(js_name);              \
-    __attribute__((visibility("hidden"))                   \
-    ) void *__em_js_ref_##c_name = (void *)&c_name;        \
-    EMLITE_USED                                            \
-    __attribute__((section("em_js"), aligned(1))           \
-    ) char __em_js__##js_name[] = #params "<::>" code;
+#define _EM_JS(ret, c_name, js_name, params, code)                                                 \
+    ret c_name params EMLITE_IMPORT(js_name);                                                      \
+    __attribute__((visibility("hidden"))) void *__em_js_ref_##c_name = (void *)&c_name;            \
+    EMLITE_USED                                                                                    \
+    __attribute__((section("em_js"), aligned(1))) char __em_js__##js_name[] = #params "<::>" code;
 
-#define EM_JS(ret, name, params, ...)                      \
-    _EM_JS(ret, name, name, params, #__VA_ARGS__)
+#define EM_JS(ret, name, params, ...) _EM_JS(ret, name, name, params, #__VA_ARGS__)
 
 // clang-format off
 EM_JS(void, emlite_init_handle_table, (), {
@@ -412,24 +409,16 @@ EM_JS(void, emlite_val_dec_ref_impl, (Handle h), {
 });
 // clang-format on
 EMLITE_USED
-Handle emlite_val_new_array() {
-    return emlite_val_new_array_impl();
-}
+Handle emlite_val_new_array() { return emlite_val_new_array_impl(); }
 
 EMLITE_USED
-Handle emlite_val_new_object() {
-    return emlite_val_new_object_impl();
-}
+Handle emlite_val_new_object() { return emlite_val_new_object_impl(); }
 
 EMLITE_USED
-char *emlite_val_typeof(Handle n) {
-    return emlite_val_typeof_impl(n);
-}
+char *emlite_val_typeof(Handle n) { return emlite_val_typeof_impl(n); }
 
 EMLITE_USED
-Handle emlite_val_construct_new(
-    Handle objRef, Handle argv
-) {
+Handle emlite_val_construct_new(Handle objRef, Handle argv) {
     return emlite_val_construct_new_impl(objRef, argv);
 }
 
@@ -439,29 +428,19 @@ Handle emlite_val_func_call(Handle func, Handle argv) {
 }
 
 EMLITE_USED
-void emlite_val_push(Handle arr, Handle v) {
-    emlite_val_push_impl(arr, v);
-}
+void emlite_val_push(Handle arr, Handle v) { emlite_val_push_impl(arr, v); }
 
 EMLITE_USED
-Handle emlite_val_make_bool(bool value) {
-    return emlite_val_make_bool_impl(value);
-}
+Handle emlite_val_make_bool(bool value) { return emlite_val_make_bool_impl(value); }
 
 EMLITE_USED
-Handle emlite_val_make_int(int value) {
-    return emlite_val_make_int_impl(value);
-}
+Handle emlite_val_make_int(int value) { return emlite_val_make_int_impl(value); }
 
 EMLITE_USED
-Handle emlite_val_make_uint(unsigned int value) {
-    return emlite_val_make_uint_impl(value);
-}
+Handle emlite_val_make_uint(unsigned int value) { return emlite_val_make_uint_impl(value); }
 
 EMLITE_USED
-Handle emlite_val_make_bigint(long long value) {
-    return emlite_val_make_bigint_impl(value);
-}
+Handle emlite_val_make_bigint(long long value) { return emlite_val_make_bigint_impl(value); }
 
 EMLITE_USED
 Handle emlite_val_make_biguint(unsigned long long value) {
@@ -469,9 +448,7 @@ Handle emlite_val_make_biguint(unsigned long long value) {
 }
 
 EMLITE_USED
-Handle emlite_val_make_double(double t) {
-    return emlite_val_make_double_impl(t);
-}
+Handle emlite_val_make_double(double t) { return emlite_val_make_double_impl(t); }
 
 EMLITE_USED
 Handle emlite_val_make_str(const char *str, size_t len) {
@@ -479,19 +456,13 @@ Handle emlite_val_make_str(const char *str, size_t len) {
 }
 
 EMLITE_USED
-int emlite_val_get_value_int(Handle n) {
-    return emlite_val_get_value_int_impl(n);
-}
+int emlite_val_get_value_int(Handle n) { return emlite_val_get_value_int_impl(n); }
 
 EMLITE_USED
-unsigned int emlite_val_get_value_uint(Handle n) {
-    return emlite_val_get_value_uint_impl(n);
-}
+unsigned int emlite_val_get_value_uint(Handle n) { return emlite_val_get_value_uint_impl(n); }
 
 EMLITE_USED
-long long emlite_val_get_value_bigint(Handle n) {
-    return emlite_val_get_value_bigint_impl(n);
-}
+long long emlite_val_get_value_bigint(Handle n) { return emlite_val_get_value_bigint_impl(n); }
 
 EMLITE_USED
 unsigned long long emlite_val_get_value_biguint(Handle n) {
@@ -499,79 +470,49 @@ unsigned long long emlite_val_get_value_biguint(Handle n) {
 }
 
 EMLITE_USED
-double emlite_val_get_value_double(Handle n) {
-    return emlite_val_get_value_double_impl(n);
-}
+double emlite_val_get_value_double(Handle n) { return emlite_val_get_value_double_impl(n); }
 
 EMLITE_USED
-bool emlite_val_get_value_bool(Handle n) {
-    return emlite_val_get_value_bool_impl(n);
-}
+bool emlite_val_get_value_bool(Handle n) { return emlite_val_get_value_bool_impl(n); }
 
 EMLITE_USED
-char *emlite_val_get_value_string(Handle n) {
-    return emlite_val_get_value_string_impl(n);
-}
+char *emlite_val_get_value_string(Handle n) { return emlite_val_get_value_string_impl(n); }
 
 EMLITE_USED
-Handle emlite_val_get(Handle n, Handle idx) {
-    return emlite_val_get_impl(n, idx);
-}
+Handle emlite_val_get(Handle n, Handle idx) { return emlite_val_get_impl(n, idx); }
 
 EMLITE_USED
-void emlite_val_set(Handle n, Handle idx, Handle val) {
-    return emlite_val_set_impl(n, idx, val);
-}
+void emlite_val_set(Handle n, Handle idx, Handle val) { return emlite_val_set_impl(n, idx, val); }
 
 EMLITE_USED
-bool emlite_val_has(Handle n, Handle idx) {
-    return emlite_val_has_impl(n, idx);
-}
+bool emlite_val_has(Handle n, Handle idx) { return emlite_val_has_impl(n, idx); }
 
 EMLITE_USED
-bool emlite_val_is_string(Handle h) {
-    return emlite_val_is_string_impl(h);
-}
+bool emlite_val_is_string(Handle h) { return emlite_val_is_string_impl(h); }
 
 EMLITE_USED
-bool emlite_val_is_bool(Handle h) {
-    return emlite_val_is_bool_impl(h);
-}
+bool emlite_val_is_bool(Handle h) { return emlite_val_is_bool_impl(h); }
 
 EMLITE_USED
-bool emlite_val_is_number(Handle h) {
-    return emlite_val_is_number_impl(h);
-}
+bool emlite_val_is_number(Handle h) { return emlite_val_is_number_impl(h); }
 
 EMLITE_USED
-bool emlite_val_not(Handle h) {
-    return emlite_val_not_impl(h);
-}
+bool emlite_val_not(Handle h) { return emlite_val_not_impl(h); }
 
 EMLITE_USED
-bool emlite_val_gt(Handle a, Handle b) {
-    return emlite_val_gt_impl(a, b);
-}
+bool emlite_val_gt(Handle a, Handle b) { return emlite_val_gt_impl(a, b); }
 
 EMLITE_USED
-bool emlite_val_gte(Handle a, Handle b) {
-    return emlite_val_gte_impl(a, b);
-}
+bool emlite_val_gte(Handle a, Handle b) { return emlite_val_gte_impl(a, b); }
 
 EMLITE_USED
-bool emlite_val_lt(Handle a, Handle b) {
-    return emlite_val_lt_impl(a, b);
-}
+bool emlite_val_lt(Handle a, Handle b) { return emlite_val_lt_impl(a, b); }
 
 EMLITE_USED
-bool emlite_val_lte(Handle a, Handle b) {
-    return emlite_val_lte_impl(a, b);
-}
+bool emlite_val_lte(Handle a, Handle b) { return emlite_val_lte_impl(a, b); }
 
 EMLITE_USED
-bool emlite_val_equals(Handle a, Handle b) {
-    return emlite_val_equals_impl(a, b);
-}
+bool emlite_val_equals(Handle a, Handle b) { return emlite_val_equals_impl(a, b); }
 
 EMLITE_USED
 bool emlite_val_strictly_equals(Handle a, Handle b) {
@@ -579,26 +520,18 @@ bool emlite_val_strictly_equals(Handle a, Handle b) {
 }
 
 EMLITE_USED
-bool emlite_val_instanceof(Handle a, Handle b) {
-    return emlite_val_instanceof_impl(a, b);
-}
+bool emlite_val_instanceof(Handle a, Handle b) { return emlite_val_instanceof_impl(a, b); }
 
 EMLITE_USED
-void emlite_val_throw(Handle arg) {
-    emlite_val_throw_impl(arg);
-}
+void emlite_val_throw(Handle arg) { emlite_val_throw_impl(arg); }
 
 EMLITE_USED
-Handle emlite_val_obj_call(
-    Handle obj, const char *name, size_t len, Handle argv
-) {
+Handle emlite_val_obj_call(Handle obj, const char *name, size_t len, Handle argv) {
     return emlite_val_obj_call_impl(obj, name, len, argv);
 }
 
 EMLITE_USED
-bool emlite_val_obj_has_own_prop(
-    Handle obj, const char *prop, size_t len
-) {
+bool emlite_val_obj_has_own_prop(Handle obj, const char *prop, size_t len) {
     return emlite_val_obj_has_own_prop_impl(obj, prop, len);
 }
 
@@ -608,21 +541,13 @@ Handle emlite_val_make_callback(Handle fidx, Handle data) {
 }
 
 EMLITE_USED
-void emlite_print_object_map() {
-    emlite_print_object_map_impl();
-}
+void emlite_print_object_map() { emlite_print_object_map_impl(); }
 
 EMLITE_USED
-void emlite_reset_object_map() {
-    emlite_reset_object_map_impl();
-}
+void emlite_reset_object_map() { emlite_reset_object_map_impl(); }
 
 EMLITE_USED
-void emlite_val_inc_ref(Handle h) {
-    emlite_val_inc_ref_impl(h);
-}
+void emlite_val_inc_ref(Handle h) { emlite_val_inc_ref_impl(h); }
 
 EMLITE_USED
-void emlite_val_dec_ref(Handle h) {
-    emlite_val_dec_ref_impl(h);
-}
+void emlite_val_dec_ref(Handle h) { emlite_val_dec_ref_impl(h); }

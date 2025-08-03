@@ -22,41 +22,26 @@ class Closure<R(Args...)> {
     void *_ptr          = nullptr;
     alignas(SBO_ALIGN) unsigned char _sbo[SBO_SIZE];
 
-    void *sbo_addr() noexcept {
-        return static_cast<void *>(_sbo);
-    }
-    const void *sbo_addr() const noexcept {
-        return static_cast<const void *>(_sbo);
-    }
-    bool is_sbo() const noexcept {
-        return _ptr == sbo_addr();
-    }
+    void *sbo_addr() noexcept { return static_cast<void *>(_sbo); }
+    const void *sbo_addr() const noexcept { return static_cast<const void *>(_sbo); }
+    bool is_sbo() const noexcept { return _ptr == sbo_addr(); }
 
     template <class Fn>
     static const vtable_t *make_vtable() {
         static const vtable_t vt = {
             // invoke
             [](const void *data, Args &&...as) -> R {
-                return (*static_cast<const Fn *>(data))(
-                    static_cast<Args &&>(as)...
-                );
+                return (*static_cast<const Fn *>(data))(static_cast<Args &&>(as)...);
             },
             // copy
-            [](void *dest, const void *src) {
-                new (dest)
-                    Fn(*static_cast<const Fn *>(src));
-            },
+            [](void *dest, const void *src) { new (dest) Fn(*static_cast<const Fn *>(src)); },
             // move
             [](void *dest, void *src) noexcept {
-                new (dest) Fn(static_cast<Fn &&>(
-                    *static_cast<Fn *>(src)
-                ));
+                new (dest) Fn(static_cast<Fn &&>(*static_cast<Fn *>(src)));
                 static_cast<Fn *>(src)->~Fn();
             },
             // destroy
-            [](void *data) noexcept {
-                static_cast<Fn *>(data)->~Fn();
-            }
+            [](void *data) noexcept { static_cast<Fn *>(data)->~Fn(); }
         };
         return &vt;
     }
@@ -65,8 +50,7 @@ class Closure<R(Args...)> {
     void assign(Fn f) {
         _vt = make_vtable<Fn>();
 
-        if (sizeof(Fn) <= SBO_SIZE &&
-            alignof(Fn) <= SBO_ALIGN) {
+        if (sizeof(Fn) <= SBO_SIZE && alignof(Fn) <= SBO_ALIGN) {
             _ptr = sbo_addr();
             new (_ptr) Fn(static_cast<Fn &&>(f));
         } else {
@@ -116,10 +100,7 @@ class Closure<R(Args...)> {
         class Fn,
         enable_if_t<
             !is_same_v<remove_reference_t<Fn>, Closure> &&
-                is_convertible_v<
-                    decltype(declval<Fn &>()(declval<Args>(
-                    )...)),
-                    R>,
+                is_convertible_v<decltype(declval<Fn &>()(declval<Args>()...)), R>,
             int> = 0>
     Closure(Fn &&fn) {
         assign(static_cast<Fn &&>(fn));
@@ -166,10 +147,7 @@ class Closure<R(Args...)> {
     }
 
     template <class Fn>
-    enable_if_t<
-        !is_same_v<remove_reference_t<Fn>, Closure>,
-        Closure &>
-    operator=(Fn &&fn) {
+    enable_if_t<!is_same_v<remove_reference_t<Fn>, Closure>, Closure &> operator=(Fn &&fn) {
         clear();
         assign(static_cast<Fn &&>(fn));
         return *this;
@@ -185,13 +163,7 @@ class Closure<R(Args...)> {
         _ptr = nullptr;
     }
 
-    explicit operator bool() const noexcept {
-        return _vt != nullptr;
-    }
+    explicit operator bool() const noexcept { return _vt != nullptr; }
 
-    R operator()(Args... as) const {
-        return _vt->invoke(
-            _ptr, static_cast<Args &&>(as)...
-        );
-    }
+    R operator()(Args... as) const { return _vt->invoke(_ptr, static_cast<Args &&>(as)...); }
 };

@@ -10,9 +10,7 @@ void operator delete(void *val) noexcept { emlite_free(val); }
 
 void operator delete[](void *val) noexcept { emlite_free(val); }
 
-void *operator new(size_t, void *place) noexcept {
-    return place;
-}
+void *operator new(size_t, void *place) noexcept { return place; }
 #endif
 namespace emlite {
 Val::Val() noexcept : v_(0) {}
@@ -42,9 +40,7 @@ Val &Val::operator=(Val &&other) noexcept {
     return *this;
 }
 
-Val::Val(Val &&other) noexcept : v_(other.v_) {
-    other.v_ = 0;
-}
+Val::Val(Val &&other) noexcept : v_(other.v_) { other.v_ = 0; }
 
 Val::~Val() {
     if (v_)
@@ -59,28 +55,17 @@ Val Val::take_ownership(Handle h) noexcept {
     return v;
 }
 
-Val Val::global(const char *v) noexcept {
-    return Val::take_ownership(EMLITE_GLOBALTHIS)
-        .get(v);
-}
+Val Val::global(const char *v) noexcept { return Val::take_ownership(EMLITE_GLOBALTHIS).get(v); }
 
-Val Val::global() noexcept {
-    return Val::take_ownership(EMLITE_GLOBALTHIS);
-}
+Val Val::global() noexcept { return Val::take_ownership(EMLITE_GLOBALTHIS); }
 
 Val Val::null() noexcept { return Val::take_ownership(EMLITE_NULL); }
 
-Val Val::undefined() noexcept {
-    return Val::take_ownership(EMLITE_UNDEFINED);
-}
+Val Val::undefined() noexcept { return Val::take_ownership(EMLITE_UNDEFINED); }
 
-Val Val::object() noexcept {
-    return Val::take_ownership(emlite_val_new_object());
-}
+Val Val::object() noexcept { return Val::take_ownership(emlite_val_new_object()); }
 
-Val Val::array() noexcept {
-    return Val::take_ownership(emlite_val_new_array());
-}
+Val Val::array() noexcept { return Val::take_ownership(emlite_val_new_array()); }
 
 Val Val::dup(Handle h) noexcept {
     emlite_val_inc_ref(h);
@@ -88,52 +73,36 @@ Val Val::dup(Handle h) noexcept {
 }
 
 Handle Val::release(Val &&v) noexcept {
-    auto v_ = detail::move(v);
+    auto v_   = detail::move(v);
     auto temp = v_.v_;
-    v_.v_      = 0;
+    v_.v_     = 0;
     return temp;
 }
 
-void Val::delete_(Val &&v) noexcept {
-    emlite_val_dec_ref(detail::move(v).v_);
-}
+void Val::delete_(Val &&v) noexcept { emlite_val_dec_ref(detail::move(v).v_); }
 
-void Val::throw_(const Val &v) {
-    return emlite_val_throw(v.v_);
-}
+void Val::throw_(const Val &v) { return emlite_val_throw(v.v_); }
 
 Handle Val::as_handle() const noexcept { return v_; }
 
-Uniq<char[]> Val::type_of() const noexcept {
-    return Uniq<char[]>(emlite_val_typeof(v_));
-}
+Uniq<char[]> Val::type_of() const noexcept { return Uniq<char[]>(emlite_val_typeof(v_)); }
 
-bool Val::has_own_property(const char *prop
-) const noexcept {
-    return emlite_val_obj_has_own_prop(
-        v_, prop, strlen(prop)
-    );
+bool Val::has_own_property(const char *prop) const noexcept {
+    return emlite_val_obj_has_own_prop(v_, prop, strlen(prop));
 }
 
 Val Val::make_fn(Callback f, const Val &data) noexcept {
-    auto fidx =
-        static_cast<uint32_t>(reinterpret_cast<uintptr_t>(f)
-        );
-    return Val::take_ownership(emlite_val_make_callback(
-        fidx, Val::release((Val &&)data)
-    ));
+    auto fidx = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(f));
+    return Val::take_ownership(emlite_val_make_callback(fidx, Val::release((Val &&)data)));
 }
 
 Val Val::make_fn(Closure<Val(Params)> &&f) noexcept {
     return Val::make_fn(
         [](auto h, auto data) -> Handle {
-            Val func0 = Val::take_ownership(data);
-            auto func = (Closure<Val(Params)> *)
-                            func0.template as<uintptr_t>();
+            Val func0  = Val::take_ownership(data);
+            auto func  = (Closure<Val(Params)> *)func0.template as<uintptr_t>();
             size_t len = 0;
-            auto v     = Val::vec_from_js_array<Val>(
-                Val::take_ownership(h), len
-            );
+            auto v     = Val::vec_from_js_array<Val>(Val::take_ownership(h), len);
             Params params{v.get(), len};
             auto ret = (*func)(params);
             Val::release((Val &&)func0);
@@ -153,67 +122,37 @@ Val Val::await() const {
 }
 // clang-format on
 
-bool Val::is_bool() const noexcept {
-    return emlite_val_is_bool(v_);
-}
+bool Val::is_bool() const noexcept { return emlite_val_is_bool(v_); }
 
-bool Val::is_number() const noexcept {
-    return emlite_val_is_number(v_);
-}
+bool Val::is_number() const noexcept { return emlite_val_is_number(v_); }
 
-bool Val::is_string() const noexcept {
-    return emlite_val_is_string(v_);
-}
+bool Val::is_string() const noexcept { return emlite_val_is_string(v_); }
 
-bool Val::instanceof (const Val &v) const noexcept {
-    return emlite_val_instanceof(v_, v.v_);
-}
+bool Val:: instanceof (const Val &v) const noexcept { return emlite_val_instanceof(v_, v.v_); }
 
-bool Val::is_function() const noexcept {
-    return instanceof(Val::global("Function"));
-}
+bool Val::is_function() const noexcept { return instanceof (Val::global("Function")); }
 
-bool Val::is_error() const noexcept {
-    return instanceof(Val::global("Error"));
-}
+bool Val::is_error() const noexcept { return instanceof (Val::global("Error")); }
 
-bool Val::is_undefined() const noexcept {
-    return v_ == EMLITE_UNDEFINED;
-}
+bool Val::is_undefined() const noexcept { return v_ == EMLITE_UNDEFINED; }
 
-bool Val::is_null() const noexcept {
-    return v_ == EMLITE_NULL;
-}
+bool Val::is_null() const noexcept { return v_ == EMLITE_NULL; }
 
 bool Val::operator!() const { return emlite_val_not(v_); }
 
-bool Val::operator==(const Val &other) const {
-    return emlite_val_strictly_equals(v_, other.v_);
-}
+bool Val::operator==(const Val &other) const { return emlite_val_strictly_equals(v_, other.v_); }
 
-bool Val::operator!=(const Val &other) const {
-    return !emlite_val_strictly_equals(v_, other.v_);
-}
+bool Val::operator!=(const Val &other) const { return !emlite_val_strictly_equals(v_, other.v_); }
 
-bool Val::operator>(const Val &other) const {
-    return emlite_val_gt(v_, other.v_);
-}
+bool Val::operator>(const Val &other) const { return emlite_val_gt(v_, other.v_); }
 
-bool Val::operator>=(const Val &other) const {
-    return emlite_val_gte(v_, other.v_);
-}
+bool Val::operator>=(const Val &other) const { return emlite_val_gte(v_, other.v_); }
 
-bool Val::operator<(const Val &other) const {
-    return emlite_val_lt(v_, other.v_);
-}
+bool Val::operator<(const Val &other) const { return emlite_val_lt(v_, other.v_); }
 
-bool Val::operator<=(const Val &other) const {
-    return emlite_val_lte(v_, other.v_);
-}
+bool Val::operator<=(const Val &other) const { return emlite_val_lte(v_, other.v_); }
 
 Console::Console() : Val(Val::take_ownership(EMLITE_CONSOLE)) {}
 
-void Console::clear() const {
-    call("clear");
-}
+void Console::clear() const { call("clear"); }
 } // namespace emlite
