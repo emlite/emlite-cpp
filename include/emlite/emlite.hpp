@@ -460,7 +460,7 @@ T Val::as() const noexcept {
                 if constexpr (detail::is_same_v<E, Val>) {
                     return err<U, E>(Val::global("Error").new_("Expected number"));
                 } else {
-                    return err<U, E>(E{});
+                    return err<U, E>(*this);
                 }
             }
         } else if constexpr (detail::is_floating_point_v<U>) {
@@ -470,7 +470,7 @@ T Val::as() const noexcept {
                 if constexpr (detail::is_same_v<E, Val>) {
                     return err<U, E>(Val::global("Error").new_("Expected number"));
                 } else {
-                    return err<U, E>(E{});
+                    return err<U, E>(*this);
                 }
             }
         } else if constexpr (detail::is_same_v<U, Uniq<char[]>>) {
@@ -483,7 +483,7 @@ T Val::as() const noexcept {
                 if constexpr (detail::is_same_v<E, Val>) {
                     return T(Val::global("Error").new_("Expected string"));
                 } else {
-                    return T(E{});
+                    return T(*this);
                 }
             }
         } else {
