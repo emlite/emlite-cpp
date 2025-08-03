@@ -40,6 +40,8 @@ using detail::nullopt;
 using detail::Option;
 using detail::Result;
 using detail::some;
+using detail::ok;
+using detail::err;
 using detail::Uniq;
 
 class Val;
