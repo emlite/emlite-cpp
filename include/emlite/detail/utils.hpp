@@ -293,13 +293,13 @@ class Result {
 };
 
 /// Create Result with success value
-template <typename T, typename E = emlite::Val>
+template <typename T, typename E>
 Result<T, E> ok(T &&value) {
     return Result<T, E>(forward<T>(value));
 }
 
 /// Create Result with error value
-template <typename T, typename E = emlite::Val>
+template <typename T, typename E>
 Result<T, E> err(E &&error) {
     return Result<T, E>(forward<E>(error));
 }
