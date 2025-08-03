@@ -8,11 +8,6 @@ struct NullOpt {
 };
 constexpr NullOpt nullopt{};
 
-// Forward declaration for error handling
-namespace emlite {
-class Val;
-}
-
 /// Custom Option class (no std library dependency)
 template <typename T>
 class Option {
@@ -143,8 +138,13 @@ Option<T> none() {
     return Option<T>();
 }
 
+struct ok_t { explicit ok_t() = default; };
+struct err_t { explicit err_t() = default; };
+inline constexpr ok_t ok_tag{};
+inline constexpr err_t err_tag{};
+
 /// Custom Result class (no std library dependency)
-template <typename T, typename E = emlite::Val>
+template <typename T, typename E>
 class Result {
   public:
     using value_type = T;
@@ -160,10 +160,10 @@ class Result {
     };
 
   public:
-    Result(T value) noexcept : has_value_(true), has_error_(false), value_(move(value)) {}
+    Result(ok_t, T value) noexcept : has_value_(true), has_error_(false), value_(move(value)) {}
 
-    Result(E error) noexcept : has_value_(false), has_error_(true), error_(move(error)) {}
-
+    Result(err_t, E error) noexcept : has_value_(false), has_error_(true), error_(move(error)) {}
+    
     Result(const Result &other) noexcept
         : has_value_(other.has_value_), has_error_(other.has_error_) {
         if (has_value_) {
@@ -295,11 +295,11 @@ class Result {
 /// Create Result with success value
 template <typename T, typename E>
 Result<T, E> ok(T &&value) {
-    return Result<T, E>(forward<T>(value));
+    return Result<T, E>(ok_tag, forward<T>(value));
 }
 
 /// Create Result with error value
 template <typename T, typename E>
 Result<T, E> err(E &&error) {
-    return Result<T, E>(forward<E>(error));
+    return Result<T, E>(err_tag, forward<E>(error));
 }

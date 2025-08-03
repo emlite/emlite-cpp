@@ -21,6 +21,26 @@ namespace detail {
 #include "detail/tiny_traits.hpp"
 #include "detail/utils.hpp"
 
+// Type traits for Option detection
+template <typename T>
+struct is_option : false_type {};
+
+template <typename T>
+struct is_option<Option<T>> : true_type {};
+
+template <typename T>
+constexpr bool is_option_v = is_option<T>::value;
+
+// Type traits for Result detection
+template <typename T>
+struct is_result : false_type {};
+
+template <typename T, typename E>
+struct is_result<Result<T, E>> : true_type {};
+
+template <typename T>
+constexpr bool is_result_v = is_result<T>::value;
+
 template <typename... Args, size_t... I, typename F, typename P>
 constexpr decltype(auto) call_with_params_impl(F &&f, P &&p, index_sequence<I...>) {
     return forward<F>(f)(forward<P>(p).vals[I].template as<Args>()...);
@@ -435,38 +455,43 @@ T Val::as() const noexcept {
         using E = typename T::error_type;
         if constexpr (detail::is_integral_v<U>) {
             if (is_number()) {
-                return T(get_integer_value<U>(v_));
+                return ok<U, E>(get_integer_value<U>(v_));
             } else {
                 if constexpr (detail::is_same_v<E, Val>) {
-                    return T(Val::global("Error").new_("Expected number"));
+                    return err<U, E>(Val::global("Error").new_("Expected number"));
                 } else {
-                    return T(E{});
+                    return err<U, E>(E{});
                 }
             }
         } else if constexpr (detail::is_floating_point_v<U>) {
             if (is_number()) {
-                return T(emlite_val_get_value_double(v_));
+                return ok<U, E>(emlite_val_get_value_double(v_));
             } else {
                 if constexpr (detail::is_same_v<E, Val>) {
-                    return T(Val::global("Error").new_("Expected number"));
+                    return err<U, E>(Val::global("Error").new_("Expected number"));
                 } else {
-                    return T(E{});
+                    return err<U, E>(E{});
                 }
             }
         } else if constexpr (detail::is_same_v<U, Uniq<char[]>>) {
             if (is_string()) {
                 auto str_ptr = emlite_val_get_value_string(v_);
                 if (str_ptr) {
-                    return T(Uniq<char[]>(str_ptr));
+                    return ok<U, E>(Uniq<char[]>(str_ptr));
+                }
+            } else {
+                if constexpr (detail::is_same_v<E, Val>) {
+                    return T(Val::global("Error").new_("Expected string"));
+                } else {
+                    return T(E{});
                 }
             }
-            if constexpr (detail::is_same_v<E, Val>) {
-                return T(Val::global("Error").new_("Expected string"));
-            } else {
-                return T(E{});
-            }
         } else {
-            return T(U(*this));
+            if (is_error()) {
+                return err<U, E>(this->as<E>());
+            } else {
+                return ok<U, E>(this->as<U>());
+            }
         }
     } else if constexpr (detail::is_integral_v<T>) {
         return get_integer_value<T>(v_); // Use type-specific getters
@@ -532,11 +557,7 @@ template <typename T, typename E>
 const T &Result<T, E>::value() const {
     if (!has_value_) {
         if (has_error_) {
-            if constexpr (is_same_v<E, Val>) {
-                Val::throw_(error_);
-            } else {
-                Val::throw_(Val::global("Error").new_("Result has error"));
-            }
+            Val::throw_(error_);
         }
         Val::throw_(Val::global("Error").new_("Result has no value"));
     }
@@ -547,11 +568,7 @@ template <typename T, typename E>
 T &Result<T, E>::value() {
     if (!has_value_) {
         if (has_error_) {
-            if constexpr (is_same_v<E, Val>) {
-                Val::throw_(error_);
-            } else {
-                Val::throw_(Val::global("Error").new_("Result has error"));
-            }
+            Val::throw_(error_);
         }
         Val::throw_(Val::global("Error").new_("Result has no value"));
     }

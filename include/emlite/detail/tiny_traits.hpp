@@ -223,31 +223,3 @@ template <class T>
 constexpr remove_reference_t<T> &&move(T &&t) noexcept {
     return static_cast<remove_reference_t<T> &&>(t);
 }
-
-// Forward declarations for Option and Result detection
-namespace emlite {
-template <typename T>
-class Option;
-template <typename T, typename E>
-class Result;
-} // namespace emlite
-
-// Type traits for Option detection
-template <typename T>
-struct is_option : false_type {};
-
-template <typename T>
-struct is_option<emlite::Option<T>> : true_type {};
-
-template <typename T>
-constexpr bool is_option_v = is_option<T>::value;
-
-// Type traits for Result detection
-template <typename T>
-struct is_result : false_type {};
-
-template <typename T, typename E>
-struct is_result<emlite::Result<T, E>> : true_type {};
-
-template <typename T>
-constexpr bool is_result_v = is_result<T>::value;
