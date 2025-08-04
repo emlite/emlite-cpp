@@ -50,7 +50,7 @@ typedef struct {
     Handle h;
 } em_Val;
 
-/// Create an em_Val from an integer value @param i
+/// Create an em_Val from a boolean value @param i
 em_Val em_Val_from_bool(bool i);
 /// Create an em_Val from an integer value @param i
 em_Val em_Val_from_int(int i);
@@ -58,8 +58,7 @@ em_Val em_Val_from_int(int i);
 em_Val em_Val_from_uint(unsigned int i);
 /// Create an em_Val from a big integer value @param i
 em_Val em_Val_from_bigint(long long i);
-/// Create an em_Val from a big unsigned integer value
-/// @param i
+/// Create an em_Val from a big unsigned integer value @param i
 em_Val em_Val_from_biguint(unsigned long long i);
 /// Create an em_Val from a double value @param i
 em_Val em_Val_from_double(double i);
@@ -83,8 +82,7 @@ em_Val em_Val_object();
 em_Val em_Val_array();
 /// Creates a javascript function from a C function @param f
 em_Val em_Val_make_fn(Callback f, Handle data);
-/// Decrements the refcount of the Handle represented by the
-/// em_Val
+/// Decrements the refcount of the Handle represented by the em_Val
 void em_Val_delete(em_Val);
 /// Throws an em_Val object
 void em_Val_throw(em_Val);
@@ -95,21 +93,18 @@ Handle em_Val_as_handle(em_Val self);
 em_Val em_Val_get(em_Val self, em_Val prop);
 /// Sets the em_Val's property @param prop to @param val
 void em_Val_set(em_Val self, em_Val prop, em_Val val);
-/// Checks whether an em_Val has a certain property @param
-/// prop
+/// Checks whether an em_Val has a certain property @param prop
 bool em_Val_has(em_Val self, em_Val prop);
-/// Checks whether an em_Val has a certain property @param
-/// prop that's not inherited
+/// Checks whether an em_Val has a certain property @param prop that's not inherited
 bool em_Val_has_own_property(em_Val self, const char *prop);
 /// Returns the typeof the underlying javascript object.
-/// @returns an allocated string which needs deallocation on
-/// the caller side
+/// @returns an allocated string which needs deallocation on the caller side
 char *em_Val_typeof(em_Val self);
 /// Returns the element at index @param idx
 em_Val em_Val_at(em_Val self, em_Val idx);
 /// Awaits the em_Val function object
 em_Val em_Val_await(em_Val self);
-/// Checks whether the underlying type is a number
+/// Checks whether the underlying type is a boolean
 bool em_Val_is_bool(em_Val self);
 /// Checks whether the underlying type is a number
 bool em_Val_is_number(em_Val self);
@@ -134,39 +129,26 @@ bool em_Val_eq(em_Val self, em_Val other);
 bool em_Val_neq(em_Val self, em_Val other);
 /// Checks whether @param self is greater than @param other
 bool em_Val_gt(em_Val self, em_Val other);
-/// Checks whether @param self is greater than or equals
-/// @param other
+/// Checks whether @param self is greater than or equals @param other
 bool em_Val_gte(em_Val self, em_Val other);
 /// Checks whether @param self is less than @param other
 bool em_Val_lt(em_Val self, em_Val other);
-/// Checks whether @param self is less than or equals @param
-/// other
+/// Checks whether @param self is less than or equals @param other
 bool em_Val_lte(em_Val self, em_Val other);
-/// Returns the underlying bool representation of the js
-/// object
+/// Returns the underlying bool representation of the js object
 bool em_Val_as_bool(em_Val self);
-/// Returns the underlying int representation of the js
-/// object
+/// Returns the underlying int representation of the js object
 int em_Val_as_int(em_Val self);
-/// Returns the underlying uint representation of the js
-/// object
+/// Returns the underlying uint representation of the js object
 unsigned int em_Val_as_uint(em_Val self);
-/// Returns the underlying bigint representation of the js
-/// object
+/// Returns the underlying bigint representation of the js object
 long long em_Val_as_bigint(em_Val self);
-/// Returns the underlying biguint representation of the js
-/// object
+/// Returns the underlying biguint representation of the js object
 unsigned long long em_Val_as_biguint(em_Val self);
-/// Returns the underlying bool representation of the js
-/// object
-bool em_Val_as_bool(em_Val self);
-/// Returns the underlying double representation of the js
-/// object
+/// Returns the underlying double representation of the js object
 double em_Val_as_double(em_Val self);
-/// Returns the underlying string representation of the js
-/// object.
-/// @returns an allocated string that will need deallocation
-/// on the caller side
+/// Returns the underlying string representation of the js object.
+/// @returns an allocated string that will need deallocation on the caller side
 char *em_Val_as_string(em_Val self);
 
 em_Val em_Val_as_val(em_Val self);
