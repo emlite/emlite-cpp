@@ -8,6 +8,14 @@ void *operator new[](size_t size) { return emlite_malloc(size); }
 
 void operator delete(void *val) noexcept { emlite_free(val); }
 
+void operator delete(void *ptr, size_t) noexcept {
+  emlite_free(ptr);
+}
+
+void operator delete[](void *ptr, size_t) noexcept {
+  emlite_free(ptr);
+}
+
 void operator delete[](void *val) noexcept { emlite_free(val); }
 
 void *operator new(size_t, void *place) noexcept { return place; }
