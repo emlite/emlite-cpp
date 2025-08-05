@@ -61,7 +61,7 @@ void *memcpy(void *dest, const void *src, size_t n);
 size_t strlen(const char *);
 #endif
 
-EMLITE_USED int emlite_target(void);
+EMLITE_USED EMLITE_EXPORT(emlite_target) int emlite_target(void);
 
 extern void emlite_init_handle_table(void);
 /// @returns a new array handle
