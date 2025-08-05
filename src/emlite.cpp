@@ -21,6 +21,10 @@ void operator delete[](void *val) noexcept { emlite_free(val); }
 void *operator new(size_t, void *place) noexcept { return place; }
 #endif
 namespace emlite {
+init() {
+    emlite_init_handle_table();
+}
+
 Val::Val() noexcept : v_(0) {}
 
 Val::Val(const Val &other) noexcept : v_(other.v_) {

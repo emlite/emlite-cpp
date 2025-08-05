@@ -63,6 +63,7 @@ size_t strlen(const char *);
 
 EMLITE_USED int emlite_target(void);
 
+extern void emlite_init_handle_table(void);
 /// @returns a new array handle
 extern Handle emlite_val_new_array(void);
 /// @returns a new js Object

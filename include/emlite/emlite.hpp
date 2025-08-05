@@ -64,6 +64,8 @@ using detail::ok;
 using detail::err;
 using detail::Uniq;
 
+void init();
+
 class Val;
 
 struct Params {
