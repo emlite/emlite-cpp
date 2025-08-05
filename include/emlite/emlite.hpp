@@ -213,6 +213,12 @@ class Val {
             v_ = emlite_val_make_double(v);
         } else if constexpr (detail::is_same_v<T, const char *> || detail::is_same_v<T, char *>) {
             v_ = emlite_val_make_str(v, strlen(v));
+        } else if constexpr (detail::is_same_v<T, const char16_t *> || detail::is_same_v<T, char16_t *>) {
+            // Calculate length of char16_t string
+            size_t len = 0;
+            const char16_t *ptr = v;
+            while (ptr && *ptr != 0) { ++len; ++ptr; }
+            v_ = emlite_val_make_str_utf16(v, len);
         } else {
             emlite_val_inc_ref(v.as_handle());
             v_ = v.as_handle();
@@ -342,6 +348,8 @@ class Val {
             return as<T>();
         } else if constexpr (detail::is_same_v<T, Uniq<char[]>> && is_string()) {
             return as<T>();
+        } else if constexpr (detail::is_same_v<T, Uniq<char16_t[]>> && is_string()) {
+            return as<T>();
         } else if (instanceof (T::instance()) && detail::is_base_of_v<Val, T>) {
             return as<T>();
         } else {
@@ -446,6 +454,14 @@ T Val::as() const noexcept {
                 }
             }
             return T(); // None
+        } else if constexpr (detail::is_same_v<U, Uniq<char16_t[]>>) {
+            if (is_string()) {
+                auto str_ptr = (char16_t *)emlite_val_get_value_string_utf16(v_);
+                if (str_ptr) {
+                    return T(Uniq<char16_t[]>(str_ptr));
+                }
+            }
+            return T(); // None
         } else {
             return T(U(*this));
         }
@@ -486,6 +502,19 @@ T Val::as() const noexcept {
                     return T(*this);
                 }
             }
+        } else if constexpr (detail::is_same_v<U, Uniq<char16_t[]>>) {
+            if (is_string()) {
+                auto str_ptr = (char16_t *)emlite_val_get_value_string_utf16(v_);
+                if (str_ptr) {
+                    return ok<U, E>(Uniq<char16_t[]>(str_ptr));
+                }
+            } else {
+                if constexpr (detail::is_same_v<E, Val>) {
+                    return T(Val::global("Error").new_("Expected string"));
+                } else {
+                    return T(*this);
+                }
+            }
         } else {
             if (is_error()) {
                 return err<U, E>(this->as<E>());
@@ -499,6 +528,8 @@ T Val::as() const noexcept {
         return emlite_val_get_value_double(v_);
     else if constexpr (detail::is_same_v<T, Uniq<char[]>>)
         return Uniq<char[]>(emlite_val_get_value_string(v_));
+    else if constexpr (detail::is_same_v<T, Uniq<char16_t[]>>)
+        return Uniq<char16_t[]>((char16_t *)emlite_val_get_value_string_utf16(v_));
     else {
         return T(*this);
     }

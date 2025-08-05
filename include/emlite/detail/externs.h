@@ -96,6 +96,8 @@ extern Handle emlite_val_make_biguint(unsigned long long value);
 extern Handle emlite_val_make_double(double t);
 /// Creates a string on the js side and returns its handle.
 extern Handle emlite_val_make_str(const char *, size_t);
+/// Creates a string from UTF-16 on the js side and returns its handle.
+extern Handle emlite_val_make_str_utf16(const uint16_t *, size_t);
 /// @returns the underlying bool value
 extern bool emlite_val_get_value_bool(Handle);
 /// @returns the underlying 32-bit signed integer value
@@ -110,6 +112,8 @@ extern unsigned long long emlite_val_get_value_biguint(Handle);
 extern double emlite_val_get_value_double(Handle);
 /// @returns the underlying string value of the js object represented by a Handle
 extern char *emlite_val_get_value_string(Handle);
+/// @returns the underlying UTF-16 string value of the js object represented by a Handle
+extern uint16_t *emlite_val_get_value_string_utf16(Handle);
 /// Gets a property from a js object
 extern Handle emlite_val_get(Handle, Handle);
 /// Sets a property on a js object

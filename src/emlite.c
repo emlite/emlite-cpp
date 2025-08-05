@@ -253,6 +253,14 @@ em_Val em_Val_from_string(const char *s) {
     return (em_Val){.h = emlite_val_make_str(s, strlen(s))};
 }
 
+em_Val em_Val_from_string_utf16(const uint16_t *s) {
+    // Calculate length of uint16_t string
+    size_t len = 0;
+    const uint16_t *ptr = s;
+    while (ptr && *ptr != 0) { ++len; ++ptr; }
+    return (em_Val){.h = emlite_val_make_str_utf16(s, len)};
+}
+
 em_Val em_Val_from_val(void *s) { return (em_Val){.h = ((em_Val *)s)->h}; }
 
 em_Val em_Val_from_handle(Handle v) { return (em_Val){.h = v}; }
@@ -355,6 +363,8 @@ bool em_Val_as_bool(em_Val self) { return !emlite_val_not(self.h); }
 double em_Val_as_double(em_Val self) { return emlite_val_get_value_double(self.h); }
 
 char *em_Val_as_string(em_Val self) { return emlite_val_get_value_string(self.h); }
+
+uint16_t *em_Val_as_string_utf16(em_Val self) { return emlite_val_get_value_string_utf16(self.h); }
 
 em_Val em_Val_as_val(em_Val self) { return em_Val_from_val(&self); }
 

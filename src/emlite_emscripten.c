@@ -195,6 +195,19 @@ EM_JS(
     { if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table(); return EMLITE_VALMAP.add(UTF8ToString(str, len)); }
 );
 
+EM_JS(
+    Handle,
+    emlite_val_make_str_utf16_impl,
+    (const unsigned short *str, size_t len),
+    {
+        if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table();
+        // str points to UTF-16 data in WebAssembly memory
+        // len is the number of char16_t units (not bytes)
+        const utf16Array = new Uint16Array(Module.HEAPU16.buffer, str, len);
+        return EMLITE_VALMAP.add(String.fromCharCode(...utf16Array));
+    }
+);
+
 EM_JS(bool, emlite_val_get_value_bool_impl, (Handle n), {
     if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table();
     return (EMLITE_VALMAP.get(n) ? 1 : 0);
@@ -246,6 +259,31 @@ EM_JS(char *, emlite_val_get_value_string_impl, (Handle n), {
     const len = Module.lengthBytesUTF8(str);
     const buf = _malloc(len);
     stringToUTF8(str, buf, len);
+    return buf;
+});
+
+EM_JS(unsigned short *, emlite_val_get_value_string_utf16_impl, (Handle n), {
+    if (!globalThis.EMLITE_INITIALIZED) emlite_init_handle_table();
+    const val = EMLITE_VALMAP.get(n);
+    if (!val || !(typeof val === "string" || val instanceof String)) return 0;
+    
+    // Convert string to UTF-16 array
+    const utf16Array = [];
+    for (let i = 0; i < val.length; i++) {
+        utf16Array.push(val.charCodeAt(i));
+    }
+    utf16Array.push(0); // null terminator
+    
+    // Allocate memory for UTF-16 data (2 bytes per char16_t)
+    const byteLength = utf16Array.length * 2;
+    const buf = _malloc(byteLength);
+    
+    // Copy UTF-16 data to WebAssembly memory
+    const uint16View = new Uint16Array(Module.HEAPU16.buffer, buf, utf16Array.length);
+    for (let i = 0; i < utf16Array.length; i++) {
+        uint16View[i] = utf16Array[i];
+    }
+    
     return buf;
 });
 
@@ -456,6 +494,11 @@ Handle emlite_val_make_str(const char *str, size_t len) {
 }
 
 EMLITE_USED
+Handle emlite_val_make_str_utf16(const char16_t *str, size_t len) {
+    return emlite_val_make_str_utf16_impl((const unsigned short *)str, len);
+}
+
+EMLITE_USED
 int emlite_val_get_value_int(Handle n) { return emlite_val_get_value_int_impl(n); }
 
 EMLITE_USED
@@ -477,6 +520,11 @@ bool emlite_val_get_value_bool(Handle n) { return emlite_val_get_value_bool_impl
 
 EMLITE_USED
 char *emlite_val_get_value_string(Handle n) { return emlite_val_get_value_string_impl(n); }
+
+EMLITE_USED
+char16_t *emlite_val_get_value_string_utf16(Handle n) { 
+    return (char16_t *)emlite_val_get_value_string_utf16_impl(n); 
+}
 
 EMLITE_USED
 Handle emlite_val_get(Handle n, Handle idx) { return emlite_val_get_impl(n, idx); }

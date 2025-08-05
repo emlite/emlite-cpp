@@ -4,10 +4,32 @@
 
 #define EMLITE_EVAL(x, ...) emlite_eval_v(#x __VA_OPT__(, __VA_ARGS__))
 
-#define em_Val_from(x)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            \
-    _Generic((x), _Bool: em_Val_from_bool, char: em_Val_from_int, signed char: em_Val_from_int, unsigned char: em_Val_from_uint, short: em_Val_from_int, unsigned short: em_Val_from_uint, int: em_Val_from_int, unsigned int: em_Val_from_uint, long: em_Val_from_int, unsigned long: em_Val_from_uint, long long: em_Val_from_bigint, unsigned long long: em_Val_from_biguint, float: em_Val_from_double, double: em_Val_from_double, long double: em_Val_from_double, char *: em_Val_from_string, const char *: em_Val_from_string, default: em_Val_from_val)( \
-        x                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         \
+// clang-format off
+#define em_Val_from(x) \
+    _Generic((x), \
+    _Bool: em_Val_from_bool, \
+    char: em_Val_from_int, \
+    signed char: em_Val_from_int, \
+    unsigned char: em_Val_from_uint, \
+    short: em_Val_from_int, \
+    unsigned short: em_Val_from_uint, \
+    int: em_Val_from_int, \
+    unsigned int: em_Val_from_uint, \
+    long: em_Val_from_int, \
+    unsigned long: em_Val_from_uint, \
+    long long: em_Val_from_bigint, \
+    unsigned long long: em_Val_from_biguint, \
+    float: em_Val_from_double, \
+    double: em_Val_from_double, \
+    long double: em_Val_from_double, \
+    char *: em_Val_from_string, \
+    const char *: em_Val_from_string, \
+    uint16_t *: em_Val_from_string_utf16, \
+    const uint16_t *: em_Val_from_string_utf16, \
+    default: em_Val_from_val)( \
+        x       \
     )
+// clang-format on
 
 #define em_Val_as(TYPE, VAL)                                                                       \
     _Generic(                                                                                      \
@@ -29,6 +51,7 @@
         double: (double)emlite_val_get_value_double(em_Val_as_handle(VAL)),                        \
         long double: (long double)emlite_val_get_value_double(em_Val_as_handle(VAL)),              \
         char *: emlite_val_get_value_string(em_Val_as_handle(VAL)),                                \
+        uint16_t *: emlite_val_get_value_string_utf16(em_Val_as_handle(VAL)),                      \
         default: *(TYPE *)&(em_Val){em_Val_as_handle(VAL)}                                         \
     )
 
@@ -64,6 +87,8 @@ em_Val em_Val_from_biguint(unsigned long long i);
 em_Val em_Val_from_double(double i);
 /// Create an em_Val from a string @param i
 em_Val em_Val_from_string(const char *i);
+/// Create an em_Val from a UTF-16 string @param i
+em_Val em_Val_from_string_utf16(const uint16_t *i);
 /// Create an em_Val from a val @param i
 em_Val em_Val_from_val(void *i);
 /// Create an em_Val from a raw handle @param v
@@ -150,6 +175,9 @@ double em_Val_as_double(em_Val self);
 /// Returns the underlying string representation of the js object.
 /// @returns an allocated string that will need deallocation on the caller side
 char *em_Val_as_string(em_Val self);
+/// Returns the underlying UTF-16 string representation of the js object.
+/// @returns an allocated UTF-16 string that will need deallocation on the caller side
+uint16_t *em_Val_as_string_utf16(em_Val self);
 
 em_Val em_Val_as_val(em_Val self);
 
