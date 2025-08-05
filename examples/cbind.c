@@ -34,6 +34,7 @@ void MyJsClass_print(MyJsClass *self) {
 }
 
 int main() {
+    emlite_init_handle_table();
     MyJsClass_define();
     MyJsClass c = MyJsClass_new(5, 6);
     MyJsClass_print(&c);

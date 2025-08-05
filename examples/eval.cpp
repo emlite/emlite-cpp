@@ -3,6 +3,7 @@
 using namespace emlite;
 
 int main() {
+    emlite::init();
     // clang-format off
     auto ret = EMLITE_EVAL({
        let c = EMLITE_VALMAP.toValue(%d);

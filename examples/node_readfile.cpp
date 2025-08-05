@@ -5,6 +5,7 @@
 using namespace emlite;
 
 int main() {
+    emlite::init();
     // `require` was exposed to Emlite in tests/node_test.js
     auto require = Val::global("require");
 

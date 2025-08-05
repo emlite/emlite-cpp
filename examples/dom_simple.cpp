@@ -3,6 +3,7 @@
 using namespace emlite;
 
 int main() {
+    emlite::init();
     Console().log("Hello from Emlite");
 
     auto doc  = Val::global("document");

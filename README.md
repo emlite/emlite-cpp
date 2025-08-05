@@ -29,7 +29,7 @@ C++ example:
 
 using namespace emlite;
 
-EMLITE_USED extern "C" void some_func() {
+void some_func() {
     Console().log("Hello from Emlite");
 
     auto doc = Val::global("document");
@@ -48,13 +48,21 @@ EMLITE_USED extern "C" void some_func() {
     );
     body.call("appendChild", btn);
 }
+
+/* The caller's main should initialize emlite
+int main() {
+    emlite::init();
+    some_func();
+}
+*/
 ```
 
 C example:
 ```c
 #include <emlite/emlite.h>
 
-EMLITE_USED int main() {
+int main() {
+    emlite_init_handle_table();
     em_Val console = em_Val_global("console");
     em_Val_call(console, "log", 1, em_Val_from_string("200"));
     emlite_reset_object_map();

@@ -6,6 +6,7 @@
 using namespace emlite;
 
 int main() {
+    emlite::init();
     auto AudioContext = Val::global("AudioContext");
     if (!AudioContext.as<bool>()) {
         printf("No global AudioContext, trying "

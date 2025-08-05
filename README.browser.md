@@ -79,6 +79,7 @@ In your src/main.cpp:
 #include <emlite/emlite.hpp>
 
 int main() {
+    emlite::init();
     emlite::Console().log("Hello World!");
 }
 ```

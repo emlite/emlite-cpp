@@ -29,6 +29,7 @@ class MyJsClass : public Val {
 };
 
 int main() {
+    emlite::init();
     MyJsClass::define();
     auto c = MyJsClass(5, 6);
     c.call("print");
