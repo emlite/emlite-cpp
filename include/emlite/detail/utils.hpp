@@ -26,7 +26,7 @@ class Option {
 
     Option(NullOpt) noexcept : has_value_(false), dummy_(0) {}
 
-    Option(T value) noexcept : has_value_(true), value_(move(value)) {}
+    Option(T value) noexcept : has_value_(true), value_(move_(value)) {}
 
     Option(const Option &other) noexcept : has_value_(other.has_value_) {
         if (has_value_) {
@@ -55,7 +55,7 @@ class Option {
 
     Option(Option &&other) noexcept : has_value_(other.has_value_) {
         if (has_value_) {
-            new (&value_) T(move(other.value_));
+            new (&value_) T(move_(other.value_));
             other.value_.~T();
         } else {
             dummy_ = 0;
@@ -74,7 +74,7 @@ class Option {
 
         has_value_ = other.has_value_;
         if (has_value_) {
-            new (&value_) T(move(other.value_));
+            new (&value_) T(move_(other.value_));
             other.value_.~T();
         } else {
             dummy_ = 0;
@@ -160,9 +160,9 @@ class Result {
     };
 
   public:
-    Result(ok_t, T value) noexcept : has_value_(true), has_error_(false), value_(move(value)) {}
+    Result(ok_t, T value) noexcept : has_value_(true), has_error_(false), value_(move_(value)) {}
 
-    Result(err_t, E error) noexcept : has_value_(false), has_error_(true), error_(move(error)) {}
+    Result(err_t, E error) noexcept : has_value_(false), has_error_(true), error_(move_(error)) {}
     
     Result(const Result &other) noexcept
         : has_value_(other.has_value_), has_error_(other.has_error_) {
@@ -200,10 +200,10 @@ class Result {
 
     Result(Result &&other) noexcept : has_value_(other.has_value_), has_error_(other.has_error_) {
         if (has_value_) {
-            new (&value_) T(move(other.value_));
+            new (&value_) T(move_(other.value_));
             other.value_.~T();
         } else if (has_error_) {
-            new (&error_) E(move(other.error_));
+            new (&error_) E(move_(other.error_));
             other.error_.~E();
         } else {
             dummy_ = 0;
@@ -227,10 +227,10 @@ class Result {
         has_error_ = other.has_error_;
 
         if (has_value_) {
-            new (&value_) T(move(other.value_));
+            new (&value_) T(move_(other.value_));
             other.value_.~T();
         } else if (has_error_) {
-            new (&error_) E(move(other.error_));
+            new (&error_) E(move_(other.error_));
             other.error_.~E();
         } else {
             dummy_ = 0;
