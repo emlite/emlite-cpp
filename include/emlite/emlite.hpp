@@ -220,7 +220,7 @@ class Val {
             size_t len = 0;
             const char16_t *ptr = v;
             while (ptr && *ptr != 0) { ++len; ++ptr; }
-            v_ = emlite_val_make_str_utf16(v, len);
+            v_ = emlite_val_make_str_utf16((uint16_t *)v, len);
         } else {
             emlite_val_inc_ref(v.as_handle());
             v_ = v.as_handle();

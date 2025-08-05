@@ -21,7 +21,7 @@ void operator delete[](void *val) noexcept { emlite_free(val); }
 void *operator new(size_t, void *place) noexcept { return place; }
 #endif
 namespace emlite {
-init() {
+void init() {
     emlite_init_handle_table();
 }
 
