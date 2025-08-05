@@ -79,7 +79,7 @@ EMLITE_USED int add(int a, int b) {
 }
 
 int main() {
-    emlite::init();
+    emlite_init_handle_table();
     int a = add(1, 2);
     emlite_print_object_map();
 }
