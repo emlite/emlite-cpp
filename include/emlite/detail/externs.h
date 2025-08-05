@@ -41,7 +41,7 @@ extern "C" {
 
 int snprintf(char *out, size_t n, const char *fmt, ...);
 int vsnprintf(char *out, size_t n, const char *fmt, va_list ap);
-EMLITE_USED void *emlite_malloc(size_t);
+EMLITE_USED EMLITE_EXPORT(emlite_malloc) void *emlite_malloc(size_t);
 EMLITE_USED void *emlite_realloc(void *, size_t);
 EMLITE_USED void emlite_free(void *);
 
