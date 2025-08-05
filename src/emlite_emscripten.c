@@ -184,7 +184,7 @@ EM_JS(
 EM_JS(
     Handle,
     emlite_val_make_str_utf16_impl,
-    (const unsigned short *str, size_t len),
+    (const uint16_t *str, size_t len),
     {
             // str points to UTF-16 data in WebAssembly memory
         // len is the number of char16_t units (not bytes)
@@ -454,7 +454,7 @@ Handle emlite_val_make_str(const char *str, size_t len) {
 }
 
 EMLITE_USED
-Handle emlite_val_make_str_utf16(const char16_t *str, size_t len) {
+Handle emlite_val_make_str_utf16(const uint16_t *str, size_t len) {
     return emlite_val_make_str_utf16_impl((const unsigned short *)str, len);
 }
 
@@ -482,8 +482,8 @@ EMLITE_USED
 char *emlite_val_get_value_string(Handle n) { return emlite_val_get_value_string_impl(n); }
 
 EMLITE_USED
-char16_t *emlite_val_get_value_string_utf16(Handle n) { 
-    return (char16_t *)emlite_val_get_value_string_utf16_impl(n); 
+uint16_t *emlite_val_get_value_string_utf16(Handle n) { 
+    return emlite_val_get_value_string_utf16_impl(n); 
 }
 
 EMLITE_USED
