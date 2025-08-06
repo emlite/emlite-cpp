@@ -465,6 +465,9 @@ T Val::as() const noexcept {
             }
             return T(); // None
         } else {
+            if (this->is_error() || this->is_null() || this->is_undefined()) {
+                return T();
+            } else 
             return T(U(*this));
         }
     } else if constexpr (detail::is_result_v<T>) {
@@ -520,6 +523,8 @@ T Val::as() const noexcept {
         } else {
             if (is_error()) {
                 return err<U, E>(this->as<E>());
+            } else if (is_null() || is_undefined()) {
+                return err<U, E>(Val::global("Error").new_("Found invalid value"));
             } else {
                 return ok<U, E>(this->as<U>());
             }
