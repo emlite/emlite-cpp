@@ -23,6 +23,8 @@ void *operator new(size_t, void *place) noexcept { return place; }
 namespace emlite {
 void init() {
     emlite_init_handle_table();
+    // make sure the symbol is there and not stripped!
+    emlite_target();
 }
 
 Val::Val() noexcept : v_(0) {}
