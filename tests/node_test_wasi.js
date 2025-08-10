@@ -22,14 +22,14 @@ async function main() {
             require: createRequire(import.meta.url),
         }
     });
-    // const bytes = await emlite.readFile(new URL("../bin/wasi_sdk/examples/node_readfile.wasm", import.meta.url));
-    // const wasm = await WebAssembly.compile(bytes);
-    // const instance = await WebAssembly.instantiate(wasm, {
-    //     wasi_snapshot_preview1: wasi.wasiImport,
-    //     env: emlite.env,
-    // });
-    // emlite.setExports(instance.exports);
-    // wasi.start(instance);
+    const bytes = await emlite.readFile(new URL("../bin/wasi_sdk/examples/node_readfile.wasm", import.meta.url));
+    const wasm = await WebAssembly.compile(bytes);
+    const instance = await WebAssembly.instantiate(wasm, {
+        wasi_snapshot_preview1: wasi.wasiImport,
+        env: emlite.env,
+    });
+    emlite.setExports(instance.exports);
+    wasi.start(instance);
 }
 
 await main();
