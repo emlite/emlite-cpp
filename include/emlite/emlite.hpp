@@ -352,6 +352,8 @@ class Val {
             return as<T>();
         } else if constexpr (detail::is_same_v<T, Uniq<char16_t[]>> && is_string()) {
             return as<T>();
+        } else if (T::instance() == emlite::Val("Any")) {
+            return as<T>();
         } else if (instanceof (T::instance()) && detail::is_base_of_v<Val, T>) {
             return as<T>();
         } else {
