@@ -9,7 +9,7 @@ set(DEFAULT_LINK_FLAGS "-sERROR_ON_UNDEFINED_SYMBOLS=0 -sALLOW_MEMORY_GROWTH=1 -
 
 For use with the default mode, you will need to tweak the link flags:
 ```
--sERROR_ON_UNDEFINED_SYMBOLS=0 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS=wasmTable,UTF8ToString,lengthBytesUTF8,stringToUTF8 -sEXPORTED_FUNCTIONS=_malloc,_main -Wl,--strip-all
+-sERROR_ON_UNDEFINED_SYMBOLS=0 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_FUNCTIONS=_main -Wl,--strip-all,--export-dynamic
 ```
 Notice how we remove the `--import-memory` link flag. To load in the browser where you depend on automatic loading of the js glue code, you can add a script tag which just imports and initializes Emlite before the `<script>` tag which loads the emscripten-generated js glue code:
 ```html
@@ -28,7 +28,7 @@ Notice how we remove the `--import-memory` link flag. To load in the browser whe
 
 If you rely on emscripten to generate an ES6 module, you can pass emscripten the `-sMODULARIZE` and `-sEXPORT_ES6=1` flags. Or you can instruct emscripten to generate an `.mjs` file in which case it will automatically generate an ES6 module. This can be done in the command-line by specifying the name of the output file, or using CMake:
 ```cmake
-set(DEFAULT_LINK_FLAGS "-sERROR_ON_UNDEFINED_SYMBOLS=0 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS=wasmTable,UTF8ToString,lengthBytesUTF8,stringToUTF8 -sEXPORTED_FUNCTIONS=_malloc,_main")
+set(DEFAULT_LINK_FLAGS "-sERROR_ON_UNDEFINED_SYMBOLS=0 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_FUNCTIONS=_main -Wl,--strip-all,--export-dynamic")
 
 add_executable(main src/main.cpp)
 target_link_libraries(main PRIVATE emlite::emlite)
@@ -59,7 +59,7 @@ This can then be imported in your browser for example using:
 
 If you generate html files using Emscripten. You just need to change the SUFFIX property to .html and supply a shell html file in your link args:
 ```
-set(${DEFAULT_LINK_FLAGS} "-sERROR_ON_UNDEFINED_SYMBOLS=0 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS=wasmTable,UTF8ToString,lengthBytesUTF8,stringToUTF8 -sEXPORTED_FUNCTIONS=_malloc,_main --shell-file ${CMAKE_CURRENT_LIST_DIR}/my_shell.html")
+set(${DEFAULT_LINK_FLAGS} "-sERROR_ON_UNDEFINED_SYMBOLS=0 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_FUNCTIONS=_main -Wl,--strip-all,--export-dynamic --shell-file ${CMAKE_CURRENT_LIST_DIR}/my_shell.html")
 ```
 
 You can create a shell my_shell.html file:
