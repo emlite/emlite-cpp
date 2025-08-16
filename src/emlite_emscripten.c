@@ -13,6 +13,12 @@
 
 #define EM_JS(ret, name, params, ...) _EM_JS(ret, name, name, params, #__VA_ARGS__)
 
+#define EM_JS_DEPS(tag, deps)                                                                      \
+    __attribute__((used)) __attribute__((section("em_lib_deps")))                                  \
+    __attribute__((aligned(1))) char __em_lib_deps_##tag[] = deps;
+
+EM_JS_DEPS(emlite, "$wasmTable,$UTF8ToString,$UTF16ToString,$lengthBytesUTF8,$lengthBytesUTF16,$stringToUTF8,$stringToUTF16");
+
 // clang-format off
 EM_JS(void, emlite_init_handle_table_impl, (), {
 class HandleTable {
@@ -100,7 +106,7 @@ EM_JS(Handle, emlite_val_new_object_impl, (), {
 
 EM_JS(char *, emlite_val_typeof_impl, (Handle n), {
     const str = (typeof EMLITE_VALMAP.get(n)) + "\0";
-    const len = Module.lengthBytesUTF8(str);
+    const len = lengthBytesUTF8(str);
     const buf = _malloc(len);
     stringToUTF8(str, buf, len);
     return buf;
@@ -186,10 +192,7 @@ EM_JS(
     emlite_val_make_str_utf16_impl,
     (const uint16_t *str, size_t len),
     {
-            // str points to UTF-16 data in WebAssembly memory
-        // len is the number of char16_t units (not bytes)
-        const utf16Array = new Uint16Array(Module.HEAPU16.buffer, str, len);
-        return EMLITE_VALMAP.add(String.fromCharCode(...utf16Array));
+        return EMLITE_VALMAP.add(UTF16ToString(str, len));
     }
 );
 
@@ -230,38 +233,22 @@ EM_JS(double, emlite_val_get_value_double_impl, (Handle n), {
     return Number(EMLITE_VALMAP.get(n));
 });
 
-EM_JS(char *, emlite_val_get_value_string_impl, (Handle n), {
-    const val = EMLITE_VALMAP.get(n);
-    if (!val || !(typeof val === "string" || val instanceof String)) return 0;
-    const str = val + "\0";
-    const len = Module.lengthBytesUTF8(str);
-    const buf = _malloc(len);
-    stringToUTF8(str, buf, len);
-    return buf;
+EM_JS(char*, emlite_val_get_value_string_impl, (Handle n), {
+  const val = EMLITE_VALMAP.get(n);
+  if (!val || typeof val !== "string") return 0;
+  const len = lengthBytesUTF8(val) + 1;
+  const buf = _malloc(len);
+  stringToUTF8(val, buf, len);
+  return buf;
 });
 
 EM_JS(unsigned short *, emlite_val_get_value_string_utf16_impl, (Handle n), {
-    const val = EMLITE_VALMAP.get(n);
-    if (!val || !(typeof val === "string" || val instanceof String)) return 0;
-    
-    // Convert string to UTF-16 array
-    const utf16Array = [];
-    for (let i = 0; i < val.length; i++) {
-        utf16Array.push(val.charCodeAt(i));
-    }
-    utf16Array.push(0); // null terminator
-    
-    // Allocate memory for UTF-16 data (2 bytes per char16_t)
-    const byteLength = utf16Array.length * 2;
-    const buf = _malloc(byteLength);
-    
-    // Copy UTF-16 data to WebAssembly memory
-    const uint16View = new Uint16Array(Module.HEAPU16.buffer, buf, utf16Array.length);
-    for (let i = 0; i < utf16Array.length; i++) {
-        uint16View[i] = utf16Array[i];
-    }
-    
-    return buf;
+  const val = EMLITE_VALMAP.get(n);
+  if (!val || typeof val !== "string") return 0;
+  const byteLen = lengthBytesUTF16(val) + 2;
+  const buf = _malloc(byteLen);
+  stringToUTF16(val, buf, byteLen);
+  return buf;
 });
 
 EM_JS(Handle, emlite_val_get_impl, (Handle n, Handle idx), {
@@ -371,7 +358,7 @@ EM_JS(Handle, emlite_val_make_callback_impl, (Handle fidx, Handle data), {
             EMLITE_VALMAP.add(args.map(v => v));
         let ret;
         try {
-            ret = Module.wasmTable.get(fidx)(arrHandle, data);
+            ret = wasmTable.get(fidx)(arrHandle, data);
         } catch (e) {
             ret = normalizeThrown(e);
         }
@@ -482,8 +469,8 @@ EMLITE_USED
 char *emlite_val_get_value_string(Handle n) { return emlite_val_get_value_string_impl(n); }
 
 EMLITE_USED
-uint16_t *emlite_val_get_value_string_utf16(Handle n) { 
-    return emlite_val_get_value_string_utf16_impl(n); 
+uint16_t *emlite_val_get_value_string_utf16(Handle n) {
+    return emlite_val_get_value_string_utf16_impl(n);
 }
 
 EMLITE_USED
