@@ -39,8 +39,11 @@ else()
     set_target_properties(emlite PROPERTIES LINKER_LANGUAGE CXX)
 endif()
 
+set(EMSCRIPTEN_ADAPTER_LIB)
 if(EMSCRIPTEN AND NOT EMSCRIPTEN_STANDALONE_WASM)
     add_subdirectory(emlite_emscripten_adapter)
+    target_link_libraries(emlite PUBLIC ems_env)
+    set(EMSCRIPTEN_ADAPTER_LIB ems_env)
 endif()
 
 target_sources(emlite 
@@ -84,7 +87,7 @@ add_library(emlite::emlite ALIAS emlite)
 
 include(GNUInstallDirs)
 
-install(TARGETS emlite ${DLMALLOC_LIB} EXPORT emliteTargets FILE_SET  HEADERS
+install(TARGETS emlite ${DLMALLOC_LIB} ${EMSCRIPTEN_ADAPTER_LIB} EXPORT emliteTargets FILE_SET  HEADERS
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
