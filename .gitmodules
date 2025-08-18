@@ -1,0 +1,3 @@
+[submodule "emlite_emscripten_adapter"]
+	path = emlite_emscripten_adapter
+	url = https://github.com/emlite/emlite_emscripten_adapter

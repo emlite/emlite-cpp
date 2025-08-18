@@ -40,7 +40,7 @@ else()
 endif()
 
 if(EMSCRIPTEN AND NOT EMSCRIPTEN_STANDALONE_WASM)
-    list(APPEND EMLITE_SOURCES src/emlite_emscripten.c)
+    add_subdirectory(emlite_emscripten_adapter)
 endif()
 
 target_sources(emlite 

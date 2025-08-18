@@ -194,7 +194,7 @@ As mentioned previously, emlite only includes a simple bump allocator. It's advi
 ## Testing
 To test emlite, you can clone this repo and run it's test suite:
 ```bash
-git clone https://github.com/emlite/emlite-cpp
+git clone https://github.com/emlite/emlite-cpp --recurse-submodules
 cd emlite-cpp
 npm install
 npm run test_all

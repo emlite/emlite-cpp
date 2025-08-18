@@ -1,6 +1,6 @@
 #include <emlite/emlite.h>
 
-EMLITE_USED int emlite_target(void) { return 1032; }
+EMLITE_USED int emlite_target(void) { return 1033; }
 
 #if __has_include(<errno.h>)
 #include <errno.h>
