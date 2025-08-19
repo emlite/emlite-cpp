@@ -48,7 +48,9 @@ target_sources(emlite
         FILES ${EMLITE_HEADERS}
 )
 
+set(EMLITE_WITH_EMS_ENV OFF)
 if(EMSCRIPTEN AND NOT EMSCRIPTEN_STANDALONE_WASM)
+    set(EMLITE_WITH_EMS_ENV ON)
     find_package(ems_env CONFIG QUIET)
     if (NOT ems_env_FOUND)
         add_subdirectory(emlite_emscripten_adapter)
@@ -56,7 +58,9 @@ if(EMSCRIPTEN AND NOT EMSCRIPTEN_STANDALONE_WASM)
     target_link_libraries(emlite PRIVATE ems_env::ems_env)
 endif()
 
+set(EMLITE_WITH_DLMALLOC OFF)
 if (EMLITE_USE_DLMALLOC)
+    set(EMLITE_WITH_DLMALLOC ON)
     find_package(dlmalloc CONFIG QUIET)
     if(NOT dlmalloc_FOUND)
         add_subdirectory(dlmalloc)
