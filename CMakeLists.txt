@@ -49,7 +49,7 @@ target_sources(emlite
 )
 
 if(EMSCRIPTEN AND NOT EMSCRIPTEN_STANDALONE_WASM)
-    find_package(ems_env QUIET)
+    find_package(ems_env CONFIG QUIET)
     if (NOT ems_env_FOUND)
         add_subdirectory(emlite_emscripten_adapter)
     endif()
@@ -57,7 +57,7 @@ if(EMSCRIPTEN AND NOT EMSCRIPTEN_STANDALONE_WASM)
 endif()
 
 if (EMLITE_USE_DLMALLOC)
-    find_package(dlmalloc QUIET)
+    find_package(dlmalloc CONFIG QUIET)
     if(NOT dlmalloc_FOUND)
         add_subdirectory(dlmalloc)
     endif()
