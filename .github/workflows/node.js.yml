@@ -34,6 +34,8 @@ jobs:
         wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-25/wasi-sysroot-25.0.tar.gz
         tar -xf wasi-sysroot-25.0.tar.gz
         rm -rf wasi-sysroot-25.0.tar.gz
+    - name: get submodules
+      run: git submodule update --init --recursive
     - name: npm install
       run: npm install
     - name: build tests for freestanding, wasi-libc, wasi-sysroot and wasi-sdk
