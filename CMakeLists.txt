@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.28)
-project(emlite VERSION 0.1.0 LANGUAGES C CXX)
+project(emlite VERSION 0.1.2 LANGUAGES C CXX)
 
 option(EMLITE_BUILD_EXAMPLES "Build examples" OFF)
 option(EMLITE_USE_DLMALLOC "Use dlmalloc for freestanding environments" OFF)
@@ -48,14 +48,14 @@ target_sources(emlite
         FILES ${EMLITE_HEADERS}
 )
 
-set(EMLITE_WITH_EMS_ENV OFF)
+set(EMLITE_WITH_EMSENV OFF)
 if(EMSCRIPTEN AND NOT EMSCRIPTEN_STANDALONE_WASM)
-    set(EMLITE_WITH_EMS_ENV ON)
-    find_package(ems_env CONFIG QUIET)
-    if (NOT ems_env_FOUND)
-        add_subdirectory(emlite_emscripten_adapter)
+    set(EMLITE_WITH_EMSENV ON)
+    find_package(emsenv CONFIG QUIET)
+    if (NOT emsenv_FOUND)
+        add_subdirectory(emsenv)
     endif()
-    target_link_libraries(emlite PRIVATE ems_env::ems_env)
+    target_link_libraries(emlite PRIVATE emsenv::emsenv)
 endif()
 
 set(EMLITE_WITH_DLMALLOC OFF)

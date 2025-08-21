@@ -2,8 +2,8 @@
 
 include(CMakeFindDependencyMacro)
 
-if(@EMLITE_WITH_EMS_ENV@)
-  find_dependency(ems_env)
+if(@EMLITE_WITH_EMSENV@)
+  find_dependency(emsenv)
 endif()
 
 if(@EMLITE_WITH_DLMALLOC@)
