@@ -1,6 +1,6 @@
-[submodule "emlite_emscripten_adapter"]
-	path = emlite_emscripten_adapter
-	url = https://github.com/emlite/emlite_emscripten_adapter
 [submodule "dlmalloc"]
 	path = dlmalloc
 	url = https://github.com/emlite/dlmalloc
+[submodule "emsenv"]
+	path = emsenv
+	url = https://github.com/emlite/emsenv
