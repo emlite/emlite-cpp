@@ -2,42 +2,25 @@ cmake_minimum_required(VERSION 3.28)
 project(emlite VERSION 0.1.2 LANGUAGES C CXX)
 
 option(EMLITE_BUILD_EXAMPLES "Build examples" OFF)
-option(EMLITE_USE_DLMALLOC "Use dlmalloc for freestanding environments" OFF)
-option(EMLITE_CLIB_ONLY "Build only the emlite C library" OFF)
-option(EMSCRIPTEN_STANDALONE_WASM "Use emscripten's default js output" OFF)
 
 add_library(emlite)
 
 set(EMLITE_HEADERS)
 set(EMLITE_SOURCES)
 
-if (EMLITE_CLIB_ONLY)
-    set(EMLITE_HEADERS
-        include/emlite/emlite.h
-        include/emlite/detail/externs.h
-    )
-    set(EMLITE_SOURCES
-        src/emlite.c
-    )
-    target_compile_features(emlite PUBLIC c_std_11)
-    set_target_properties(emlite PROPERTIES LINKER_LANGUAGE C)
-else()
-    set(EMLITE_HEADERS
-        include/emlite/emlite.h
-        include/emlite/emlite.hpp
-        include/emlite/detail/externs.h
-        include/emlite/detail/func.hpp
-        include/emlite/detail/mem.hpp
-        include/emlite/detail/tiny_traits.hpp
-        include/emlite/detail/utils.hpp
-    )
-    set(EMLITE_SOURCES
-        src/emlite.c
-        src/emlite.cpp
-    )
-    target_compile_features(emlite PUBLIC cxx_std_17)
-    set_target_properties(emlite PROPERTIES LINKER_LANGUAGE CXX)
-endif()
+set(EMLITE_HEADERS
+    include/emlite/emlite.hpp
+    include/emlite/detail/func.hpp
+    include/emlite/detail/mem.hpp
+    include/emlite/detail/tiny_traits.hpp
+    include/emlite/detail/utils.hpp
+)
+set(EMLITE_SOURCES
+    src/emlite.cpp
+)
+target_compile_features(emlite PUBLIC cxx_std_17)
+set_target_properties(emlite PROPERTIES LINKER_LANGUAGE CXX)
+
 
 target_sources(emlite 
     PRIVATE 
@@ -48,26 +31,11 @@ target_sources(emlite
         FILES ${EMLITE_HEADERS}
 )
 
-set(EMLITE_WITH_EMSENV OFF)
-if(EMSCRIPTEN AND NOT EMSCRIPTEN_STANDALONE_WASM)
-    set(EMLITE_WITH_EMSENV ON)
-    find_package(emsenv CONFIG QUIET)
-    if (NOT emsenv_FOUND)
-        add_subdirectory(emsenv)
-    endif()
-    target_link_libraries(emlite PRIVATE emsenv::emsenv)
+find_package(emcore CONFIG QUIET)
+if(NOT emcore_FOUND)
+    add_subdirectory(emcore)
 endif()
-
-set(EMLITE_WITH_DLMALLOC OFF)
-if (EMLITE_USE_DLMALLOC)
-    set(EMLITE_WITH_DLMALLOC ON)
-    find_package(dlmalloc CONFIG QUIET)
-    if(NOT dlmalloc_FOUND)
-        add_subdirectory(dlmalloc)
-    endif()
-    target_compile_definitions(emlite PUBLIC HAVE_DLMALLOC)
-    target_link_libraries(emlite PRIVATE dlmalloc)
-endif()
+target_link_libraries(emlite PUBLIC emcore::emcore)
 
 add_library(emlite::emlite ALIAS emlite)
 

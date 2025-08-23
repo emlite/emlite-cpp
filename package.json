@@ -1,7 +1,7 @@
 {
   "name": "emlite-cpp",
   "version": "0.1.24",
-  "description": "A tiny JS bridge for C/C++ via wasm",
+  "description": "A tiny JS bridge for C++ via wasm",
   "main": "scripts/index.js",
   "type": "module",
   "directories": {

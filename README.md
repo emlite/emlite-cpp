@@ -1,5 +1,5 @@
 # Emlite-cpp
-Emlite is a tiny JS bridge for native C/C++ code via Wasm, which is agnostic of the underlying toolchain. Thus it can target wasm32-unknown-unknown (freestanding, via stock clang), wasm32-wasi, wasm32-wasip1 and emscripten. 
+Emlite is a tiny JS bridge for native C++ code via Wasm, which is agnostic of the underlying toolchain. Thus it can target wasm32-unknown-unknown (freestanding, via stock clang), wasm32-wasi, wasm32-wasip1 and emscripten. 
 It allows plain C or C++ code — compiled for wasm — to interoperate with javascript (including the DOM) and other JavaScript objects/runtimes without writing much JS “glue.”
 It provides both a C api and a higher level C++ api similar to emscripten's val api.
 For freestanding builds, it provides a simple bump allocator (invocable via malloc), however this repo also vendors dlmalloc in the src directory. Please check the CMakeLists.txt to see how it's used in the tests and examples.
@@ -55,18 +55,6 @@ int main() {
     some_func();
 }
 */
-```
-
-C example:
-```c
-#include <emlite/emlite.h>
-
-int main() {
-    emlite_init_handle_table();
-    em_Val console = em_Val_global("console");
-    em_Val_call(console, "log", 1, em_Val_from_string("200"));
-    emlite_reset_object_map();
-}
 ```
 
 To quickly try out emlite in the browser, create an index.html file:

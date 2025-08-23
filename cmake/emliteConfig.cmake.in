@@ -2,13 +2,7 @@
 
 include(CMakeFindDependencyMacro)
 
-if(@EMLITE_WITH_EMSENV@)
-  find_dependency(emsenv)
-endif()
-
-if(@EMLITE_WITH_DLMALLOC@)
-  find_dependency(dlmalloc)
-endif()
+find_dependency(emcore)
 
 include("${CMAKE_CURRENT_LIST_DIR}/emliteTargets.cmake")
 

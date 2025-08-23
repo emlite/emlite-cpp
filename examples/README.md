@@ -1,13 +1,6 @@
 # Examples
 
-This directory contains both a C and a C++ example.
-
 ## Building with the wasi-sdk
-C example:
-```
-clang -I../include -o my.wasm main.c -Wl,--no-entry,--allow-undefined,--export-dynamic,--export-if-defined=main,--export-table,,--import-memory,--export-memory,--strip-all
-```
-
 C++ example:
 ```
 clang++ -std=c++20 -I../include -o my.wasm main.cpp -Wl,--no-entry,--allow-undefined,--export-dynamic,--export-if-defined=main,--export-table,,--import-memory,--export-memory,--strip-all

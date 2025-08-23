@@ -1,6 +1,6 @@
 #pragma once
 
-#include "detail/externs.h"
+#include <emcore/emcore.h>
 
 #if __has_include(<new>)
 #include <new>

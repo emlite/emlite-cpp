@@ -1,6 +1,3 @@
-[submodule "dlmalloc"]
-	path = dlmalloc
-	url = https://github.com/emlite/dlmalloc
-[submodule "emsenv"]
-	path = emsenv
-	url = https://github.com/emlite/emsenv
+[submodule "emcore"]
+	path = emcore
+	url = https://github.com/emlite/emcore
