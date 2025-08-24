@@ -1,5 +1,12 @@
 #include <emlite/emlite.hpp>
 
+#ifdef EMLITE_WASIP2
+extern "C" {
+    Handle emlite_register_callback(Callback);
+    void emlite_unregister_callback(Handle);
+}
+#endif
+
 #if __has_include(<new>)
 #else
 void *operator new(size_t size) { return emlite_malloc(size); }
