@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.28)
-project(emlite VERSION 0.1.3 LANGUAGES C CXX)
+project(emlite VERSION 0.1.4 LANGUAGES C CXX)
 
 option(EMLITE_BUILD_EXAMPLES "Build examples" OFF)
 
