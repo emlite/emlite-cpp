@@ -4,7 +4,7 @@ Emlite can be used with emscripten whether in [standalone_wasm mode](https://git
 
 For use with standalone_wasm mode, you will need to pass the CMake flag EMSCRIPTEN_STANDALONE_WASM=ON to emlite, and you will also need a wasi shim/polyfill as described in the main [README.md](../README.md). You will also need to export the _start symbol in your link flags:
 ```cmake
-set(DEFAULT_LINK_FLAGS "-sERROR_ON_UNDEFINED_SYMBOLS=0 -sALLOW_MEMORY_GROWTH=1 -Wl,--no-entry,--allow-undefined,--export-dynamic,--export-if-defined=main,--export-if-defined=_start,--export-table,,--export-memory,--strip-all")
+set(DEFAULT_LINK_FLAGS "-sERROR_ON_UNDEFINED_SYMBOLS=0 -sALLOW_MEMORY_GROWTH=1 -Wl,--no-entry,--allow-undefined,--export-dynamic,--export-if-defined=main,--export-if-defined=_start,--export-table,--export-memory,--strip-all")
 ```
 
 For use with the default mode, you will need to tweak the link flags:

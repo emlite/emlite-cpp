@@ -115,6 +115,10 @@ class Val {
     static Val object() noexcept;
     /// Returns an empty javascript array
     static Val array() noexcept;
+    /// Creates a JavaScript Array from a span (pointer + length), pushing elements.
+    /// Each element is converted to a Val and appended using `Array.prototype.push`.
+    template <typename T>
+    static Val from_span(const T *ptr, size_t len) noexcept;
     /// Creates a javascript function
     /// @param f is function pointer of type Handle
     /// (*)(Handle)
@@ -207,6 +211,13 @@ class Val {
     }
 
   public:
+    /// Generic converting constructor.
+    /// Notes:
+    /// - Accepts numeric types, C/UTF-16 strings, or types convertible to Val.
+    /// - For non-primitive types, the branch expects `v.as_handle()`; if a type
+    ///   does not model this interface (i.e., is not Val or a Val-like wrapper),
+    ///   this intentionally triggers a hard compile error to catch misuse early
+    ///   in no-std builds.
     template <typename T>
     explicit Val(T v) noexcept : v_(0) {
         if constexpr (detail::is_integral_v<T>) {
@@ -431,6 +442,16 @@ Val Val::operator()(Args &&...vals) const {
     for (auto &v : keep_alive)
         emlite_val_push(arr.as_handle(), v.as_handle());
     return Val::take_ownership(emlite_val_func_call(v_, arr.as_handle()));
+}
+
+template <typename T>
+Val Val::from_span(const T *ptr, size_t len) noexcept {
+    auto arr = Val::array();
+    for (size_t i = 0; i < len; ++i) {
+        // Use method call so JS receives actual values, avoiding handle-lifetime issues
+        arr.call("push", Val(ptr[i]));
+    }
+    return arr;
 }
 
 template <typename T>

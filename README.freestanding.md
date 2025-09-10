@@ -26,7 +26,7 @@ FetchContent_MakeAvailable(emlite)
 
 add_executable(main src/main.cpp)
 target_link_libraries(main PRIVATE emlite::emlite)
-set_target_properties(main PROPERTIES LINKER_LANGUAGE CXX SUFFIX .wasm LINK_FLAGS "-nostdlib -Wl,--no-entry,--allow-undefined,--export-dynamic,--export-if-defined=main,--export-table,,--import-memory,--export-memory,--strip-all")
+set_target_properties(main PROPERTIES LINKER_LANGUAGE CXX SUFFIX .wasm LINK_FLAGS "-nostdlib -Wl,--no-entry,--allow-undefined,--export-dynamic,--export-if-defined=main,--export-table,--import-memory,--export-memory,--strip-all")
 ```
 
 It's advisable to use a cmake toolchain file since you're technically cross-compiling. A simple one as the following should do the job:
@@ -80,4 +80,3 @@ async function main() {
 
 await main();
 ```
-

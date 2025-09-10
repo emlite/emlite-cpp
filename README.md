@@ -148,21 +148,21 @@ cmake -Bbin -GNinja -DCMAKE_TOOLCHAIN_FILE=$EMSCRIPTEN_ROOT/cmake/Modules/Platfo
 
 To build using cmake for freestanding or with wasi-libc or wasi-sysroot, it's preferable to create a cmake toolchain file and pass that to your invocation:
 ```bash
-cmake -Bbin -GNinja -DCMAME_TOOLCHAIN_FILE=./my_toolchain_file.cmake
+cmake -Bbin -GNinja -DCMAKE_TOOLCHAIN_FILE=./my_toolchain_file.cmake
 ```
 
 The contents of your toolchain file should be adjust according to your needs. Please check the cmake directory of this repo for examples.
 
 Note that there are certain flags which must be passed to wasm-ld in your CMakeLists.txt file:
 ```cmake
-set_target_properties(mytarget PROPERTIES LINKER_LANGUAGE CXX SUFFIX .wasm LINK_FLAGS "-Wl,--no-entry,--allow-undefined,--export-dynamic,--export-if-defined=main,--export-table,,--import-memory,--export-memory,--strip-all")
+set_target_properties(mytarget PROPERTIES LINKER_LANGUAGE CXX SUFFIX .wasm LINK_FLAGS "-Wl,--no-entry,--allow-undefined,--export-dynamic,--export-if-defined=main,--export-table,--import-memory,--export-memory,--strip-all")
 ```
 Also check the CMakeLists.txt file in the repo to see how the examples and tests are built.
 
 ### Using clang bundled with wasi-sdk
 - No need to pass a sysroot, nor a target:
 ```bash
-clang++ -Iinclude -o my.wasm main.cpp -Wl,--no-entry,--allow-undefined,--export-dynamic,--export-if-defined=main,--export-table,,--import-memory,--export-memory,--strip-all
+clang++ -Iinclude -o my.wasm main.cpp -Wl,--no-entry,--allow-undefined,--export-dynamic,--export-if-defined=main,--export-table,--import-memory,--export-memory,--strip-all
 ```
 
 ### Using stock clang

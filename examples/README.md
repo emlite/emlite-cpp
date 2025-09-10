@@ -3,7 +3,7 @@
 ## Building with the wasi-sdk
 C++ example:
 ```
-clang++ -std=c++20 -I../include -o my.wasm main.cpp -Wl,--no-entry,--allow-undefined,--export-dynamic,--export-if-defined=main,--export-table,,--import-memory,--export-memory,--strip-all
+clang++ -std=c++20 -I../include -o my.wasm main.cpp -Wl,--no-entry,--allow-undefined,--export-dynamic,--export-if-defined=main,--export-table,--import-memory,--export-memory,--strip-all
 ```
 
 ```
@@ -19,4 +19,3 @@ CMake can be used. It needs to be invoked while passing clang as your CC and CXX
 # from the project's root
 CC=clang CXX=clang++ cmake -Bbin -DCMAKE_SYSROOT=/path/to/wasi-sysroot -DEMLITE_BUILD_EXAMPLES=ON && cmake --build bin
 ```
-
