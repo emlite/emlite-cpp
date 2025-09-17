@@ -126,13 +126,15 @@ class Val {
     static Val make_fn(Closure<Val(Params)> &&f) noexcept;
     template <typename Ret, typename... Args, typename F>
     static Val make_fn(F &&f) noexcept {
-        return make_fn([=](Params p) -> Val {
-            // maybe check length of p.len against
-            // sizeof...(Args)
-            if constexpr (!detail::is_same_v<void, Ret>)
-                return Val(detail::call_with_params<Args...>(detail::forward<F>(f), p));
-            else {
-                detail::call_with_params<Args...>((Closure<Ret(Args...)> &&)f, p);
+        // Move/capture the callable to avoid const-qualification issues in the lambda body
+        auto fn = detail::forward<F>(f);
+        return make_fn([fn = detail::move(fn)](Params p) -> Val {
+            // maybe check length of p.len against sizeof...(Args)
+            using CallResult = decltype(detail::call_with_params<Args...>(fn, p));
+            if constexpr (!detail::is_same_v<CallResult, void>) {
+                return Val(detail::call_with_params<Args...>(fn, p));
+            } else {
+                detail::call_with_params<Args...>(fn, p);
                 return Val::undefined();
             }
         });
