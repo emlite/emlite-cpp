@@ -1,11 +1,6 @@
 #include <emlite/emlite.hpp>
 
-#ifdef EMLITE_WASIP2
-extern "C" {
-    Handle emlite_register_callback(Callback);
-    void emlite_unregister_callback(Handle);
-}
-#endif
+// Unified JS-side callback handling; no registry needed across targets
 
 #if __has_include(<new>)
 #else
@@ -112,11 +107,18 @@ bool Val::has_own_property(const char *prop) const noexcept {
 
 Val Val::make_fn(Callback f, const Val &data) noexcept {
 #ifdef EMLITE_WASIP2
-    Handle fidx = emlite_register_callback(f);
+    // JS-side callback storage for all targets: pack function pointer + user data
+    if (data.v_) emlite_val_inc_ref(data.v_);
+    auto pack = (EmliteCbPack *)emlite_malloc(sizeof(EmliteCbPack));
+    if (!pack) return Val::undefined();
+    pack->fn = f;
+    pack->user_data = data.v_;
+    Handle packed = emlite_val_make_biguint((uint64_t)(uintptr_t)pack);
+    return Val::take_ownership(emlite_val_make_callback(0, packed));
 #else
     Handle fidx = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(f));
-#endif
     return Val::take_ownership(emlite_val_make_callback(fidx, Val::release((Val &&)data)));
+#endif
 }
 
 Val Val::make_fn(Closure<Val(Params)> &&f) noexcept {
