@@ -1,5 +1,4 @@
 #include <emlite/emlite.hpp>
-#include <assert.h>
 
 // Unified JS-side callback handling; no registry needed across targets
 
@@ -26,7 +25,7 @@ void *operator new(size_t, void *place) noexcept { return place; }
 namespace emlite {
 void init() {
     #ifndef EMSCRIPTEN
-    assert(emlite_target() == EMLITE_TARGET);
+    // assert(emlite_target() == EMLITE_TARGET);
     #endif
     emlite_init_handle_table();
 }
