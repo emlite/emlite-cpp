@@ -21,6 +21,9 @@ set(EMLITE_SOURCES
 target_compile_features(emlite PUBLIC cxx_std_17)
 if (CMAKE_C_COMPILER_TARGET STREQUAL "wasm32-wasip2" OR CMAKE_CXX_COMPILER_TARGET STREQUAL "wasm32-wasip2")
   target_compile_definitions(emlite PUBLIC EMLITE_WASIP2)
+  if (EMCORE_WASIP2_COMPONENT)
+    target_compile_definitions(emlite PUBLIC EMCORE_WASIP2_COMPONENT)
+  endif()
 endif()
 set_target_properties(emlite PROPERTIES LINKER_LANGUAGE CXX)
 
