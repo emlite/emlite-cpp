@@ -25,7 +25,7 @@ void *operator new(size_t, void *place) noexcept { return place; }
 namespace emlite {
 void init() {
     #ifndef EMSCRIPTEN
-    // assert(emlite_target() == EMLITE_TARGET);
+    // check(emlite_target() == EMLITE_TARGET);
     #endif
     emlite_init_handle_table();
 }
@@ -89,10 +89,9 @@ Val Val::dup(Handle h) noexcept {
     return Val::take_ownership(h);
 }
 
-Handle Val::release(Val &&v) noexcept {
-    auto v_   = detail::move(v);
-    auto temp = v_.v_;
-    v_.v_     = 0;
+Handle Val::release_handle() noexcept {
+    auto temp = this->v_;
+    this->v_     = 0;
     return temp;
 }
 
