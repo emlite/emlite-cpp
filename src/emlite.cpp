@@ -107,7 +107,7 @@ bool Val::has_own_property(const char *prop) const noexcept {
     return emlite_val_obj_has_own_prop(v_, prop, strlen(prop));
 }
 
-Val Val::make_fn(Callback f, const Val &data) noexcept {
+Val Val::make_fn(Callback f, Val data) noexcept {
 #ifdef EMLITE_WASIP2
     // JS-side callback storage for all targets: pack function pointer + user data
     if (data.v_) emlite_val_inc_ref(data.v_);
@@ -119,7 +119,7 @@ Val Val::make_fn(Callback f, const Val &data) noexcept {
     return Val::take_ownership(emlite_val_make_callback(0, packed));
 #else
     Handle fidx = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(f));
-    return Val::take_ownership(emlite_val_make_callback(fidx, Val::release((Val &&)data)));
+    return Val::take_ownership(emlite_val_make_callback(fidx, data.release_handle()));
 #endif
 }
 
@@ -132,7 +132,7 @@ Val Val::make_fn(Closure<Val(Params)> &&f) noexcept {
             auto v     = Val::vec_from_js_array<Val>(Val::take_ownership(h), len);
             Params params{v.get(), len};
             auto ret = (*func)(params);
-            Val::release((Val &&)func0);
+            func0.release_handle();
             return ret.as_handle();
         },
         Val((uintptr_t) new Closure<Val(Params)>(detail::move(f)))

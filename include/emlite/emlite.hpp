@@ -122,7 +122,7 @@ class Val {
     /// Creates a javascript function
     /// @param f is function pointer of type Handle
     /// (*)(Handle)
-    static Val make_fn(Callback f, const Val &data = Val::null()) noexcept;
+    static Val make_fn(Callback f, Val data = Val::null()) noexcept;
     static Val make_fn(Closure<Val(Params)> &&f) noexcept;
     template <typename Ret, typename... Args, typename F>
     static Val make_fn(F &&f) noexcept {
