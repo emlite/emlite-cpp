@@ -108,7 +108,8 @@ bool Val::has_own_property(const char *prop) const noexcept {
 }
 
 Val Val::make_fn(Callback f, Val data) noexcept {
-#if defined(EMLITE_WASIP2) && defined(EMCORE_WASIP2_COMPONENT)
+#ifdef EMLITE_WASIP2
+//&& defined(EMCORE_WASIP2_COMPONENT)
     // JS-side callback storage for all targets: pack function pointer + user data
     if (data.v_) emlite_val_inc_ref(data.v_);
     auto pack = (EmliteCbPack *)emlite_malloc(sizeof(EmliteCbPack));
